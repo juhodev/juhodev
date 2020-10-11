@@ -29,6 +29,9 @@ commandHandler.registerCommand(GifCommand);
 client.on('ready', () => {
 	console.log('Connected');
 
+	client.user.setStatus('idle');
+	client.user.setActivity({ name: 'with viinirypälerasia' });
+
 	db.updateGuild(client);
 	userMetrics.start();
 });
