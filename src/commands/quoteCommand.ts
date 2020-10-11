@@ -1,11 +1,12 @@
 import { TextChannel, MessageEmbed, DMChannel, NewsChannel } from 'discord.js';
 import DB from '../database/db';
+import { Quote } from '../database/types';
 import { Command } from './types';
 
 const QuoteCommand: Command = {
 	execute: (channel, args, db) => {
 		if (args.length === 0) {
-			channel.send(db.getQuoteDB().getRandomQuote());
+			sendQuote(channel, db.getQuoteDB().getRandomQuote());
 			return;
 		}
 
@@ -24,6 +25,10 @@ const QuoteCommand: Command = {
 				removeQuote(channel, args, db);
 				break;
 
+			case 'READ':
+				readQuote(channel, args, db);
+				break;
+
 			default:
 				channel.send(`Action ${action} not found`);
 				break;
@@ -32,6 +37,22 @@ const QuoteCommand: Command = {
 
 	alias: ['!quote', '!q'],
 };
+
+function readQuote(
+	channel: TextChannel | DMChannel | NewsChannel,
+	args: string[],
+	db: DB,
+) {
+	const quoteTitle: string = args.shift();
+
+	if (!db.getQuoteDB().hasQuote(quoteTitle)) {
+		channel.send(`Quote with the title "${quoteTitle}" not found`);
+		return;
+	}
+
+	const fullQuote: Quote = db.getQuoteDB().getQuote(quoteTitle);
+	sendQuote(channel, fullQuote);
+}
 
 function removeQuote(
 	channel: TextChannel | DMChannel | NewsChannel,
@@ -85,6 +106,14 @@ function sendQuoteList(channel: TextChannel | DMChannel | NewsChannel, db: DB) {
 		title: 'Quotes',
 	}).addField('List', list);
 
+	channel.send(embed);
+}
+
+function sendQuote(
+	channel: TextChannel | DMChannel | NewsChannel,
+	quote: Quote,
+) {
+	const embed = new MessageEmbed({}).addField(quote.title, quote.content);
 	channel.send(embed);
 }
 

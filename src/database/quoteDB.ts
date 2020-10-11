@@ -18,11 +18,17 @@ class QuoteDB {
 		this.writeToDisk();
 	}
 
-	// TODO: This shouldn't actually be random. Random is bad. Save a list of recently sent quotes
-	// and don't send them again in a while
-	getRandomQuote(): string {
-		const allQuotes: string[] = this.quotes.map((quote) => quote.content);
-		return this.random.pseudoRandom(allQuotes);
+	getRandomQuote(): Quote {
+		const allQuotes: string[] = this.quotes.map((quote) => quote.title);
+		const randomTitle: string = this.random.pseudoRandom(allQuotes);
+
+		return this.getQuote(randomTitle);
+	}
+
+	getQuote(title: string): Quote {
+		return this.quotes.find(
+			(quote) => quote.title.toUpperCase() === title.toUpperCase(),
+		);
 	}
 
 	getQuotes(): Quote[] {
