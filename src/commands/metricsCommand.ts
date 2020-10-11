@@ -16,6 +16,11 @@ const MetricsCommand: Command = {
 			.getMetricsDB()
 			.getUserTimes(userArgument);
 
+		if (userTimes === undefined) {
+			channel.send(`${userArgument} not found`);
+			return;
+		}
+
 		let message: string = '';
 
 		for (const voiceHistory of userTimes.channels) {
