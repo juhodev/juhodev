@@ -25,7 +25,7 @@ class CommandHandler {
 		const args = content.split(' ');
 		const command = args.shift();
 
-		console.log(`${author}: ${command} ${JSON.stringify(args)}`);
+		console.log(`${author.username}: ${command} ${JSON.stringify(args)}`);
 
 		if (!this.commands.has(command)) {
 			channel.send(`${command} is not a command!`);
