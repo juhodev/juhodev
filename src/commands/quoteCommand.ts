@@ -89,6 +89,3 @@ function sendQuoteList(channel: TextChannel | DMChannel | NewsChannel, db: DB) {
 }
 
 export default QuoteCommand;
-/*
-baavo kuvia
-*/
