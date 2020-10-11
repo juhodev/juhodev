@@ -14,8 +14,6 @@ class RandomString {
 			(item) => !this.history.includes(item),
 		);
 
-		console.log(this.history);
-
 		if (withoutItemsInHistory.length === 0) {
 			return this.random(items);
 		}

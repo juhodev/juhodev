@@ -8,6 +8,7 @@ import QuoteCommand from './commands/quoteCommand';
 import SetupCommand from './commands/setupCommand';
 import MetricsCommand from './commands/metricsCommand';
 import BaavoCommand from './commands/baavoCommand';
+import GifCommand from './commands/gifCommand';
 
 dotenv.config();
 
@@ -17,12 +18,13 @@ const db = new DB();
 db.load();
 
 const userMetrics = new UserMetrics(db);
-
 const commandHandler = new CommandHandler(db);
+
 commandHandler.registerCommand(QuoteCommand);
 commandHandler.registerCommand(SetupCommand);
 commandHandler.registerCommand(MetricsCommand);
 commandHandler.registerCommand(BaavoCommand);
+commandHandler.registerCommand(GifCommand);
 
 client.on('ready', () => {
 	console.log('Connected');
