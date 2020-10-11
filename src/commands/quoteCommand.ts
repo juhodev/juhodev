@@ -46,7 +46,6 @@ function removeQuote(
 	}
 
 	db.getQuoteDB().removeQuote(quoteTitle);
-
 	channel.send(`Quote "${quoteTitle}" removed`);
 }
 

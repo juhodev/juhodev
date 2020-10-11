@@ -24,10 +24,12 @@
 
 import * as Discord from 'discord.js';
 import CommandHandler from './commandHandler';
-import QuoteCommand from './commands/quoteCommand';
 import DB from './database/db';
 import * as dotenv from 'dotenv';
 dotenv.config();
+
+import QuoteCommand from './commands/quoteCommand';
+import SetupCommand from './commands/setupCommand';
 
 const client = new Discord.Client();
 
@@ -36,6 +38,7 @@ db.load();
 
 const commandHandler = new CommandHandler(db);
 commandHandler.registerCommand(QuoteCommand);
+commandHandler.registerCommand(SetupCommand);
 
 client.on('ready', () => {
 	console.log('Connected');
