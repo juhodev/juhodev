@@ -1,14 +1,18 @@
-import { Guild, TextChannel } from 'discord.js';
+import { Client, Guild, TextChannel } from 'discord.js';
 import * as fs from 'fs';
+import MetricsDB from './metricsDB';
 import QuoteDB from './quoteDB';
 import { DBConfig, DB_CONFIG_FILE, DB_DATA_DIR } from './types';
 
 class DB {
 	private quoteDB: QuoteDB;
+	private metricsDB: MetricsDB;
+
 	private config: DBConfig;
 
 	constructor() {
 		this.quoteDB = new QuoteDB();
+		this.metricsDB = new MetricsDB();
 		this.config = {};
 	}
 
@@ -19,12 +23,24 @@ class DB {
 		this.writeToDisk();
 	}
 
+	updateGuild(client: Client) {
+		if (this.config.guild === undefined) {
+			return;
+		}
+
+		this.config.guild = client.guilds.cache.get(this.config.guild.id);
+	}
+
 	getGuild(): Guild {
 		return this.config.guild;
 	}
 
 	getQuoteDB() {
 		return this.quoteDB;
+	}
+
+	getMetricsDB() {
+		return this.metricsDB;
 	}
 
 	load() {
@@ -44,6 +60,7 @@ class DB {
 		}
 
 		this.quoteDB.load();
+		this.metricsDB.load();
 	}
 
 	private writeToDisk() {
