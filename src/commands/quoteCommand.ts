@@ -78,6 +78,11 @@ function saveQuote(
 	const title = args.shift();
 	const fullQuote = args.join(' ');
 
+	if (db.getQuoteDB().hasQuote(title)) {
+		channel.send('A quote with that title already exists');
+		return;
+	}
+
 	db.getQuoteDB().save(title, fullQuote);
 	channel.send(`The quote was saved with the title "${title}"`);
 }
