@@ -1,11 +1,14 @@
 import { DB_DATA_DIR, DB_QUOTE_FILE, Quote } from './types';
 import * as fs from 'fs';
+import RandomString from '../randomString';
 
 class QuoteDB {
 	private quotes: Quote[];
+	private random: RandomString;
 
 	constructor() {
 		this.quotes = [];
+		this.random = new RandomString();
 	}
 
 	save(title: string, content: string) {
@@ -17,8 +20,9 @@ class QuoteDB {
 
 	// TODO: This shouldn't actually be random. Random is bad. Save a list of recently sent quotes
 	// and don't send them again in a while
-	getRandomQuote(): Quote {
-		return this.quotes[Math.floor(Math.random() * this.quotes.length)];
+	getRandomQuote(): string {
+		const allQuotes: string[] = this.quotes.map((quote) => quote.content);
+		return this.random.pseudoRandom(allQuotes);
 	}
 
 	getQuotes(): Quote[] {

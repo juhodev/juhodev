@@ -12,7 +12,11 @@ class CommandHandler {
 	}
 
 	handle(message: Message) {
-		const { content, channel } = message;
+		const { content, channel, author } = message;
+
+		if (author.bot) {
+			return;
+		}
 
 		if (!content.startsWith('!')) {
 			return;
