@@ -7,7 +7,7 @@ import {
 	VoiceChannelHistory,
 	VoiceChannelMetrics,
 } from '../metrics/types';
-import { DB_DATA_DIR, DB_METRICS_FILE, DB_QUOTE_FILE } from './types';
+import { DB_DATA_DIR, DB_METRICS_FILE } from './types';
 
 class MetricsDB {
 	private voiceChannelMetrics: VoiceChannelMetrics;
@@ -42,6 +42,12 @@ class MetricsDB {
 
 		savedVoiceChannel.time += LOG_INTERVAL;
 		this.writeToDisk();
+	}
+
+	getUserTimes(name: string): UserVoiceHistory {
+		return this.voiceChannelMetrics.users.find(
+			(user) => user.name.toUpperCase() === name,
+		);
 	}
 
 	getUserTotalTimes(): UserTotalTime[] {
