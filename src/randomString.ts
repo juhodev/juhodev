@@ -18,7 +18,7 @@ class RandomString {
 			return this.random(items);
 		}
 
-		if (this.history.length > items.length / 3) {
+		if (this.history.length > items.length / 2) {
 			this.history.shift();
 		}
 

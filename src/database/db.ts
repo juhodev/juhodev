@@ -1,5 +1,6 @@
 import { Client, Guild, TextChannel } from 'discord.js';
 import * as fs from 'fs';
+import ImgDB from './imgDB';
 import MetricsDB from './metricsDB';
 import QuoteDB from './quoteDB';
 import { DBConfig, DB_CONFIG_FILE, DB_DATA_DIR } from './types';
@@ -7,12 +8,15 @@ import { DBConfig, DB_CONFIG_FILE, DB_DATA_DIR } from './types';
 class DB {
 	private quoteDB: QuoteDB;
 	private metricsDB: MetricsDB;
+	private imgDB: ImgDB;
 
 	private config: DBConfig;
 
 	constructor() {
 		this.quoteDB = new QuoteDB();
 		this.metricsDB = new MetricsDB();
+		this.imgDB = new ImgDB();
+
 		this.config = {};
 	}
 
@@ -41,6 +45,10 @@ class DB {
 
 	getMetricsDB() {
 		return this.metricsDB;
+	}
+
+	getImgDB() {
+		return this.imgDB;
 	}
 
 	load() {
