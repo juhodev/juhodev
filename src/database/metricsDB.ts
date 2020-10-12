@@ -63,7 +63,7 @@ class MetricsDB {
 			times.push({ id: user.id, name: user.name, time: totalTime });
 		}
 
-		return times;
+		return times.sort((a, b) => a.time - b.time).reverse();
 	}
 
 	load() {
