@@ -1,4 +1,3 @@
-import * as ffmpeg from 'ffmpeg';
 import * as path from 'path';
 import * as fs from 'fs';
 import { DB_DATA_DIR } from '../database/types';
@@ -22,6 +21,7 @@ import {
 	TextChannel,
 } from 'discord.js';
 import RandomString from '../randomString';
+import * as ffmpeg from 'fluent-ffmpeg';
 
 class Clips {
 	private db: DB;
@@ -123,7 +123,7 @@ class Clips {
 			name: renderClip.clipName,
 			length: renderClip.clipLength,
 			originalVideoLink: url,
-			path: renderExit.output,
+			path: renderClip.outputPath,
 			views: 0,
 		};
 
@@ -313,23 +313,27 @@ class Clips {
 	}
 
 	private async renderPart(renderClip: RenderClip): Promise<RenderExit> {
-		const { inputPath, outputPath, startAt, clipLength } = renderClip;
-		console.log(inputPath, outputPath, startAt, clipLength);
+		return new Promise((resolve) => {
+			const { inputPath, outputPath, startAt, clipLength } = renderClip;
+			console.log(inputPath, outputPath, startAt, clipLength);
 
-		const startTime: number = new Date().getTime();
-		const process = await new ffmpeg(inputPath);
-		process
-			.setVideoSize('1080x?', true, true, '#000000')
-			.setVideoStartTime(startAt)
-			.setVideoDuration(clipLength);
+			const startTime: number = new Date().getTime();
+			ffmpeg(inputPath)
+				.size('1080x?')
+				.autopad(true, '#000000')
+				.setStartTime(startAt)
+				.setDuration(clipLength)
+				.output(outputPath)
+				.on('end', () => {
+					const endTime: number = new Date().getTime();
 
-		const response: string = await process.save(outputPath);
-		const endTime: number = new Date().getTime();
-
-		return {
-			output: response,
-			elapsedTime: endTime - startTime,
-		};
+					resolve({
+						elapsedTime: endTime - startTime,
+					});
+					return;
+				})
+				.run();
+		});
 	}
 }
 

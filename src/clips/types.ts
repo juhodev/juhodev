@@ -17,7 +17,6 @@ export type RenderClip = {
 };
 
 export type RenderExit = {
-	output: string;
 	elapsedTime: number;
 };
 
