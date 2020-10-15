@@ -319,7 +319,7 @@ class Clips {
 
 			const startTime: number = new Date().getTime();
 			ffmpeg(inputPath)
-				.size('1080x?')
+				.size('720x?')
 				.autopad(true, '#000000')
 				.setStartTime(startAt)
 				.setDuration(clipLength)
