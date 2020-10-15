@@ -1,5 +1,8 @@
 import { Client, Guild, TextChannel } from 'discord.js';
 import * as fs from 'fs';
+import Clips from '../clips/clips';
+import RRSG from '../randomReadableStringGenerator';
+import ClipsDB from './clipsDB';
 import ImgDB from './imgDB';
 import MetricsDB from './metricsDB';
 import QuoteDB from './quoteDB';
@@ -9,6 +12,9 @@ class DB {
 	private quoteDB: QuoteDB;
 	private metricsDB: MetricsDB;
 	private imgDB: ImgDB;
+	private rrsg: RRSG;
+	private clips: Clips;
+	private clipsDB: ClipsDB;
 
 	private config: DBConfig;
 
@@ -16,6 +22,9 @@ class DB {
 		this.quoteDB = new QuoteDB();
 		this.metricsDB = new MetricsDB();
 		this.imgDB = new ImgDB();
+		this.rrsg = new RRSG();
+		this.clips = new Clips(this);
+		this.clipsDB = new ClipsDB();
 
 		this.config = {};
 	}
@@ -39,16 +48,28 @@ class DB {
 		return this.config.guild;
 	}
 
-	getQuoteDB() {
+	getQuoteDB(): QuoteDB {
 		return this.quoteDB;
 	}
 
-	getMetricsDB() {
+	getMetricsDB(): MetricsDB {
 		return this.metricsDB;
 	}
 
-	getImgDB() {
+	getImgDB(): ImgDB {
 		return this.imgDB;
+	}
+
+	getRRSG(): RRSG {
+		return this.rrsg;
+	}
+
+	getClips(): Clips {
+		return this.clips;
+	}
+
+	getClipsDB(): ClipsDB {
+		return this.clipsDB;
 	}
 
 	load() {
@@ -69,6 +90,10 @@ class DB {
 
 		this.quoteDB.load();
 		this.metricsDB.load();
+		this.rrsg.load();
+		this.clipsDB.load();
+
+		this.clips.setup();
 	}
 
 	private writeToDisk() {

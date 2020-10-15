@@ -10,6 +10,7 @@ import MetricsCommand from './commands/metricsCommand';
 import BaavoCommand from './commands/baavoCommand';
 import GifCommand from './commands/gifCommand';
 import ImgCommand from './commands/imgCommand';
+import ClipsCommand from './commands/clipsCommand';
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ commandHandler.registerCommand(MetricsCommand);
 commandHandler.registerCommand(BaavoCommand);
 commandHandler.registerCommand(GifCommand);
 commandHandler.registerCommand(ImgCommand);
+commandHandler.registerCommand(ClipsCommand);
 
 client.on('ready', () => {
 	console.log('Connected');
