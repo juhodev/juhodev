@@ -318,21 +318,25 @@ class Clips {
 			console.log(inputPath, outputPath, startAt, clipLength);
 
 			const startTime: number = new Date().getTime();
-			ffmpeg(inputPath)
-				.size('1080x?')
-				.autopad(true, '#000000')
-				.setStartTime(startAt)
-				.setDuration(clipLength)
-				.output(outputPath)
-				.on('end', () => {
-					const endTime: number = new Date().getTime();
+			try {
+				ffmpeg(inputPath)
+					.size('1080x?')
+					.autopad(true, '#000000')
+					.setStartTime(startAt)
+					.setDuration(clipLength)
+					.output(outputPath)
+					.on('end', () => {
+						const endTime: number = new Date().getTime();
 
-					resolve({
-						elapsedTime: endTime - startTime,
-					});
-					return;
-				})
-				.run();
+						resolve({
+							elapsedTime: endTime - startTime,
+						});
+						return;
+					})
+					.run();
+			} catch (e) {
+				console.error(e);
+			}
 		});
 	}
 }
