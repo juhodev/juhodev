@@ -100,7 +100,11 @@ function addClip(
 		hasLowQualityOptionSet = true;
 	}
 
-	if (superLowQualityOption === undefined && name.toUpperCase() === 'LQ') {
+	if (
+		superLowQualityOption === undefined &&
+		name !== undefined &&
+		name.toUpperCase() === 'LQ'
+	) {
 		hasLowQualityOptionSet = true;
 	}
 
