@@ -10,6 +10,8 @@ import {
 	VideoDownloadResult,
 	MAX_NUMBER_OF_VIDEOS_DOWNLOADED,
 	Clip,
+	ClipProgress,
+	ClipStage,
 } from './types';
 import DB from '../database/db';
 import * as youtubedl from 'youtube-dl';
@@ -83,25 +85,19 @@ class Clips {
 		userEnd: string,
 		userClipName: string,
 	) {
-		const downloadingEmbed: MessageEmbed = new MessageEmbed({
-			title: 'Clips',
-		}).addField('Progress', '*Downloading video...*');
-		const message: Message = await channel.send(downloadingEmbed);
+		const message: Message = await channel.send(
+			this.createEmbed('Progress', '*Downloading video...*'),
+		);
 
 		this.removeOldVideosIfNeeded();
 		const videoDownload: VideoDownloadResult = await this.downloadVideo(
 			url,
 		);
 
-		const renderingEmbed: MessageEmbed = new MessageEmbed({
-			title: 'Clips',
-		}).addField(
-			'Progress',
-			'Downloading video... **downloaded**\n*Creating clip...*',
-		);
-
-		message.edit(renderingEmbed);
-
+		this.updateClipProgress(message, {
+			error: false,
+			stage: ClipStage.RENDERING,
+		});
 		const renderClip: RenderClip = await this.createRenderClip(
 			videoDownload.filename,
 			userStart,
@@ -114,6 +110,11 @@ class Clips {
 
 		if (validRenderClip.error) {
 			console.error(validRenderClip.message);
+			this.updateClipProgress(message, {
+				error: true,
+				errorMessage: validRenderClip.message,
+				stage: ClipStage.RENDERING,
+			});
 			return;
 		}
 
@@ -129,21 +130,71 @@ class Clips {
 
 		this.db.getClipsDB().save(clip);
 
-		const renderDoneEmbed: MessageEmbed = new MessageEmbed({
-			title: 'Clips',
-		})
-			.addField(
-				'Progress',
-				'Downloading video... **downloaded**\nCreating clip... **created**',
-			)
-			.addField(
-				'Clip info',
-				`Clip id: **${clip.name}**\nCreating the clip took ${Math.round(
-					renderExit.elapsedTime / 1000,
-				)} seconds`,
+		this.updateClipProgress(
+			message,
+			{
+				error: false,
+				stage: ClipStage.DONE,
+			},
+			clip,
+			renderExit,
+		);
+	}
+
+	private updateClipProgress(
+		originalMessage: Message,
+		clipProgress: ClipProgress,
+		clip?: Clip,
+		renderExit?: RenderExit,
+	) {
+		const { error, errorMessage, stage } = clipProgress;
+		if (error) {
+			const embed: MessageEmbed = this.createEmbed(
+				'Error',
+				`${this.getMessageForStage(
+					stage,
+				)} **error**\n\n${errorMessage}`,
 			);
 
-		message.edit(renderDoneEmbed);
+			originalMessage.edit(embed);
+			return;
+		}
+
+		let progressMessage: string = this.getMessageForStage(stage);
+
+		if (stage === ClipStage.DONE) {
+			progressMessage += `\n\nClip id: **${
+				clip.name
+			}**\nCreating the clip took ${Math.round(
+				renderExit.elapsedTime / 1000,
+			)} seconds`;
+		}
+
+		const embed: MessageEmbed = this.createEmbed(
+			'Progress',
+			progressMessage,
+		);
+		originalMessage.edit(embed);
+	}
+
+	private getMessageForStage(stage: ClipStage): string {
+		switch (stage) {
+			case ClipStage.DOWNLOADING:
+				return '*Downloading video...*';
+
+			case ClipStage.RENDERING:
+				return 'Downloading video... **downloaded**\n*Creating clip...*';
+
+			case ClipStage.DONE:
+				return 'Downloading video... **downloaded**\nCreating clip... **created**';
+		}
+	}
+
+	private createEmbed(fieldTitle: string, fieldText: string): MessageEmbed {
+		return new MessageEmbed({ title: 'Clips' }).addField(
+			fieldTitle,
+			fieldText,
+		);
 	}
 
 	private removeOldVideosIfNeeded() {

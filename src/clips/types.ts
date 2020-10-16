@@ -30,6 +30,18 @@ export type VideoDownloadResult = {
 	filename: string;
 };
 
+export type ClipProgress = {
+	error: boolean;
+	errorMessage?: string;
+	stage: ClipStage;
+};
+
+export enum ClipStage {
+	DOWNLOADING = 0,
+	RENDERING = 1,
+	DONE = 2,
+}
+
 export const DOWNLOADED_DIR: string = 'downloaded_videos';
 export const CLIPS_DIR: string = 'clips';
 export const MAX_NUMBER_OF_VIDEOS_DOWNLOADED: number = 30;
