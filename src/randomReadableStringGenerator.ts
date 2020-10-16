@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import { DB_DATA_DIR } from './database/types';
+import * as path from 'path';
 
 class RRSG {
 	private adjectives: string[];
@@ -49,6 +50,7 @@ class RRSG {
 		}
 
 		this.generatedStrings.push(generatedString);
+		this.writeToDisk();
 		return generatedString;
 	}
 
@@ -64,6 +66,11 @@ class RRSG {
 		];
 
 		return adjectiveOne + adjectiveTwo + randomNoun;
+	}
+
+	private writeToDisk() {
+		const file: string = path.resolve(DB_DATA_DIR, 'generatedStrings.json');
+		fs.writeFileSync(file, JSON.stringify(this.generatedStrings));
 	}
 }
 
