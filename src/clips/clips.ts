@@ -12,6 +12,7 @@ import {
 	Clip,
 	ClipProgress,
 	ClipStage,
+	ValidClip,
 } from './types';
 import DB from '../database/db';
 import * as youtubedl from 'youtube-dl';
@@ -127,6 +128,16 @@ class Clips {
 			views: 0,
 		};
 
+		const validClip: ValidClip = this.validateClip(clip);
+		if (validClip.error) {
+			this.updateClipProgress(message, {
+				error: true,
+				errorMessage: validClip.message,
+				stage: ClipStage.RENDERING,
+			});
+			return;
+		}
+
 		this.db.getClipsDB().save(clip);
 
 		this.updateClipProgress(
@@ -138,6 +149,25 @@ class Clips {
 			clip,
 			renderExit,
 		);
+	}
+
+	private validateClip(clip: Clip): ValidClip {
+		// Discord max attachment size without nitro
+		const maxFileSizeInBytes: number = 1024 * 1024 * 8;
+
+		const fileStats: fs.Stats = fs.statSync(clip.path);
+		const { size } = fileStats;
+
+		if (size > maxFileSizeInBytes) {
+			return {
+				error: true,
+				message: `The clip size is more than the allowed 8MB!`,
+			};
+		}
+
+		return {
+			error: false,
+		};
 	}
 
 	private updateClipProgress(
@@ -256,7 +286,16 @@ class Clips {
 			outputPath,
 			startAt,
 			clipLength,
+			error,
+			message,
 		} = renderClip;
+
+		if (error) {
+			return {
+				error,
+				message,
+			};
+		}
 
 		if (!fs.existsSync(inputPath)) {
 			return {
@@ -324,7 +363,6 @@ class Clips {
 		);
 
 		const timeSplitIndex: number = userDefinedStart.indexOf(':');
-		// TODO: return error
 		if (timeSplitIndex === -1) {
 			return {
 				error: true,

@@ -6,6 +6,11 @@ export type Clip = {
 	views: number;
 };
 
+export type ValidClip = {
+	error: boolean;
+	message?: string;
+};
+
 export type RenderClip = {
 	clipName?: string;
 	inputPath?: string;
