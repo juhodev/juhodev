@@ -109,7 +109,6 @@ class Clips {
 		);
 
 		if (validRenderClip.error) {
-			console.error(validRenderClip.message);
 			this.updateClipProgress(message, {
 				error: true,
 				errorMessage: validRenderClip.message,
@@ -251,12 +250,25 @@ class Clips {
 	}
 
 	private validateRenderClip(renderClip: RenderClip): ValidRenderClip {
-		const { inputPath, outputPath, startAt, clipLength } = renderClip;
+		const {
+			clipName,
+			inputPath,
+			outputPath,
+			startAt,
+			clipLength,
+		} = renderClip;
 
 		if (!fs.existsSync(inputPath)) {
 			return {
 				error: true,
 				message: `Clip not found! ${inputPath}`,
+			};
+		}
+
+		if (this.db.getClipsDB().hasClip(clipName)) {
+			return {
+				error: true,
+				message: 'A clip with that name already exists!',
 			};
 		}
 
@@ -366,7 +378,6 @@ class Clips {
 	private async renderPart(renderClip: RenderClip): Promise<RenderExit> {
 		return new Promise((resolve) => {
 			const { inputPath, outputPath, startAt, clipLength } = renderClip;
-			console.log(inputPath, outputPath, startAt, clipLength);
 
 			const startTime: number = new Date().getTime();
 			ffmpeg(inputPath)

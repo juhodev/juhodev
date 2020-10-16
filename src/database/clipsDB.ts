@@ -34,6 +34,10 @@ class ClipsDB {
 		return this.clips.find((clip) => clip.name === name);
 	}
 
+	hasClip(name: string): boolean {
+		return this.clips.some((clip) => clip.name === name);
+	}
+
 	load() {
 		const clipDBFile = path.resolve(DB_DATA_DIR, DB_CLIPS_FILE);
 		if (!fs.existsSync(clipDBFile)) {
