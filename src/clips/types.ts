@@ -17,12 +17,15 @@ export type RenderClip = {
 	outputPath?: string;
 	startAt?: number;
 	clipLength?: number;
+	superLowQuality?: boolean;
 	error: boolean;
 	message?: string;
 };
 
 export type RenderExit = {
 	elapsedTime: number;
+	error: boolean;
+	message?: string;
 };
 
 export type ValidRenderClip = {

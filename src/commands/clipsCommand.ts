@@ -89,7 +89,29 @@ function addClip(
 	}
 
 	const name: string = args.shift();
-	db.getClips().createClip(channel, url, start, length, name);
+	const superLowQualityOption: string = args.shift();
+
+	let hasLowQualityOptionSet: boolean = false;
+
+	if (
+		superLowQualityOption !== undefined &&
+		superLowQualityOption.toUpperCase() === 'LQ'
+	) {
+		hasLowQualityOptionSet = true;
+	}
+
+	if (superLowQualityOption === undefined && name.toUpperCase() === 'LQ') {
+		hasLowQualityOptionSet = true;
+	}
+
+	db.getClips().createClip(
+		channel,
+		url,
+		start,
+		length,
+		name,
+		hasLowQualityOptionSet,
+	);
 }
 
 function viewClip(

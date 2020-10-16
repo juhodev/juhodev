@@ -85,6 +85,7 @@ class Clips {
 		userStart: string,
 		userEnd: string,
 		userClipName: string,
+		superLowQuality: boolean,
 	) {
 		const message: Message = await channel.send(
 			this.createEmbed('Progress', '*Downloading video...*'),
@@ -104,6 +105,7 @@ class Clips {
 			userStart,
 			userEnd,
 			userClipName,
+			superLowQuality,
 		);
 		const validRenderClip: ValidRenderClip = this.validateRenderClip(
 			renderClip,
@@ -120,6 +122,15 @@ class Clips {
 
 		const renderExit: RenderExit = await this.renderPart(renderClip);
 
+		if (renderExit.error) {
+			this.updateClipProgress(message, {
+				error: true,
+				errorMessage: renderExit.message,
+				stage: ClipStage.RENDERING,
+			});
+			return;
+		}
+
 		const clip: Clip = {
 			name: renderClip.clipName,
 			length: renderClip.clipLength,
@@ -130,6 +141,7 @@ class Clips {
 
 		const validClip: ValidClip = this.validateClip(clip);
 		if (validClip.error) {
+			fs.unlinkSync(clip.path);
 			this.updateClipProgress(message, {
 				error: true,
 				errorMessage: validClip.message,
@@ -161,7 +173,7 @@ class Clips {
 		if (size > maxFileSizeInBytes) {
 			return {
 				error: true,
-				message: `The clip size is more than the allowed 8MB!`,
+				message: `The clip size is more than the allowed 8MB! (${size} bytes)\nTry with !clip add <url> <start> <end> [name] **lq**`,
 			};
 		}
 
@@ -342,6 +354,7 @@ class Clips {
 		userDefinedStart: string,
 		userDefinedEnd?: string,
 		userDefinedName?: string,
+		superLowQuality?: boolean,
 	): Promise<RenderClip> {
 		const downloadedFilePath: string = path.resolve(
 			DB_DATA_DIR,
@@ -406,6 +419,7 @@ class Clips {
 		return {
 			clipName,
 			clipLength,
+			superLowQuality,
 			inputPath: downloadedFilePath,
 			outputPath: outputFileName,
 			startAt: startTime,
@@ -415,24 +429,50 @@ class Clips {
 
 	private async renderPart(renderClip: RenderClip): Promise<RenderExit> {
 		return new Promise((resolve) => {
-			const { inputPath, outputPath, startAt, clipLength } = renderClip;
+			try {
+				const {
+					inputPath,
+					outputPath,
+					startAt,
+					clipLength,
+					superLowQuality,
+				} = renderClip;
 
-			const startTime: number = new Date().getTime();
-			ffmpeg(inputPath)
-				.size('720x?')
-				.autopad(true, '#000000')
-				.setStartTime(startAt)
-				.setDuration(clipLength)
-				.output(outputPath)
-				.on('end', () => {
-					const endTime: number = new Date().getTime();
+				const startTime: number = new Date().getTime();
+				ffmpeg(inputPath)
+					.size(superLowQuality ? '480x?' : '720x?')
+					.autopad(true, '#000000')
+					.setStartTime(startAt)
+					.setDuration(clipLength)
+					.output(outputPath)
+					.on('end', () => {
+						const endTime: number = new Date().getTime();
 
-					resolve({
-						elapsedTime: endTime - startTime,
-					});
-					return;
-				})
-				.run();
+						resolve({
+							elapsedTime: endTime - startTime,
+							error: false,
+						});
+						return;
+					})
+					.on('error', (error) => {
+						console.error(error);
+						resolve({
+							elapsedTime: 0,
+							error: true,
+							message: error,
+						});
+						return;
+					})
+					.run();
+			} catch (e) {
+				console.error(e);
+				resolve({
+					elapsedTime: 0,
+					error: true,
+					message: e,
+				});
+				return;
+			}
 		});
 	}
 }
