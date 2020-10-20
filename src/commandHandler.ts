@@ -1,4 +1,4 @@
-import { Message } from 'discord.js';
+import { GuildMember, Message } from 'discord.js';
 import { Command } from './commands/types';
 import DB from './database/db';
 
@@ -34,6 +34,8 @@ class CommandHandler {
 
 		const realCommand = this.commands.get(command);
 		realCommand.execute(channel, args, this.db);
+
+		this.db.getMetricsDB().saveCommand(channel, command, args, author);
 	}
 
 	registerCommand(command: Command) {

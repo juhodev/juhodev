@@ -1,4 +1,11 @@
-import { GuildMember, VoiceChannel } from 'discord.js';
+import {
+	DMChannel,
+	GuildMember,
+	NewsChannel,
+	TextChannel,
+	User,
+	VoiceChannel,
+} from 'discord.js';
 import * as fs from 'fs';
 import {
 	LOG_INTERVAL,
@@ -6,18 +13,49 @@ import {
 	UserVoiceHistory,
 	VoiceChannelHistory,
 	VoiceChannelMetrics,
+	Metrics,
+	UserCommandHistory,
+	UserData,
+	ChannelData,
+	CommandData,
+	CommandHistory,
 } from '../metrics/types';
 import { DB_DATA_DIR, DB_METRICS_FILE } from './types';
 
 class MetricsDB {
-	private voiceChannelMetrics: VoiceChannelMetrics;
+	private metrics: Metrics;
 
 	constructor() {
-		this.voiceChannelMetrics = { users: [] };
+		this.metrics = {
+			voiceChannelMetrics: { users: [] },
+			commandMetrics: { commands: [], users: [] },
+		};
 	}
 
-	save(channel: VoiceChannel, member: GuildMember) {
-		const user: UserVoiceHistory = this.voiceChannelMetrics.users.find(
+	saveCommand(
+		channel: TextChannel | DMChannel | NewsChannel,
+		command: string,
+		args: string[],
+		member: User,
+	) {
+		const userData: UserData = { id: member.id, name: member.username };
+
+		const channelName: string =
+			channel instanceof DMChannel ? 'Private message' : channel.name;
+		const channelData: ChannelData = { id: channel.id, name: channelName };
+		const commandData: CommandData = {
+			args,
+			command,
+			channel: channelData,
+			date: new Date().getTime(),
+		};
+
+		this.saveUserCommand(userData, commandData);
+		this.saveCommandHistory(userData, commandData);
+	}
+
+	saveVoiceChannel(channel: VoiceChannel, member: GuildMember) {
+		const user: UserVoiceHistory = this.metrics.voiceChannelMetrics.users.find(
 			(user) => user.id === member.id,
 		);
 
@@ -36,16 +74,16 @@ class MetricsDB {
 				name: channel.name,
 				time: LOG_INTERVAL,
 			});
-			this.writeToDisk();
+			this.writeMetrics();
 			return;
 		}
 
 		savedVoiceChannel.time += LOG_INTERVAL;
-		this.writeToDisk();
+		this.writeMetrics();
 	}
 
 	getUserTimes(name: string): UserVoiceHistory {
-		return this.voiceChannelMetrics.users.find(
+		return this.metrics.voiceChannelMetrics.users.find(
 			(user) => user.name.toUpperCase() === name,
 		);
 	}
@@ -53,7 +91,7 @@ class MetricsDB {
 	getUserTotalTimes(): UserTotalTime[] {
 		const times: UserTotalTime[] = [];
 
-		for (const user of this.voiceChannelMetrics.users) {
+		for (const user of this.metrics.voiceChannelMetrics.users) {
 			let totalTime: number = 0;
 
 			for (const channel of user.channels) {
@@ -68,7 +106,7 @@ class MetricsDB {
 
 	load() {
 		if (!fs.existsSync(`${DB_DATA_DIR}/${DB_METRICS_FILE}`)) {
-			this.writeToDisk();
+			this.writeMetrics();
 			return;
 		}
 
@@ -76,11 +114,22 @@ class MetricsDB {
 			`${DB_DATA_DIR}/${DB_METRICS_FILE}`,
 			'utf-8',
 		);
-		this.voiceChannelMetrics = JSON.parse(dataString);
+		const data: object = JSON.parse(dataString);
+
+		// If the save file is still using the old save format
+		if (data['users'] !== undefined) {
+			this.metrics = {
+				voiceChannelMetrics: data as VoiceChannelMetrics,
+				commandMetrics: { users: [], commands: [] },
+			};
+			return;
+		} else {
+			this.metrics = data as Metrics;
+		}
 	}
 
 	private createUser(channel: VoiceChannel, member: GuildMember) {
-		this.voiceChannelMetrics.users.push({
+		this.metrics.voiceChannelMetrics.users.push({
 			channels: [
 				{ id: channel.id, name: channel.name, time: LOG_INTERVAL },
 			],
@@ -88,13 +137,53 @@ class MetricsDB {
 			name: member.displayName,
 		});
 
-		this.writeToDisk();
+		this.writeMetrics();
 	}
 
-	private writeToDisk() {
+	private saveUserCommand(user: UserData, command: CommandData) {
+		const userHistory: UserCommandHistory = this.metrics.commandMetrics.users.find(
+			(history) => history.user.id === user.id,
+		);
+
+		if (userHistory === undefined) {
+			const newUserHistory: UserCommandHistory = {
+				commands: [command],
+				user,
+			};
+
+			this.metrics.commandMetrics.users.push(newUserHistory);
+			this.writeMetrics();
+			return;
+		}
+
+		userHistory.commands.push(command);
+		this.writeMetrics();
+	}
+
+	private saveCommandHistory(user: UserData, command: CommandData) {
+		const commandHistory: CommandHistory = this.metrics.commandMetrics.commands.find(
+			(cmd) => cmd.command.command === command.command,
+		);
+
+		if (commandHistory === undefined) {
+			const newHistory: CommandHistory = {
+				command,
+				count: 1,
+			};
+
+			this.metrics.commandMetrics.commands.push(newHistory);
+			this.writeMetrics();
+			return;
+		}
+
+		commandHistory.count++;
+		this.writeMetrics();
+	}
+
+	private writeMetrics() {
 		fs.writeFileSync(
 			`${DB_DATA_DIR}/${DB_METRICS_FILE}`,
-			JSON.stringify(this.voiceChannelMetrics),
+			JSON.stringify(this.metrics),
 		);
 	}
 }

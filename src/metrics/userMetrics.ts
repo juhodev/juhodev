@@ -40,7 +40,7 @@ class UserMetrics {
 			const { members } = voiceChannel;
 
 			for (const [memberSnowflake, member] of members) {
-				this.db.getMetricsDB().save(channel, member);
+				this.db.getMetricsDB().saveVoiceChannel(channel, member);
 			}
 		}
 	}
