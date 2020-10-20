@@ -33,6 +33,10 @@ const ImgCommand: Command = {
 				sendImage(channel, args, db);
 				break;
 
+			case 'REMOVE':
+				removeImage(channel, args, db);
+				break;
+
 			default:
 				channel.send(`Action ${action} not found`);
 				break;
@@ -40,6 +44,21 @@ const ImgCommand: Command = {
 	},
 	alias: ['!img'],
 };
+
+function removeImage(
+	channel: TextChannel | DMChannel | NewsChannel,
+	args: string[],
+	db: DB,
+) {
+	const imageName: string = args.shift();
+
+	if (imageName === undefined) {
+		channel.send('!img remove <img>');
+		return;
+	}
+
+	db.getImgDB().removeImage(channel, imageName);
+}
 
 function sendImage(
 	channel: TextChannel | DMChannel | NewsChannel,

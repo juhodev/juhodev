@@ -15,6 +15,19 @@ class ImgDB {
 		this.random = new RandomString();
 	}
 
+	removeImage(channel: TextChannel | DMChannel | NewsChannel, name: string) {
+		if (!this.hasImage(name)) {
+			channel.send(`Image with the name "${name}" not found`);
+			return;
+		}
+
+		const imgDir = `${DB_DATA_DIR}/${IMG_DIR}`;
+		const pathToImage: string = path.resolve(imgDir, name);
+
+		fs.unlinkSync(pathToImage);
+		channel.send('Image removed');
+	}
+
 	hasImage(name: string): boolean {
 		const imgDir = `${DB_DATA_DIR}/${IMG_DIR}`;
 		if (!fs.existsSync(imgDir)) {
