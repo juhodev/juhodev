@@ -4,13 +4,11 @@ import Clips from '../clips/clips';
 import RRSG from '../randomReadableStringGenerator';
 import ClipsDB from './clipsDB';
 import ImgDB from './imgDB';
-import MetricsDB from './metricsDB';
 import QuoteDB from './quoteDB';
 import { DBConfig, DB_CONFIG_FILE, DB_DATA_DIR } from './types';
 
 class DB {
 	private quoteDB: QuoteDB;
-	private metricsDB: MetricsDB;
 	private imgDB: ImgDB;
 	private rrsg: RRSG;
 	private clips: Clips;
@@ -20,7 +18,6 @@ class DB {
 
 	constructor() {
 		this.quoteDB = new QuoteDB();
-		this.metricsDB = new MetricsDB();
 		this.imgDB = new ImgDB();
 		this.rrsg = new RRSG();
 		this.clips = new Clips(this);
@@ -50,10 +47,6 @@ class DB {
 
 	getQuoteDB(): QuoteDB {
 		return this.quoteDB;
-	}
-
-	getMetricsDB(): MetricsDB {
-		return this.metricsDB;
 	}
 
 	getImgDB(): ImgDB {
@@ -89,7 +82,6 @@ class DB {
 		}
 
 		this.quoteDB.load();
-		this.metricsDB.load();
 		this.rrsg.load();
 		this.clipsDB.load();
 
