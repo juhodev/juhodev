@@ -4,8 +4,9 @@ import * as path from 'path';
 import fetch from 'node-fetch';
 import * as util from 'util';
 import { uuid } from 'uuidv4';
-import { DMChannel, NewsChannel, TextChannel } from 'discord.js';
+import { DMChannel, NewsChannel, TextChannel, User } from 'discord.js';
 import RandomString from '../randomString';
+import { addView, saveBaavo } from '../database/baavoDB';
 
 const streamPipeline = util.promisify(require('stream').pipeline);
 
@@ -22,7 +23,7 @@ const BaavoCommand: Command = {
 
 		switch (action) {
 			case 'ADD':
-				addBaavo(channel, args);
+				addBaavo(channel, author, args);
 				break;
 
 			case 'REMOVE':
@@ -39,6 +40,7 @@ const BaavoCommand: Command = {
 
 async function addBaavo(
 	channel: TextChannel | DMChannel | NewsChannel,
+	author: User,
 	args: string[],
 ) {
 	if (args.length === 0) {
@@ -55,12 +57,14 @@ async function addBaavo(
 		const response = await fetch(url);
 
 		if (response.ok) {
+			const name: string = `BAAVO-${uuid()}.png`;
 			await streamPipeline(
 				response.body,
-				fs.createWriteStream(`data/baavo/BAAVO-${uuid()}.png`),
+				fs.createWriteStream(`data/baavo/${name}`),
 			);
 
 			channel.send('Baavo added');
+			await saveBaavo(name, author);
 		} else {
 			channel.send('url not ok');
 		}
@@ -85,7 +89,7 @@ function removeBaavo(
 	channel.send(`${fileName} removed`);
 }
 
-function sendRandomBaavo(channel: TextChannel | DMChannel | NewsChannel) {
+async function sendRandomBaavo(channel: TextChannel | DMChannel | NewsChannel) {
 	const baavoFiles: string[] = fs.readdirSync('data/baavo');
 	const randomBaavo: string = random.pseudoRandom(baavoFiles);
 
@@ -97,6 +101,8 @@ function sendRandomBaavo(channel: TextChannel | DMChannel | NewsChannel) {
 			},
 		],
 	});
+
+	await addView(randomBaavo);
 }
 
 export default BaavoCommand;

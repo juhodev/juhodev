@@ -1,5 +1,4 @@
-import { DB_DATA_DIR, DB_QUOTE_FILE, Quote, QuoteResponse } from './types';
-import * as fs from 'fs';
+import { Quote, QuoteResponse } from './types';
 import RandomString from '../randomString';
 import { User } from 'discord.js';
 import { knex } from '../db/utils';

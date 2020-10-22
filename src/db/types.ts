@@ -55,3 +55,10 @@ export type DBQuote = {
 	submission_by: string;
 	submission_date: number;
 };
+
+export type DBBaavo = {
+	name: string;
+	views: number;
+	submission_by: string;
+	submission_date: number;
+};

@@ -131,6 +131,28 @@ export async function initDatabase() {
 				},
 			],
 		},
+		{
+			name: 'baavo_imgs',
+			columns: [
+				{
+					name: 'name',
+					type: ColumnType.STRING,
+					primary: true,
+				},
+				{
+					name: 'views',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'submission_by',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'submission_date',
+					type: ColumnType.BIG_INTEGER,
+				},
+			],
+		},
 	];
 
 	for (const table of tables) {
