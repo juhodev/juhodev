@@ -6,15 +6,7 @@ import { Command } from './types';
 const ImgCommand: Command = {
 	execute: (channel, author, args, db) => {
 		if (args.length === 0) {
-			const randomImage: Image = db.getImgDB().getRandomImage();
-			channel.send({
-				files: [
-					{
-						attachment: randomImage.path,
-						name: randomImage.name,
-					},
-				],
-			});
+			sendRandomImage(channel, db);
 			return;
 		}
 
@@ -22,7 +14,7 @@ const ImgCommand: Command = {
 
 		switch (action) {
 			case 'ADD':
-				db.getImgDB().addImage(channel, args);
+				db.getImgDB().addImage(channel, author, args);
 				break;
 
 			case 'LIST':
@@ -45,6 +37,21 @@ const ImgCommand: Command = {
 	alias: ['!img'],
 };
 
+async function sendRandomImage(
+	channel: TextChannel | DMChannel | NewsChannel,
+	db: DB,
+) {
+	const randomImage: Image = await db.getImgDB().getRandomImage();
+	channel.send({
+		files: [
+			{
+				attachment: randomImage.path,
+				name: randomImage.name,
+			},
+		],
+	});
+}
+
 function removeImage(
 	channel: TextChannel | DMChannel | NewsChannel,
 	args: string[],
@@ -60,7 +67,7 @@ function removeImage(
 	db.getImgDB().removeImage(channel, imageName);
 }
 
-function sendImage(
+async function sendImage(
 	channel: TextChannel | DMChannel | NewsChannel,
 	args: string[],
 	db: DB,
@@ -72,12 +79,12 @@ function sendImage(
 		return;
 	}
 
-	if (!db.getImgDB().hasImage(imageName)) {
+	if (!(await db.getImgDB().hasImage(imageName))) {
 		channel.send(`Image with the name "${imageName}" not found`);
 		return;
 	}
 
-	const image: Image = db.getImgDB().getImage(imageName);
+	const image: Image = await db.getImgDB().getImage(imageName);
 	channel.send({
 		files: [
 			{

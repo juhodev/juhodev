@@ -15,6 +15,7 @@ export enum ColumnType {
 	INTEGER = 'INTEGER',
 	STRING = 'STRING',
 	TEXT = 'TEXT',
+	BOOLEAN = 'BOOLEAN',
 }
 
 export type DBUser = {
@@ -61,4 +62,13 @@ export type DBBaavo = {
 	views: number;
 	submission_by: string;
 	submission_date: number;
+};
+
+export type DBImage = {
+	name: string;
+	original_link: string;
+	views: number;
+	submission_by: string;
+	submission_date: number;
+	deleted: boolean;
 };

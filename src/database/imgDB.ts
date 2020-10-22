@@ -1,4 +1,4 @@
-import { DMChannel, NewsChannel, TextChannel } from 'discord.js';
+import { DMChannel, NewsChannel, TextChannel, User } from 'discord.js';
 import * as fs from 'fs';
 import { DB_DATA_DIR, Image, IMG_DIR } from './types';
 import fetch from 'node-fetch';
@@ -6,6 +6,8 @@ import * as util from 'util';
 import { uuid } from 'uuidv4';
 import RandomString from '../randomString';
 import * as path from 'path';
+import { knex } from '../db/utils';
+import { DBImage } from '../db/types';
 
 const streamPipeline = util.promisify(require('stream').pipeline);
 
@@ -15,7 +17,10 @@ class ImgDB {
 		this.random = new RandomString();
 	}
 
-	removeImage(channel: TextChannel | DMChannel | NewsChannel, name: string) {
+	async removeImage(
+		channel: TextChannel | DMChannel | NewsChannel,
+		name: string,
+	) {
 		if (!this.hasImage(name)) {
 			channel.send(`Image with the name "${name}" not found`);
 			return;
@@ -25,20 +30,22 @@ class ImgDB {
 		const pathToImage: string = path.resolve(imgDir, name);
 
 		fs.unlinkSync(pathToImage);
+
+		await knex<DBImage>('images').update({ deleted: true }).where({ name });
 		channel.send('Image removed');
 	}
 
-	hasImage(name: string): boolean {
+	async hasImage(name: string): Promise<boolean> {
 		const imgDir = `${DB_DATA_DIR}/${IMG_DIR}`;
 		if (!fs.existsSync(imgDir)) {
 			fs.mkdirSync(imgDir);
 		}
 
-		const files = fs.readdirSync(imgDir);
-		return files.includes(name);
+		const result: DBImage[] = await knex<DBImage>('images').where({ name });
+		return result.length > 0;
 	}
 
-	getRandomImage(): Image {
+	async getRandomImage(): Promise<Image> {
 		const imgDir = `${DB_DATA_DIR}/${IMG_DIR}`;
 		if (!fs.existsSync(imgDir)) {
 			fs.mkdirSync(imgDir);
@@ -47,15 +54,16 @@ class ImgDB {
 		const images: string[] = this.getImages();
 		const randomImage = this.random.pseudoRandom(images);
 
-		return { path: path.resolve(imgDir, randomImage), name: randomImage };
+		return await this.getImage(randomImage);
 	}
 
-	getImage(name: string): Image {
+	async getImage(name: string): Promise<Image> {
 		const imgDir = `${DB_DATA_DIR}/${IMG_DIR}`;
 		if (!fs.existsSync(imgDir)) {
 			fs.mkdirSync(imgDir);
 		}
 
+		await knex<DBImage>('images').increment('views').where({ name });
 		return { path: path.resolve(imgDir, name), name };
 	}
 
@@ -70,6 +78,7 @@ class ImgDB {
 
 	async addImage(
 		channel: TextChannel | DMChannel | NewsChannel,
+		author: User,
 		args: string[],
 	) {
 		const url: string = args.shift();
@@ -94,7 +103,7 @@ class ImgDB {
 			imgName += fileEnding;
 		}
 
-		if (this.hasImage(imgName)) {
+		if (await this.hasImage(imgName)) {
 			channel.send(`File with the name "${imgName}" already exists`);
 			return;
 		}
@@ -105,6 +114,15 @@ class ImgDB {
 				response.body,
 				fs.createWriteStream(`${imgDir}/${imgName}`),
 			);
+
+			await knex<DBImage>('images').insert({
+				name: imgName,
+				original_link: url,
+				views: 0,
+				submission_by: author.id,
+				submission_date: new Date().getTime(),
+				deleted: false,
+			});
 
 			channel.send(`Image added`);
 		} else {

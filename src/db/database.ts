@@ -153,6 +153,35 @@ export async function initDatabase() {
 				},
 			],
 		},
+		{
+			name: 'images',
+			columns: [
+				{
+					name: 'name',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'original_link',
+					type: ColumnType.TEXT,
+				},
+				{
+					name: 'views',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'submission_by',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'submission_date',
+					type: ColumnType.BIG_INTEGER,
+				},
+				{
+					name: 'deleted',
+					type: ColumnType.BOOLEAN,
+				},
+			],
+		},
 	];
 
 	for (const table of tables) {
@@ -195,6 +224,10 @@ async function createTable(table: Table) {
 
 				case ColumnType.TEXT:
 					col = table.text(column.name);
+					break;
+
+				case ColumnType.BOOLEAN:
+					col = table.boolean(column.name);
 					break;
 			}
 
