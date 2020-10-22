@@ -46,3 +46,12 @@ export type DBVoiceLog = {
 export type DBRandomString = {
 	random_string: string;
 };
+
+export type DBQuote = {
+	id: number;
+	title: string;
+	content: string;
+	views: number;
+	submission_by: string;
+	submission_date: number;
+};

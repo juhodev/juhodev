@@ -5,7 +5,7 @@ import { msToTime } from '../utils';
 import { Command } from './types';
 
 const MetricsCommand: Command = {
-	execute: (channel, args, db) => {
+	execute: (channel, author, args, db) => {
 		if (args.length === 0) {
 			sendTotalTimes(channel);
 			return;

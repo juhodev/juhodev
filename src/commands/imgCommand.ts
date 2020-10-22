@@ -4,7 +4,7 @@ import { Image } from '../database/types';
 import { Command } from './types';
 
 const ImgCommand: Command = {
-	execute: (channel, args, db) => {
+	execute: (channel, author, args, db) => {
 		if (args.length === 0) {
 			const randomImage: Image = db.getImgDB().getRandomImage();
 			channel.send({

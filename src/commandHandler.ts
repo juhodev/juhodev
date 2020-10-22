@@ -1,11 +1,4 @@
-import {
-	DMChannel,
-	GuildMember,
-	Message,
-	NewsChannel,
-	TextChannel,
-	User,
-} from 'discord.js';
+import { DMChannel, Message, NewsChannel, TextChannel, User } from 'discord.js';
 import { Command } from './commands/types';
 import DB from './database/db';
 import { DBCommandLog } from './db/types';
@@ -41,10 +34,10 @@ class CommandHandler {
 			return;
 		}
 
-		const realCommand = this.commands.get(command);
-		realCommand.execute(channel, args, this.db);
-
 		this.logCommand(channel, command, args, author);
+
+		const realCommand = this.commands.get(command);
+		realCommand.execute(channel, author, args, this.db);
 	}
 
 	registerCommand(command: Command) {

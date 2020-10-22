@@ -4,7 +4,7 @@ import { Command } from './types';
 const giphy = new Giphy();
 
 const GifCommand: Command = {
-	execute: (channel, args, db) => {
+	execute: (channel, author, args, db) => {
 		if (args.length === 0) {
 			return;
 		}

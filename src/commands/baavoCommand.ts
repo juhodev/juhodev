@@ -12,7 +12,7 @@ const streamPipeline = util.promisify(require('stream').pipeline);
 const random: RandomString = new RandomString();
 
 const BaavoCommand: Command = {
-	execute: (channel, args, db) => {
+	execute: (channel, author, args, db) => {
 		if (args.length === 0) {
 			sendRandomBaavo(channel);
 			return;

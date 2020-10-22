@@ -1,11 +1,10 @@
 import { DMChannel, MessageEmbed, NewsChannel, TextChannel } from 'discord.js';
-import Clips from '../clips/clips';
 import { Clip } from '../clips/types';
 import DB from '../database/db';
 import { Command } from './types';
 
 const ClipsCommand: Command = {
-	execute: (channel, args, db) => {
+	execute: (channel, author, args, db) => {
 		if (args.length === 0) {
 			db.getClips().sendRandomClip(channel);
 			return;

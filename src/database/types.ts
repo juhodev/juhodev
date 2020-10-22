@@ -1,10 +1,5 @@
 import { Guild } from 'discord.js';
 
-export type Quote = {
-	title: string;
-	content: string;
-};
-
 export type DBConfig = {
 	guild?: Guild;
 };
@@ -12,6 +7,16 @@ export type DBConfig = {
 export type Image = {
 	path: string;
 	name: string;
+};
+
+export type Quote = {
+	title: string;
+	content: string;
+};
+
+export type QuoteResponse = {
+	error: boolean;
+	message?: string;
 };
 
 export const DB_DATA_DIR = 'data';

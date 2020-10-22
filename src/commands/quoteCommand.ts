@@ -1,12 +1,18 @@
-import { TextChannel, MessageEmbed, DMChannel, NewsChannel } from 'discord.js';
+import {
+	TextChannel,
+	MessageEmbed,
+	DMChannel,
+	NewsChannel,
+	User,
+} from 'discord.js';
 import DB from '../database/db';
-import { Quote } from '../database/types';
+import { Quote, QuoteResponse } from '../database/types';
 import { Command } from './types';
 
 const QuoteCommand: Command = {
-	execute: (channel, args, db) => {
+	execute: (channel, author, args, db) => {
 		if (args.length === 0) {
-			sendQuote(channel, db.getQuoteDB().getRandomQuote());
+			sendRandomQuote(channel, db);
 			return;
 		}
 
@@ -14,7 +20,7 @@ const QuoteCommand: Command = {
 
 		switch (action) {
 			case 'ADD':
-				saveQuote(channel, args, db);
+				saveQuote(channel, author, args, db);
 				break;
 
 			case 'LIST':
@@ -38,7 +44,15 @@ const QuoteCommand: Command = {
 	alias: ['!quote', '!q'],
 };
 
-function readQuote(
+async function sendRandomQuote(
+	channel: TextChannel | DMChannel | NewsChannel,
+	db: DB,
+) {
+	const randomQuote: Quote = await db.getQuoteDB().getRandomQuote();
+	sendQuote(channel, randomQuote);
+}
+
+async function readQuote(
 	channel: TextChannel | DMChannel | NewsChannel,
 	args: string[],
 	db: DB,
@@ -50,28 +64,31 @@ function readQuote(
 		return;
 	}
 
-	const fullQuote: Quote = db.getQuoteDB().getQuote(quoteTitle);
+	const fullQuote: Quote = await db.getQuoteDB().getQuote(quoteTitle);
 	sendQuote(channel, fullQuote);
 }
 
-function removeQuote(
+async function removeQuote(
 	channel: TextChannel | DMChannel | NewsChannel,
 	args: string[],
 	db: DB,
 ) {
 	const quoteTitle: string = args.shift();
 
-	if (!db.getQuoteDB().hasQuote(quoteTitle)) {
-		channel.send(`Quote with the title "${quoteTitle}" not found!`);
+	const response: QuoteResponse = await db
+		.getQuoteDB()
+		.removeQuote(quoteTitle);
+	if (response.error) {
+		channel.send(response.message);
 		return;
 	}
 
-	db.getQuoteDB().removeQuote(quoteTitle);
-	channel.send(`Quote "${quoteTitle}" removed`);
+	channel.send('Quote removed');
 }
 
-function saveQuote(
+async function saveQuote(
 	channel: TextChannel | DMChannel | NewsChannel,
+	author: User,
 	args: string[],
 	db: DB,
 ) {
@@ -83,7 +100,7 @@ function saveQuote(
 		return;
 	}
 
-	db.getQuoteDB().save(title, fullQuote);
+	db.getQuoteDB().save(title, fullQuote, author);
 	channel.send(`The quote was saved with the title "${title}"`);
 }
 

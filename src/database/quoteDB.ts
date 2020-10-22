@@ -1,6 +1,9 @@
-import { DB_DATA_DIR, DB_QUOTE_FILE, Quote } from './types';
+import { DB_DATA_DIR, DB_QUOTE_FILE, Quote, QuoteResponse } from './types';
 import * as fs from 'fs';
 import RandomString from '../randomString';
+import { User } from 'discord.js';
+import { knex } from '../db/utils';
+import { DBQuote } from '../db/types';
 
 class QuoteDB {
 	private quotes: Quote[];
@@ -11,24 +14,50 @@ class QuoteDB {
 		this.random = new RandomString();
 	}
 
-	save(title: string, content: string) {
-		const quote: Quote = { title, content };
+	async save(
+		title: string,
+		content: string,
+		user: User,
+	): Promise<QuoteResponse> {
+		const result: DBQuote[] = await knex<DBQuote>('quotes').where({
+			title,
+		});
 
-		this.quotes.push(quote);
-		this.writeToDisk();
+		if (result.length !== 0) {
+			return {
+				error: true,
+				message: `A quote with the title "${title}" already exists`,
+			};
+		}
+
+		this.quotes.push({ title, content });
+
+		await knex<DBQuote>('quotes').insert({
+			submission_by: user.id,
+			submission_date: new Date().getTime(),
+			views: 0,
+			title,
+			content,
+		});
 	}
 
-	getRandomQuote(): Quote {
+	async getRandomQuote(): Promise<Quote> {
 		const allQuotes: string[] = this.quotes.map((quote) => quote.title);
 		const randomTitle: string = this.random.pseudoRandom(allQuotes);
 
-		return this.getQuote(randomTitle);
+		return await this.getQuote(randomTitle);
 	}
 
-	getQuote(title: string): Quote {
-		return this.quotes.find(
+	async getQuote(title: string): Promise<Quote> {
+		const quote: Quote = this.quotes.find(
 			(quote) => quote.title.toUpperCase() === title.toUpperCase(),
 		);
+
+		await knex<DBQuote>('quotes')
+			.increment('views')
+			.where({ title: quote.title });
+
+		return quote;
 	}
 
 	getQuotes(): Quote[] {
@@ -39,33 +68,34 @@ class QuoteDB {
 		return this.quotes.find((quote) => quote.title === title) !== undefined;
 	}
 
-	removeQuote(title: string) {
+	async removeQuote(title: string): Promise<QuoteResponse> {
 		const quoteIndex: number = this.quotes.findIndex(
 			(quote) => quote.title === title,
 		);
 
-		this.quotes.splice(quoteIndex, 1);
-		this.writeToDisk();
-	}
-
-	load() {
-		if (!fs.existsSync(`${DB_DATA_DIR}/${DB_QUOTE_FILE}`)) {
-			this.writeToDisk();
-			return;
+		if (quoteIndex === 0) {
+			return {
+				error: true,
+				message: `Quote with the title "${title}" not found`,
+			};
 		}
 
-		const quoteString: string = fs.readFileSync(
-			`${DB_DATA_DIR}/${DB_QUOTE_FILE}`,
-			'utf-8',
-		);
-		this.quotes = JSON.parse(quoteString);
+		this.quotes.splice(quoteIndex, 1);
+		await knex<DBQuote>('quotes').delete().where({ title });
+		return {
+			error: false,
+		};
 	}
 
-	private writeToDisk() {
-		fs.writeFileSync(
-			`${DB_DATA_DIR}/${DB_QUOTE_FILE}`,
-			JSON.stringify(this.quotes),
-		);
+	async load() {
+		const result: DBQuote[] = await knex<DBQuote>('quotes').where({});
+
+		for (const dbQuote of result) {
+			this.quotes.push({
+				title: dbQuote.title,
+				content: dbQuote.content,
+			});
+		}
 	}
 }
 

@@ -100,10 +100,41 @@ export async function initDatabase() {
 				},
 			],
 		},
+		{
+			name: 'quotes',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.INTEGER,
+					primary: true,
+					autoIncrement: true,
+				},
+				{
+					name: 'title',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'content',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'views',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'submission_by',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'submission_date',
+					type: ColumnType.BIG_INTEGER,
+				},
+			],
+		},
 	];
 
 	for (const table of tables) {
-		createTable(table);
+		await createTable(table);
 	}
 }
 
