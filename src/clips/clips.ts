@@ -366,7 +366,7 @@ class Clips {
 		if (userDefinedName !== undefined) {
 			clipName = userDefinedName;
 		} else {
-			clipName = this.db.getRRSG().generate();
+			clipName = await this.db.getRRSG().generate();
 		}
 
 		const outputFileName = path.resolve(

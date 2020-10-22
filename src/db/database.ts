@@ -91,6 +91,15 @@ export async function initDatabase() {
 				},
 			],
 		},
+		{
+			name: 'random_strings',
+			columns: [
+				{
+					name: 'rand_string',
+					type: ColumnType.STRING,
+				},
+			],
+		},
 	];
 
 	for (const table of tables) {

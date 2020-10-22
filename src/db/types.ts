@@ -42,3 +42,7 @@ export type DBVoiceLog = {
 	channel: string;
 	time: number;
 };
+
+export type DBRandomString = {
+	random_string: string;
+};
