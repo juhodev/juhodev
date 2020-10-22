@@ -1,5 +1,6 @@
 import { VoiceChannel } from 'discord.js';
 import DB from '../database/db';
+import { knex } from '../db/utils';
 import { LOG_INTERVAL } from './types';
 
 class UserMetrics {
@@ -17,7 +18,7 @@ class UserMetrics {
 		}, LOG_INTERVAL);
 	}
 
-	private logVoiceChat() {
+	private async logVoiceChat() {
 		const guild = this.db.getGuild();
 
 		if (guild === undefined) {
@@ -31,7 +32,7 @@ class UserMetrics {
 		const { channels } = guild;
 		const { cache } = channels;
 
-		for (const [snowflake, channel] of cache) {
+		for (const [_, channel] of cache) {
 			if (!(channel instanceof VoiceChannel)) {
 				continue;
 			}
@@ -39,8 +40,15 @@ class UserMetrics {
 			const voiceChannel: VoiceChannel = channel;
 			const { members } = voiceChannel;
 
-			for (const [memberSnowflake, member] of members) {
-				this.db.getMetricsDB().saveVoiceChannel(channel, member);
+			for (const [_, member] of members) {
+				const knexUpdateOrInsert: string = `INSERT INTO voice_log (combined, snowflake, channel, time) values (?, ?, ?, ?) ON DUPLICATE KEY UPDATE time=time+${LOG_INTERVAL}`;
+
+				await knex.raw(knexUpdateOrInsert, [
+					`${member.id}-${channel.name}`,
+					member.id,
+					channel.name,
+					LOG_INTERVAL,
+				]);
 			}
 		}
 	}

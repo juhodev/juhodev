@@ -1,7 +1,11 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import * as Discord from 'discord.js';
 import CommandHandler from './commandHandler';
 import DB from './database/db';
-import * as dotenv from 'dotenv';
+
+
 import UserMetrics from './metrics/userMetrics';
 
 import QuoteCommand from './commands/quoteCommand';
@@ -11,13 +15,15 @@ import BaavoCommand from './commands/baavoCommand';
 import GifCommand from './commands/gifCommand';
 import ImgCommand from './commands/imgCommand';
 import ClipsCommand from './commands/clipsCommand';
-
-dotenv.config();
+import { initDatabase } from './db/database';
+import { logUsers } from './userLogger';
 
 const client = new Discord.Client();
 
 const db = new DB();
 db.load();
+
+initDatabase();
 
 const userMetrics = new UserMetrics(db);
 const commandHandler = new CommandHandler(db);
@@ -38,6 +44,7 @@ client.on('ready', () => {
 
 	db.updateGuild(client);
 	userMetrics.start();
+	logUsers(db);
 });
 
 client.on('message', (message) => {

@@ -1,6 +1,15 @@
-import { GuildMember, Message } from 'discord.js';
+import {
+	DMChannel,
+	GuildMember,
+	Message,
+	NewsChannel,
+	TextChannel,
+	User,
+} from 'discord.js';
 import { Command } from './commands/types';
 import DB from './database/db';
+import { DBCommandLog } from './db/types';
+import { knex } from './db/utils';
 
 class CommandHandler {
 	private commands: Map<string, Command>;
@@ -35,13 +44,31 @@ class CommandHandler {
 		const realCommand = this.commands.get(command);
 		realCommand.execute(channel, args, this.db);
 
-		this.db.getMetricsDB().saveCommand(channel, command, args, author);
+		this.logCommand(channel, command, args, author);
 	}
 
 	registerCommand(command: Command) {
 		for (const alias of command.alias) {
 			this.commands.set(alias, command);
 		}
+	}
+
+	private async logCommand(
+		channel: TextChannel | DMChannel | NewsChannel,
+		command: string,
+		args: string[],
+		author: User,
+	) {
+		const channelName: string =
+			channel instanceof DMChannel ? 'DM' : channel.name;
+
+		await knex<DBCommandLog>('command_log').insert({
+			snowflake: author.id,
+			args: JSON.stringify(args),
+			time: new Date().getTime(),
+			channel: channelName,
+			command,
+		});
 	}
 }
 
