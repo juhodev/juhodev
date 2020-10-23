@@ -29,6 +29,7 @@ router.get('/:snowflake', async (req, res) => {
 		return;
 	}
 	const userSubmissions: UserSubmission[] = [];
+	const submissionBy: string = `${user.discord_name_original}#${user.discord_tag}`;
 
 	const userClips: DBClip[] = await knex<DBClip>('clips').where({
 		submission_by: user.snowflake,
@@ -40,7 +41,7 @@ router.get('/:snowflake', async (req, res) => {
 				clip_length: clip.clip_length,
 				clip_start: clip.clip_start,
 				original_link: clip.original_link,
-				submission_by: clip.submission_by,
+				submission_by: submissionBy,
 				submission_date: clip.submission_date,
 				submission_type: SubmissionType.CLIP,
 				views: clip.views,
@@ -57,7 +58,7 @@ router.get('/:snowflake', async (req, res) => {
 			return {
 				name: image.name,
 				original_link: image.original_link,
-				submission_by: image.submission_by,
+				submission_by: submissionBy,
 				submission_date: image.submission_date,
 				submission_type: SubmissionType.IMAGE,
 				views: image.views,
@@ -75,7 +76,7 @@ router.get('/:snowflake', async (req, res) => {
 				content: quote.content,
 				id: quote.id,
 				name: quote.name,
-				submission_by: quote.submission_by,
+				submission_by: submissionBy,
 				submission_date: quote.submission_date,
 				submission_type: SubmissionType.QUOTE,
 				views: quote.views,
