@@ -1,6 +1,7 @@
 export type Clip = {
 	name: string;
 	path: string;
+	start: number;
 	length: number;
 	originalVideoLink: string;
 	views: number;

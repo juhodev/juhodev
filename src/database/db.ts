@@ -83,8 +83,6 @@ class DB {
 
 		this.quoteDB.load();
 		this.rrsg.load();
-		this.clipsDB.load();
-
 		this.clips.setup();
 	}
 

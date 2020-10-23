@@ -1,57 +1,82 @@
 import { Clip } from '../clips/types';
-import * as fs from 'fs';
-import * as path from 'path';
-import { DB_CLIPS_FILE, DB_DATA_DIR } from './types';
+import { knex } from '../db/utils';
+import { DBClip } from '../db/types';
+import { User } from 'discord.js';
 
 class ClipsDB {
-	private clips: Clip[];
-
-	constructor() {
-		this.clips = [];
+	async save(clip: Clip, user: User) {
+		await knex<DBClip>('clips').insert({
+			name: clip.name,
+			path: clip.path,
+			original_link: clip.originalVideoLink,
+			views: clip.views,
+			submission_by: user.id,
+			submission_date: new Date().getTime(),
+			clip_length: clip.length,
+			clip_start: clip.start,
+			deleted: false,
+		});
 	}
 
-	save(clip: Clip) {
-		this.clips.push(clip);
-		this.writeToDisk();
-	}
+	async addView(clipName: string) {
+		const clips: DBClip[] = await knex<DBClip>('clips').where({
+			name: clipName,
+		});
 
-	getClips() {
-		return this.clips;
-	}
-
-	addView(clipName: string) {
-		const clip = this.clips.find((x) => x.name === clipName);
-
-		if (clip === undefined) {
+		if (clips.length !== 1) {
 			return;
 		}
 
-		clip.views++;
-		this.writeToDisk();
+		await knex<DBClip>('clips')
+			.increment('views')
+			.where({ name: clipName });
 	}
 
-	getClip(name: string): Clip {
-		return this.clips.find((clip) => clip.name === name);
+	async getClips(): Promise<Clip[]> {
+		const dbClips: DBClip[] = await knex<DBClip>('clips').whereNot({
+			deleted: false,
+		});
+
+		const clips: Clip[] = dbClips.map(
+			(dbClip): Clip => {
+				return {
+					name: dbClip.name,
+					length: dbClip.clip_length,
+					originalVideoLink: dbClip.original_link,
+					path: dbClip.path,
+					start: dbClip.clip_start,
+					views: dbClip.views,
+				};
+			},
+		);
+
+		return clips;
 	}
 
-	hasClip(name: string): boolean {
-		return this.clips.some((clip) => clip.name === name);
-	}
+	async getClip(name: string): Promise<Clip> {
+		const clips: DBClip[] = await knex<DBClip>('clips').where({ name });
 
-	load() {
-		const clipDBFile = path.resolve(DB_DATA_DIR, DB_CLIPS_FILE);
-		if (!fs.existsSync(clipDBFile)) {
-			this.writeToDisk();
-			return;
+		if (clips.length !== 1) {
+			return undefined;
 		}
 
-		const clipsString: string = fs.readFileSync(clipDBFile, 'utf-8');
-		this.clips = JSON.parse(clipsString);
+		await knex<DBClip>('clips').increment('views').where({ name });
+
+		const dbClip: DBClip = clips.shift();
+		return {
+			name: dbClip.name,
+			length: dbClip.clip_length,
+			originalVideoLink: dbClip.original_link,
+			path: dbClip.path,
+			start: dbClip.clip_start,
+			views: dbClip.views,
+		};
 	}
 
-	private writeToDisk() {
-		const clipDBFile = path.resolve(DB_DATA_DIR, DB_CLIPS_FILE);
-		fs.writeFileSync(clipDBFile, JSON.stringify(this.clips));
+	async hasClip(name: string): Promise<boolean> {
+		const clips: DBClip[] = await knex<DBClip>('clips').where({ name });
+
+		return clips.length === 1;
 	}
 }
 

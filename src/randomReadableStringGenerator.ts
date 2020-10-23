@@ -36,7 +36,7 @@ class RRSG {
 			const result: DBRandomString[] = await knex<DBRandomString>(
 				'random_strings',
 			).where({
-				random_string: random,
+				rand_string: random,
 			});
 
 			if (result.length === 0) {

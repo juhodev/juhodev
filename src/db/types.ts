@@ -45,7 +45,7 @@ export type DBVoiceLog = {
 };
 
 export type DBRandomString = {
-	random_string: string;
+	rand_string: string;
 };
 
 export type DBQuote = {
@@ -70,5 +70,17 @@ export type DBImage = {
 	views: number;
 	submission_by: string;
 	submission_date: number;
+	deleted: boolean;
+};
+
+export type DBClip = {
+	name: string;
+	path: string;
+	original_link: string;
+	views: number;
+	submission_by: string;
+	submission_date: number;
+	clip_start: number;
+	clip_length: number;
 	deleted: boolean;
 };

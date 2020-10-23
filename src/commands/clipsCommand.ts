@@ -1,4 +1,10 @@
-import { DMChannel, MessageEmbed, NewsChannel, TextChannel } from 'discord.js';
+import {
+	DMChannel,
+	MessageEmbed,
+	NewsChannel,
+	TextChannel,
+	User,
+} from 'discord.js';
 import { Clip } from '../clips/types';
 import DB from '../database/db';
 import { Command } from './types';
@@ -18,7 +24,7 @@ const ClipsCommand: Command = {
 				break;
 
 			case 'ADD':
-				addClip(channel, args, db);
+				addClip(channel, author, args, db);
 				break;
 
 			case 'VIEW':
@@ -29,8 +35,11 @@ const ClipsCommand: Command = {
 	alias: ['!clips'],
 };
 
-function sendClipList(channel: TextChannel | DMChannel | NewsChannel, db: DB) {
-	const clips: Clip[] = db.getClipsDB().getClips();
+async function sendClipList(
+	channel: TextChannel | DMChannel | NewsChannel,
+	db: DB,
+) {
+	const clips: Clip[] = await db.getClipsDB().getClips();
 	let message: string = '';
 
 	if (clips.length === 0) {
@@ -66,6 +75,7 @@ function sendClipList(channel: TextChannel | DMChannel | NewsChannel, db: DB) {
 
 function addClip(
 	channel: TextChannel | DMChannel | NewsChannel,
+	author: User,
 	args: string[],
 	db: DB,
 ) {
@@ -109,6 +119,7 @@ function addClip(
 
 	db.getClips().createClip(
 		channel,
+		author,
 		url,
 		start,
 		length,
@@ -117,7 +128,7 @@ function addClip(
 	);
 }
 
-function viewClip(
+async function viewClip(
 	channel: TextChannel | DMChannel | NewsChannel,
 	args: string[],
 	db: DB,
@@ -129,7 +140,7 @@ function viewClip(
 		return;
 	}
 
-	const clip: Clip = db.getClipsDB().getClip(clipName);
+	const clip: Clip = await db.getClipsDB().getClip(clipName);
 	if (clip === undefined) {
 		channel.send(`Clip ${clipName} not found!`);
 		return;

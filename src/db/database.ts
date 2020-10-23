@@ -182,6 +182,48 @@ export async function initDatabase() {
 				},
 			],
 		},
+		{
+			name: 'clips',
+			columns: [
+				{
+					name: 'name',
+					type: ColumnType.STRING,
+					primary: true,
+				},
+				{
+					name: 'path',
+					type: ColumnType.TEXT,
+				},
+				{
+					name: 'original_link',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'views',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'submission_by',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'submission_date',
+					type: ColumnType.BIG_INTEGER,
+				},
+				{
+					name: 'clip_start',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'clip_length',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'deleted',
+					type: ColumnType.BOOLEAN,
+				},
+			],
+		},
 	];
 
 	for (const table of tables) {

@@ -22,6 +22,7 @@ import {
 	MessageEmbed,
 	NewsChannel,
 	TextChannel,
+	User,
 } from 'discord.js';
 import RandomString from '../randomString';
 import * as ffmpeg from 'fluent-ffmpeg';
@@ -48,7 +49,7 @@ class Clips {
 		}
 	}
 
-	sendRandomClip(channel: TextChannel | DMChannel | NewsChannel) {
+	async sendRandomClip(channel: TextChannel | DMChannel | NewsChannel) {
 		const clipDir: string = path.resolve(DB_DATA_DIR, CLIPS_DIR);
 		if (!fs.existsSync(clipDir)) {
 			channel.send('No clips found!');
@@ -68,7 +69,7 @@ class Clips {
 			randomClip,
 		);
 
-		this.db.getClipsDB().addView(randomClip);
+		await this.db.getClipsDB().addView(randomClip);
 		channel.send({
 			files: [
 				{
@@ -81,6 +82,7 @@ class Clips {
 
 	async createClip(
 		channel: TextChannel | DMChannel | NewsChannel,
+		author: User,
 		url: string,
 		userStart: string,
 		userEnd: string,
@@ -107,7 +109,7 @@ class Clips {
 			userClipName,
 			superLowQuality,
 		);
-		const validRenderClip: ValidRenderClip = this.validateRenderClip(
+		const validRenderClip: ValidRenderClip = await this.validateRenderClip(
 			renderClip,
 		);
 
@@ -133,6 +135,7 @@ class Clips {
 
 		const clip: Clip = {
 			name: renderClip.clipName,
+			start: renderClip.startAt,
 			length: renderClip.clipLength,
 			originalVideoLink: url,
 			path: renderClip.outputPath,
@@ -150,7 +153,7 @@ class Clips {
 			return;
 		}
 
-		this.db.getClipsDB().save(clip);
+		await this.db.getClipsDB().save(clip, author);
 
 		this.updateClipProgress(
 			message,
@@ -291,7 +294,9 @@ class Clips {
 		});
 	}
 
-	private validateRenderClip(renderClip: RenderClip): ValidRenderClip {
+	private async validateRenderClip(
+		renderClip: RenderClip,
+	): Promise<ValidRenderClip> {
 		const {
 			clipName,
 			inputPath,
@@ -316,7 +321,7 @@ class Clips {
 			};
 		}
 
-		if (this.db.getClipsDB().hasClip(clipName)) {
+		if (await this.db.getClipsDB().hasClip(clipName)) {
 			return {
 				error: true,
 				message: 'A clip with that name already exists!',
