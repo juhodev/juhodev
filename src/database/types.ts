@@ -10,7 +10,7 @@ export type Image = {
 };
 
 export type Quote = {
-	title: string;
+	name: string;
 	content: string;
 };
 

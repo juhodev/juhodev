@@ -50,7 +50,7 @@ export type DBRandomString = {
 
 export type DBQuote = {
 	id: number;
-	title: string;
+	name: string;
 	content: string;
 	views: number;
 	submission_by: string;

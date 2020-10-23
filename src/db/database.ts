@@ -110,7 +110,7 @@ export async function initDatabase() {
 					autoIncrement: true,
 				},
 				{
-					name: 'title',
+					name: 'name',
 					type: ColumnType.STRING,
 				},
 				{
@@ -159,6 +159,7 @@ export async function initDatabase() {
 				{
 					name: 'name',
 					type: ColumnType.STRING,
+					primary: true,
 				},
 				{
 					name: 'original_link',

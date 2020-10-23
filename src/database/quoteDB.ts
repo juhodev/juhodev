@@ -14,47 +14,47 @@ class QuoteDB {
 	}
 
 	async save(
-		title: string,
+		name: string,
 		content: string,
 		user: User,
 	): Promise<QuoteResponse> {
 		const result: DBQuote[] = await knex<DBQuote>('quotes').where({
-			title,
+			name,
 		});
 
 		if (result.length !== 0) {
 			return {
 				error: true,
-				message: `A quote with the title "${title}" already exists`,
+				message: `A quote with the title "${name}" already exists`,
 			};
 		}
 
-		this.quotes.push({ title, content });
+		this.quotes.push({ name, content });
 
 		await knex<DBQuote>('quotes').insert({
 			submission_by: user.id,
 			submission_date: new Date().getTime(),
 			views: 0,
-			title,
+			name,
 			content,
 		});
 	}
 
 	async getRandomQuote(): Promise<Quote> {
-		const allQuotes: string[] = this.quotes.map((quote) => quote.title);
-		const randomTitle: string = this.random.pseudoRandom(allQuotes);
+		const allQuotes: string[] = this.quotes.map((quote) => quote.name);
+		const randomName: string = this.random.pseudoRandom(allQuotes);
 
-		return await this.getQuote(randomTitle);
+		return await this.getQuote(randomName);
 	}
 
-	async getQuote(title: string): Promise<Quote> {
+	async getQuote(name: string): Promise<Quote> {
 		const quote: Quote = this.quotes.find(
-			(quote) => quote.title.toUpperCase() === title.toUpperCase(),
+			(quote) => quote.name.toUpperCase() === name.toUpperCase(),
 		);
 
 		await knex<DBQuote>('quotes')
 			.increment('views')
-			.where({ title: quote.title });
+			.where({ name: quote.name });
 
 		return quote;
 	}
@@ -63,24 +63,24 @@ class QuoteDB {
 		return this.quotes;
 	}
 
-	hasQuote(title: string) {
-		return this.quotes.find((quote) => quote.title === title) !== undefined;
+	hasQuote(name: string) {
+		return this.quotes.find((quote) => quote.name === name) !== undefined;
 	}
 
-	async removeQuote(title: string): Promise<QuoteResponse> {
+	async removeQuote(name: string): Promise<QuoteResponse> {
 		const quoteIndex: number = this.quotes.findIndex(
-			(quote) => quote.title === title,
+			(quote) => quote.name === name,
 		);
 
 		if (quoteIndex === 0) {
 			return {
 				error: true,
-				message: `Quote with the title "${title}" not found`,
+				message: `Quote with the title "${name}" not found`,
 			};
 		}
 
 		this.quotes.splice(quoteIndex, 1);
-		await knex<DBQuote>('quotes').delete().where({ title });
+		await knex<DBQuote>('quotes').delete().where({ name });
 		return {
 			error: false,
 		};
@@ -91,7 +91,7 @@ class QuoteDB {
 
 		for (const dbQuote of result) {
 			this.quotes.push({
-				title: dbQuote.title,
+				name: dbQuote.name,
 				content: dbQuote.content,
 			});
 		}

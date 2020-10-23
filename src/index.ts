@@ -16,7 +16,9 @@ import BaavoCommand from './commands/baavoCommand';
 import GifCommand from './commands/gifCommand';
 import ImgCommand from './commands/imgCommand';
 import ClipsCommand from './commands/clipsCommand';
+
 import { logUsers } from './userLogger';
+import { startApi } from './api/server';
 
 (async () => {
 	await initDatabase();
@@ -53,4 +55,6 @@ import { logUsers } from './userLogger';
 	});
 
 	client.login(process.env.DISCORD_TOKEN);
+
+	startApi();
 })();

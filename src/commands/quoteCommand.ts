@@ -120,7 +120,7 @@ function sendQuoteList(channel: TextChannel | DMChannel | NewsChannel, db: DB) {
 	let list = '';
 
 	for (const quote of quoteList) {
-		list += quote.title;
+		list += quote.name;
 		list += '\n';
 	}
 
@@ -135,7 +135,7 @@ function sendQuote(
 	channel: TextChannel | DMChannel | NewsChannel,
 	quote: Quote,
 ) {
-	const embed = new MessageEmbed({}).addField(quote.title, quote.content);
+	const embed = new MessageEmbed({}).addField(quote.name, quote.content);
 	channel.send(embed);
 }
 
