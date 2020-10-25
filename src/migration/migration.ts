@@ -114,7 +114,7 @@ async function migrateMetrics() {
 					channel: name,
 					snowflake: id,
 					time: date,
-					args,
+					args: JSON.stringify(args),
 					command,
 				});
 			} catch (e) {
