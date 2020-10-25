@@ -48,7 +48,7 @@ export function startApi() {
 			'utf-8',
 		);
 		const ca = fs.readFileSync(
-			'etc/letsencrypt/live/juho.dev/cert.pem',
+			'/etc/letsencrypt/live/juho.dev/cert.pem',
 			'utf-8',
 		);
 		const creds = {
