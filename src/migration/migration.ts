@@ -84,8 +84,8 @@ async function migrateMetrics() {
 	for (const u of users) {
 		const { channels, id, name } = u;
 		for (const c of channels) {
-			const { id, name: channelName, time } = c;
-
+			const { id: channelSnowflake, name: channelName, time } = c;
+			
 			const voiceLog: DBVoiceLog = {
 				channel: channelName,
 				snowflake: id,
