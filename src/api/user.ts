@@ -1,6 +1,7 @@
-import { DBClip, DBImage, DBQuote, DBUser } from '../db/types';
+import { DBBaavo, DBClip, DBImage, DBQuote, DBUser } from '../db/types';
 import { knex } from '../db/utils';
 import {
+	BaavoSubmission,
 	ClipSubmission,
 	ImageSubmission,
 	QuoteSubmission,
@@ -75,6 +76,22 @@ export async function getUserDataWithSnowflake(
 		},
 	);
 	userSubmissions.push(...quoteSubmissions);
+
+	const userBaavos: DBBaavo[] = await knex<DBBaavo>('baavo_imgs').where({
+		submission_by: user.snowflake,
+	});
+	const baavoSubmissions: BaavoSubmission[] = userBaavos.map(
+		(baavo): BaavoSubmission => {
+			return {
+				name: baavo.name,
+				submission_by: baavo.submission_by,
+				submission_date: baavo.submission_date,
+				views: baavo.views,
+				submission_type: SubmissionType.BAAVO,
+			};
+		},
+	);
+	userSubmissions.push(...baavoSubmissions);
 	userSubmissions
 		.sort((a, b) => a.submission_date - b.submission_date)
 		.reverse();

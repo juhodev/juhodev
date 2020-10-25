@@ -6,12 +6,17 @@ export type UserBasicData = {
 	submissions: UserSubmission[];
 };
 
-export type UserSubmission = ClipSubmission | ImageSubmission | QuoteSubmission;
+export type UserSubmission =
+	| ClipSubmission
+	| ImageSubmission
+	| QuoteSubmission
+	| BaavoSubmission;
 
 export enum SubmissionType {
 	CLIP = 'CLIP',
 	IMAGE = 'IMAGE',
 	QUOTE = 'QUOTE',
+	BAAVO = 'BAAVO',
 }
 
 export type ClipSubmission = {
@@ -52,4 +57,12 @@ export type UserRouteResponse = {
 
 export const ERROR = {
 	DISCORD_NOT_AUTHENTICATED: 0,
+};
+
+export type BaavoSubmission = {
+	name: string;
+	views: number;
+	submission_by: string;
+	submission_date: number;
+	submission_type: SubmissionType;
 };
