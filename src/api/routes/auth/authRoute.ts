@@ -40,7 +40,9 @@ router.post('/code', async (req, res) => {
 		JWT_SECRET,
 	} = process.env;
 	const redirectUrl =
-		ENVIRONMENT === 'dev' ? 'http://localhost:8888/auth' : '';
+		ENVIRONMENT === 'dev'
+			? 'http://localhost:8888/auth'
+			: 'http://165.227.160.251:8080/auth';
 
 	const params = new URLSearchParams();
 	params.append('client_id', DISCORD_CLIENT_ID);
