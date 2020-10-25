@@ -42,7 +42,7 @@ router.post('/code', async (req, res) => {
 	const redirectUrl =
 		ENVIRONMENT === 'dev'
 			? 'http://localhost:8888/auth'
-			: 'http://165.227.160.251:8080/auth';
+			: 'https://juho.dev/auth';
 
 	const params = new URLSearchParams();
 	params.append('client_id', DISCORD_CLIENT_ID);
