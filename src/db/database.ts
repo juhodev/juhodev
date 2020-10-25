@@ -225,6 +225,58 @@ export async function initDatabase() {
 				},
 			],
 		},
+		{
+			name: 'discord_tokens',
+			columns: [
+				{
+					name: 'uuid',
+					type: ColumnType.STRING,
+					primary: true,
+				},
+				{
+					name: 'access_token',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'refresh_token',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'expires_in',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'issued_at',
+					type: ColumnType.BIG_INTEGER,
+				},
+			],
+		},
+		{
+			name: 'discord_data',
+			columns: [
+				{
+					name: 'uuid',
+					type: ColumnType.STRING,
+					primary: true,
+				},
+				{
+					name: 'snowflake',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'username',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'avatar',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'discriminator',
+					type: ColumnType.STRING,
+				},
+			],
+		},
 	];
 
 	for (const table of tables) {

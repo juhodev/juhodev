@@ -84,3 +84,19 @@ export type DBClip = {
 	clip_length: number;
 	deleted: boolean;
 };
+
+export type DBDiscordToken = {
+	uuid: string;
+	access_token: string;
+	refresh_token: string;
+	expires_in: number;
+	issued_at: number;
+};
+
+export type DBDiscordData = {
+	uuid: string;
+	snowflake: string;
+	username: string;
+	avatar: string;
+	discriminator: string;
+};

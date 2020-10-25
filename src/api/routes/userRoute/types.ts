@@ -43,3 +43,13 @@ export type QuoteSubmission = {
 	submission_date: number;
 	submission_type: SubmissionType;
 };
+
+export type UserRouteResponse = {
+	error: boolean;
+	errorCode?: number;
+	userData?: UserBasicData;
+};
+
+export const ERROR = {
+	DISCORD_NOT_AUTHENTICATED: 0,
+};
