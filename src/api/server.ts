@@ -25,6 +25,8 @@ export function startApi() {
 	app.use('/api/user', UserRouter);
 	app.use('/api/auth', AuthRouter);
 
+	app.use('/baavo', express.static('data/baavo'));
+	app.use('/img', express.static('data/imgs'));
 	app.use('/', express.static('dist', { dotfiles: 'allow' }));
 
 	app.use('*', (req, res) => {
