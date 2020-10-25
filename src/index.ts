@@ -16,6 +16,7 @@ import BaavoCommand from './commands/baavoCommand';
 import GifCommand from './commands/gifCommand';
 import ImgCommand from './commands/imgCommand';
 import ClipsCommand from './commands/clipsCommand';
+import MigrateCommand from './commands/migrateCommand';
 
 import { logUsers } from './userLogger';
 import { startApi } from './api/server';
@@ -38,6 +39,7 @@ import { startApi } from './api/server';
 	commandHandler.registerCommand(GifCommand);
 	commandHandler.registerCommand(ImgCommand);
 	commandHandler.registerCommand(ClipsCommand);
+	commandHandler.registerCommand(MigrateCommand);
 
 	client.on('ready', () => {
 		console.log('Connected');
