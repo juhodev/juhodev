@@ -1,6 +1,7 @@
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import * as cors from 'cors';
+import * as path from 'path';
 
 import UserRouter from './routes/userRoute/userRoute';
 import AuthRouter from './routes/auth/authRoute';
@@ -19,6 +20,12 @@ export function startApi() {
 
 	app.use('/api/user', UserRouter);
 	app.use('/api/auth', AuthRouter);
+
+	app.use('/', express.static('dist'));
+
+	app.use('*', (req, res) => {
+		res.sendFile(path.resolve('dist', 'index.html'));
+	});
 
 	const httpPort: number = parseInt(process.env.HTTP_PORT);
 	app.listen(httpPort, () => {
