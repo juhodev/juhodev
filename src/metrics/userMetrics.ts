@@ -41,7 +41,7 @@ class UserMetrics {
 			const { members } = voiceChannel;
 
 			for (const [_, member] of members) {
-				const knexUpdateOrInsert: string = `INSERT INTO voice_log (combined, snowflake, channel, time) values (?, ?, ?) ON DUPLICATE KEY UPDATE time=time+${LOG_INTERVAL}`;
+				const knexUpdateOrInsert: string = `INSERT INTO voice_log (combined, snowflake, channel, time) values (?, ?, ?, ?) ON DUPLICATE KEY UPDATE time=time+${LOG_INTERVAL}`;
 
 				await knex.raw(knexUpdateOrInsert, [
 					`${member.id}-${channel.name}`,
