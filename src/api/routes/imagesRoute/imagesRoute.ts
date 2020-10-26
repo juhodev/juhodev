@@ -57,4 +57,77 @@ router.get('/', [verifyIdentity], async (req, res) => {
 	res.json(response);
 });
 
+router.post('/', [verifyIdentity], async (req, res) => {
+	const bearer: string = req.headers.authorization;
+	const userJWT: string = bearer.split('Bearer ')[1];
+
+	const decoded: JWTData = jwt.verify(
+		userJWT,
+		process.env.JWT_SECRET,
+	) as JWTData;
+
+	const authenticatedJwt: JWTDiscordAuth = decoded as JWTDiscordAuth;
+	const identity: DBDiscordData = await fetchUserIdentity(authenticatedJwt);
+
+	const userData: UserData = {
+		avatar: identity.avatar,
+		name: identity.username,
+		snowflake: identity.snowflake,
+		tag: identity.discriminator,
+	};
+
+	const { name, link } = req.body;
+
+	const imageExists: DBImage = await knex<DBImage>('images')
+		.where({ name })
+		.first();
+
+	if (imageExists !== undefined) {
+		const response: ImageRouteResponse = {
+			error: true,
+			errorCode: ImageError.NAME_ALREADY_EXISTS,
+		};
+
+		res.json(response);
+		return;
+	}
+
+	const dbImage: DBImage = {
+		deleted: false,
+		original_link: link,
+		submission_by: userData.snowflake,
+		submission_date: new Date().getTime(),
+		views: 0,
+		name,
+	};
+
+	await knex<DBImage>('images').insert(dbImage);
+
+	const dbImages: DBImageWithUserInfo[] = await knex<DBImageWithUserInfo>(
+		'images',
+	)
+		.join('users', 'users.snowflake', 'images.submission_by')
+		.select('*');
+	const imageSubmissions: ImageSubmission[] = dbImages.map(
+		(image): ImageSubmission => {
+			return {
+				name: image.name,
+				original_link: image.original_link,
+				submission_by: `${image.discord_name_original}#${image.discord_tag}`,
+				submission_date: image.submission_date,
+				submission_type: SubmissionType.IMAGE,
+				views: image.views,
+			};
+		},
+	);
+
+	const response: ImageRouteResponse = {
+		error: false,
+		submissions: imageSubmissions,
+		userData,
+	};
+
+	res.json(response);
+});
+
 export default router;
