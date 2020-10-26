@@ -8,6 +8,7 @@ import { knex } from '../../../db/utils';
 import { ImageSubmission, SubmissionType } from '../userRoute/types';
 import { UserData } from '../../types';
 import { verifyIdentity } from '../middleware/middleware';
+import { downloadImage } from '../../../utils';
 
 const router = expressPromiseRouter();
 
@@ -101,7 +102,7 @@ router.post('/', [verifyIdentity], async (req, res) => {
 		name,
 	};
 
-	await knex<DBImage>('images').insert(dbImage);
+	await downloadImage(dbImage);
 
 	const dbImages: DBImageWithUserInfo[] = await knex<DBImageWithUserInfo>(
 		'images',
