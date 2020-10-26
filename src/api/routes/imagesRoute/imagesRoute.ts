@@ -7,10 +7,11 @@ import { DBDiscordData, DBImage, DBImageWithUserInfo } from '../../../db/types';
 import { knex } from '../../../db/utils';
 import { ImageSubmission, SubmissionType } from '../userRoute/types';
 import { UserData } from '../../types';
+import { verifyIdentity } from '../middleware/middleware';
 
 const router = expressPromiseRouter();
 
-router.get('/', async (req, res) => {
+router.get('/', [verifyIdentity], async (req, res) => {
 	const bearer: string = req.headers.authorization;
 	const userJWT: string = bearer.split('Bearer ')[1];
 
@@ -19,28 +20,8 @@ router.get('/', async (req, res) => {
 		process.env.JWT_SECRET,
 	) as JWTData;
 
-	if (!decoded.discordAuthenticated) {
-		const response: ImageRouteResponse = {
-			error: true,
-			errorCode: ImageError.DISCORD_NOT_AUTHENTICATED,
-		};
-
-		res.json(response);
-		return;
-	}
-
 	const authenticatedJwt: JWTDiscordAuth = decoded as JWTDiscordAuth;
 	const identity: DBDiscordData = await fetchUserIdentity(authenticatedJwt);
-
-	if (!userOnServer(identity)) {
-		const response: ImageRouteResponse = {
-			error: true,
-			errorCode: ImageError.USER_NOT_ON_SERVER,
-		};
-
-		res.json(response);
-		return;
-	}
 
 	const userData: UserData = {
 		avatar: identity.avatar,

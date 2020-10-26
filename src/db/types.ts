@@ -116,3 +116,22 @@ export type DBImageWithUserInfo = {
 	avatar: string;
 	first_seen: number;
 };
+
+export type DBClipWithUserInfo = {
+	name: string;
+	path: string;
+	original_link: string;
+	views: number;
+	submission_by: string;
+	submission_date: number;
+	clip_start: number;
+	clip_length: number;
+	deleted: boolean;
+	snowflake: string;
+	discord_tag: string;
+	discord_name_uppercase: string;
+	discord_name_original: string;
+	discord_created: number;
+	avatar: string;
+	first_seen: number;
+};

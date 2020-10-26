@@ -1,17 +1,16 @@
-import expressPromiseRouter from 'express-promise-router';
-import {
-	DBDiscordData,
-} from '../../../db/types';
 import * as jwt from 'jsonwebtoken';
-import { ERROR, UserBasicData, UserRouteResponse } from './types';
-import { JWTData, JWTDiscordAuth } from '../auth/types';
+import { DBDiscordData } from '../../../db/types';
 import { fetchUserIdentity, userOnServer } from '../../discord';
-import { getUserDataWithSnowflake } from '../../user';
+import { JWTData, JWTDiscordAuth } from '../auth/types';
+import { ERROR, UserRouteResponse } from '../userRoute/types';
 
-const router = expressPromiseRouter();
-
-router.get('/', async (req, res) => {
+export const verifyIdentity = async (req, res, next) => {
 	const bearer: string = req.headers.authorization;
+	if (bearer === undefined) {
+		res.sendStatus(401);
+		return;
+	}
+
 	const userJWT: string = bearer.split('Bearer ')[1];
 
 	const decoded: JWTData = jwt.verify(
@@ -42,20 +41,5 @@ router.get('/', async (req, res) => {
 		return;
 	}
 
-	const userBasicData: UserBasicData = await getUserDataWithSnowflake(
-		identity.snowflake,
-	);
-
-	if (userBasicData === undefined) {
-		res.json({ error: true });
-		return;
-	}
-
-	const response: UserRouteResponse = {
-		error: false,
-		userData: userBasicData,
-	};
-	res.json(response);
-});
-
-export default router;
+	next();
+};
