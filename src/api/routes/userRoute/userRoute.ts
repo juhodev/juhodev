@@ -6,19 +6,10 @@ import {
 	DBQuote,
 	DBUser,
 } from '../../../db/types';
-import { knex } from '../../../db/utils';
 import * as jwt from 'jsonwebtoken';
-import {
-	ClipSubmission,
-	ERROR,
-	ImageSubmission,
-	QuoteSubmission,
-	SubmissionType,
-	UserBasicData,
-	UserRouteResponse,
-} from './types';
+import { ERROR, UserBasicData, UserRouteResponse } from './types';
 import { JWTData, JWTDiscordAuth } from '../auth/types';
-import { fetchUserIdentity } from '../../discord';
+import { fetchUserIdentity, userOnServer } from '../../discord';
 import { getUserDataWithSnowflake } from '../../user';
 
 const router = expressPromiseRouter();
@@ -44,6 +35,17 @@ router.get('/', async (req, res) => {
 
 	const authenticatedJwt: JWTDiscordAuth = decoded as JWTDiscordAuth;
 	const identity: DBDiscordData = await fetchUserIdentity(authenticatedJwt);
+
+	if (!userOnServer(identity)) {
+		const response: UserRouteResponse = {
+			error: true,
+			errorCode: ERROR.USER_NOT_ON_SERVER,
+		};
+
+		res.json(response);
+		return;
+	}
+
 	const userBasicData: UserBasicData = await getUserDataWithSnowflake(
 		identity.snowflake,
 	);
