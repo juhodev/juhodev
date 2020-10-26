@@ -29,7 +29,7 @@ export function startApi() {
 
 	app.use('/baavo', express.static('data/baavo'));
 	app.use('/img', express.static('data/imgs'));
-	app.use('/', express.static('dist', { dotfiles: 'allow' }));
+	app.use('/dist', express.static('dist', { dotfiles: 'allow' }));
 
 	app.use('*', (req, res) => {
 		res.sendFile(path.resolve('dist', 'index.html'));
