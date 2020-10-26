@@ -8,7 +8,7 @@ import {
 } from './types';
 import fetch from 'node-fetch';
 import { knex } from '../../../db/utils';
-import { DBDiscordToken } from '../../../db/types';
+import { DBDiscordData, DBDiscordToken } from '../../../db/types';
 import { JWTDiscordAuth } from './types';
 import { uuid } from 'uuidv4';
 
@@ -71,10 +71,14 @@ router.post('/code', async (req, res) => {
 			process.env.JWT_SECRET,
 		) as JWTData;
 
-		if (decoded['uuid'] !== undefined) {
+		const uuid: string = decoded['uuid'];
+
+		if (uuid !== undefined) {
 			await knex<DBDiscordToken>('discord_tokens')
 				.delete()
-				.where({ uuid: decoded['uuid'] });
+				.where({ uuid });
+
+			await knex<DBDiscordData>('discord_data').delete().where({ uuid });
 		}
 	}
 
