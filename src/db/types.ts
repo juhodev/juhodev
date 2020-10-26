@@ -100,3 +100,19 @@ export type DBDiscordData = {
 	avatar: string;
 	discriminator: string;
 };
+
+export type DBImageWithUserInfo = {
+	name: string;
+	original_link: string;
+	views: number;
+	submission_by: string;
+	submission_date: number;
+	deleted: boolean;
+	snowflake: string;
+	discord_tag: string;
+	discord_name_uppercase: string;
+	discord_name_original: string;
+	discord_created: number;
+	avatar: string;
+	first_seen: number;
+};

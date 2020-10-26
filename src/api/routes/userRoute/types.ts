@@ -57,6 +57,7 @@ export type UserRouteResponse = {
 
 export const ERROR = {
 	DISCORD_NOT_AUTHENTICATED: 0,
+	USER_NOT_ON_SERVER: 1,
 };
 
 export type BaavoSubmission = {

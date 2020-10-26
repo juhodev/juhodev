@@ -7,6 +7,7 @@ import * as https from 'https';
 
 import UserRouter from './routes/userRoute/userRoute';
 import AuthRouter from './routes/auth/authRoute';
+import ImageRouter from './routes/imagesRoute/imagesRoute';
 
 const { ENVIRONMENT } = process.env;
 
@@ -24,6 +25,7 @@ export function startApi() {
 
 	app.use('/api/user', UserRouter);
 	app.use('/api/auth', AuthRouter);
+	app.use('/api/images', ImageRouter);
 
 	app.use('/baavo', express.static('data/baavo'));
 	app.use('/img', express.static('data/imgs'));

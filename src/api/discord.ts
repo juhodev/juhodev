@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import { DBDiscordData, DBDiscordToken } from '../db/types';
+import { DBDiscordData, DBDiscordToken, DBUser } from '../db/types';
 import { knex } from '../db/utils';
 import { JWTDiscordAuth } from './routes/auth/types';
 
@@ -42,4 +42,12 @@ const fetchUserIdentity = async (
 	return newDiscordData;
 };
 
-export { fetchUserIdentity };
+const userOnServer = async (discordData: DBDiscordData): Promise<boolean> => {
+	const user: DBUser = await knex<DBUser>('users')
+		.where({ snowflake: discordData.snowflake })
+		.first();
+
+	return user !== undefined;
+};
+
+export { fetchUserIdentity, userOnServer };
