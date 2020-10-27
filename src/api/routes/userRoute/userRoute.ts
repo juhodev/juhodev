@@ -1,7 +1,5 @@
 import expressPromiseRouter from 'express-promise-router';
-import {
-	DBDiscordData,
-} from '../../../db/types';
+import { DBDiscordData } from '../../../db/types';
 import * as jwt from 'jsonwebtoken';
 import { ERROR, UserBasicData, UserRouteResponse } from './types';
 import { JWTData, JWTDiscordAuth } from '../auth/types';

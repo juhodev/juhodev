@@ -58,6 +58,7 @@ export type UserRouteResponse = {
 export const ERROR = {
 	DISCORD_NOT_AUTHENTICATED: 0,
 	USER_NOT_ON_SERVER: 1,
+	CLIP_DOES_NOT_EXIST: 2,
 };
 
 export type BaavoSubmission = {

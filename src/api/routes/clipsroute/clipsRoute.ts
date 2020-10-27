@@ -5,9 +5,10 @@ import { JWTData, JWTDiscordAuth } from '../auth/types';
 import { verifyIdentity } from '../middleware/middleware';
 import * as jwt from 'jsonwebtoken';
 import { knex } from '../../../db/utils';
-import { ClipSubmission, SubmissionType } from '../userRoute/types';
+import { ClipSubmission, ERROR, SubmissionType } from '../userRoute/types';
 import { UserData } from '../../types';
 import { ClipsRouteResponse } from './types';
+import { getUserDataWithBearer } from '../../user';
 
 const router = expressPromiseRouter();
 
@@ -53,6 +54,70 @@ router.get('/', [verifyIdentity], async (req, res) => {
 	const response: ClipsRouteResponse = {
 		error: false,
 		submissions: clipSubmissions,
+		userData,
+	};
+
+	res.json(response);
+});
+
+router.get('/:clip', [verifyIdentity], async (req, res) => {
+	const bearer: string = req.headers.authorization;
+	const userData: UserData = await getUserDataWithBearer(bearer);
+
+	const { clip } = req.params;
+	const dbClip: DBClipWithUserInfo = await knex<DBClipWithUserInfo>('clips')
+		.join('users', 'users.snowflake', 'clips.submission_by')
+		.select('*')
+		.where({ name: clip })
+		.first();
+
+	if (dbClip === undefined) {
+		const response: ClipsRouteResponse = {
+			error: true,
+			errorCode: ERROR.CLIP_DOES_NOT_EXIST,
+			submissions: [
+				{
+					original_link:
+						'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+					name: 'Not found',
+					views: 0,
+					submission_date: 0,
+					submission_by: 'User#0000',
+					clip_length: 30,
+					clip_start: 0,
+					submission_type: SubmissionType.CLIP,
+				},
+			],
+			userData,
+		};
+
+		res.json(response);
+		return;
+	}
+
+	const {
+		original_link,
+		name,
+		submission_date,
+		views,
+		clip_start,
+		clip_length,
+	} = dbClip;
+
+	const response: ClipsRouteResponse = {
+		error: false,
+		submissions: [
+			{
+				submission_type: SubmissionType.CLIP,
+				submission_by: `${dbClip.discord_name_original}#${dbClip.discord_tag}`,
+				original_link,
+				name,
+				submission_date,
+				views,
+				clip_start,
+				clip_length,
+			},
+		],
 		userData,
 	};
 
