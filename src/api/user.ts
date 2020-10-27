@@ -1,5 +1,14 @@
-import { DBBaavo, DBClip, DBImage, DBQuote, DBUser } from '../db/types';
+import {
+	DBBaavo,
+	DBClip,
+	DBDiscordData,
+	DBImage,
+	DBQuote,
+	DBUser,
+} from '../db/types';
 import { knex } from '../db/utils';
+import { fetchUserIdentity } from './discord';
+import { JWTData, JWTDiscordAuth } from './routes/auth/types';
 import {
 	BaavoSubmission,
 	ClipSubmission,
@@ -9,6 +18,8 @@ import {
 	UserBasicData,
 	UserSubmission,
 } from './routes/userRoute/types';
+import { UserData } from './types';
+import * as jwt from 'jsonwebtoken';
 
 export async function getUserDataWithSnowflake(
 	snowflake: string,
@@ -102,6 +113,27 @@ export async function getUserDataWithSnowflake(
 		avatar: user.avatar,
 		submissions: userSubmissions,
 		snowflake,
+	};
+
+	return userData;
+}
+
+export async function getUserDataWithBearer(bearer: string): Promise<UserData> {
+	const userJWT: string = bearer.split('Bearer ')[1];
+
+	const decoded: JWTData = jwt.verify(
+		userJWT,
+		process.env.JWT_SECRET,
+	) as JWTData;
+
+	const authenticatedJwt: JWTDiscordAuth = decoded as JWTDiscordAuth;
+	const identity: DBDiscordData = await fetchUserIdentity(authenticatedJwt);
+
+	const userData: UserData = {
+		avatar: identity.avatar,
+		name: identity.username,
+		snowflake: identity.snowflake,
+		tag: identity.discriminator,
 	};
 
 	return userData;

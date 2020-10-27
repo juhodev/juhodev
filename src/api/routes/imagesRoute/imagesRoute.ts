@@ -9,27 +9,13 @@ import { ImageSubmission, SubmissionType } from '../userRoute/types';
 import { UserData } from '../../types';
 import { verifyIdentity } from '../middleware/middleware';
 import { downloadImage } from '../../../utils';
+import { getUserDataWithBearer } from '../../user';
 
 const router = expressPromiseRouter();
 
 router.get('/', [verifyIdentity], async (req, res) => {
 	const bearer: string = req.headers.authorization;
-	const userJWT: string = bearer.split('Bearer ')[1];
-
-	const decoded: JWTData = jwt.verify(
-		userJWT,
-		process.env.JWT_SECRET,
-	) as JWTData;
-
-	const authenticatedJwt: JWTDiscordAuth = decoded as JWTDiscordAuth;
-	const identity: DBDiscordData = await fetchUserIdentity(authenticatedJwt);
-
-	const userData: UserData = {
-		avatar: identity.avatar,
-		name: identity.username,
-		snowflake: identity.snowflake,
-		tag: identity.discriminator,
-	};
+	const userData: UserData = await getUserDataWithBearer(bearer);
 
 	const dbImages: DBImageWithUserInfo[] = await knex<DBImageWithUserInfo>(
 		'images',
@@ -58,24 +44,62 @@ router.get('/', [verifyIdentity], async (req, res) => {
 	res.json(response);
 });
 
+router.get('/:image', [verifyIdentity], async (req, res) => {
+	const bearer: string = req.headers.authorization;
+	const userData: UserData = await getUserDataWithBearer(bearer);
+
+	const { image } = req.params;
+	const dbImage: DBImageWithUserInfo = await knex<DBImageWithUserInfo>(
+		'images',
+	)
+		.join('users', 'users.snowflake', 'images.submission_by')
+		.where({ name: image })
+		.select('*')
+		.first();
+
+	if (dbImage === undefined) {
+		const response: ImageRouteResponse = {
+			error: true,
+			errorCode: ImageError.IMAGE_DOES_NOT_EXIST,
+			submissions: [
+				{
+					original_link:
+						'https://cdn.discordapp.com/attachments/324620441195118592/770571708365013032/xkcd.PNG',
+					name: 'Not found',
+					views: 0,
+					submission_date: 0,
+					submission_by: 'User#0000',
+					submission_type: SubmissionType.IMAGE,
+				},
+			],
+			userData,
+		};
+
+		res.json(response);
+		return;
+	}
+
+	const response: ImageRouteResponse = {
+		error: false,
+		submissions: [
+			{
+				original_link: dbImage.original_link,
+				name: dbImage.name,
+				submission_by: `${dbImage.discord_name_original}#${dbImage.discord_tag}`,
+				submission_date: dbImage.submission_date,
+				submission_type: SubmissionType.IMAGE,
+				views: dbImage.views,
+			},
+		],
+		userData,
+	};
+
+	res.json(response);
+});
+
 router.post('/', [verifyIdentity], async (req, res) => {
 	const bearer: string = req.headers.authorization;
-	const userJWT: string = bearer.split('Bearer ')[1];
-
-	const decoded: JWTData = jwt.verify(
-		userJWT,
-		process.env.JWT_SECRET,
-	) as JWTData;
-
-	const authenticatedJwt: JWTDiscordAuth = decoded as JWTDiscordAuth;
-	const identity: DBDiscordData = await fetchUserIdentity(authenticatedJwt);
-
-	const userData: UserData = {
-		avatar: identity.avatar,
-		name: identity.username,
-		snowflake: identity.snowflake,
-		tag: identity.discriminator,
-	};
+	const userData: UserData = await getUserDataWithBearer(bearer);
 
 	const { name, link } = req.body;
 
