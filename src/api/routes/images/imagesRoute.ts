@@ -1,11 +1,8 @@
 import expressPromiseRouter from 'express-promise-router';
 import { ImageError, ImageRouteResponse } from './types';
-import * as jwt from 'jsonwebtoken';
-import { JWTData, JWTDiscordAuth } from '../auth/types';
-import { fetchUserIdentity, userOnServer } from '../../discord';
-import { DBDiscordData, DBImage, DBImageWithUserInfo } from '../../../db/types';
+import { DBImage, DBImageWithUserInfo } from '../../../db/types';
 import { knex } from '../../../db/utils';
-import { ImageSubmission, SubmissionType } from '../userRoute/types';
+import { ImageSubmission, SubmissionType } from '../user/types';
 import { UserData } from '../../types';
 import { verifyIdentity } from '../middleware/middleware';
 import { downloadImage } from '../../../utils';

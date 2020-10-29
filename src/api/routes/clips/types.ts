@@ -1,5 +1,5 @@
 import { UserData } from '../../types';
-import { ClipSubmission } from '../userRoute/types';
+import { ClipSubmission } from '../user/types';
 
 export type ClipsRouteResponse = {
 	error: boolean;

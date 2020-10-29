@@ -5,7 +5,7 @@ import { JWTData, JWTDiscordAuth } from '../auth/types';
 import { verifyIdentity } from '../middleware/middleware';
 import * as jwt from 'jsonwebtoken';
 import { knex } from '../../../db/utils';
-import { ClipSubmission, ERROR, SubmissionType } from '../userRoute/types';
+import { ClipSubmission, ERROR, SubmissionType } from '../user/types';
 import { UserData } from '../../types';
 import { ClipsRouteResponse } from './types';
 import { getUserDataWithBearer } from '../../user';

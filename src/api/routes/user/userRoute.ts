@@ -4,7 +4,7 @@ import * as jwt from 'jsonwebtoken';
 import { ERROR, UserBasicData, UserRouteResponse } from './types';
 import { JWTData, JWTDiscordAuth } from '../auth/types';
 import { fetchUserIdentity, userOnServer } from '../../discord';
-import { getUserDataWithSnowflake } from '../../user';
+import { getUserSubmissionsWithSnowflake } from '../../user';
 
 const router = expressPromiseRouter();
 
@@ -40,7 +40,7 @@ router.get('/', async (req, res) => {
 		return;
 	}
 
-	const userBasicData: UserBasicData = await getUserDataWithSnowflake(
+	const userBasicData: UserBasicData = await getUserSubmissionsWithSnowflake(
 		identity.snowflake,
 	);
 

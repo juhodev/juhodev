@@ -1,5 +1,5 @@
 import { UserData } from '../../types';
-import { ImageSubmission } from '../userRoute/types';
+import { ImageSubmission } from '../user/types';
 
 export type ImageRouteResponse = {
 	error: boolean;

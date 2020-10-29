@@ -1,10 +1,12 @@
 import {
 	DBBaavo,
 	DBClip,
+	DBCommandLog,
 	DBDiscordData,
 	DBImage,
 	DBQuote,
 	DBUser,
+	DBVoiceLog,
 } from '../db/types';
 import { knex } from '../db/utils';
 import { fetchUserIdentity } from './discord';
@@ -17,11 +19,12 @@ import {
 	SubmissionType,
 	UserBasicData,
 	UserSubmission,
-} from './routes/userRoute/types';
-import { UserData } from './types';
+} from './routes/user/types';
+import { UserCommandLog, UserData, UserProfile, UserVoiceLog } from './types';
 import * as jwt from 'jsonwebtoken';
+import { updateInferTypeNode } from 'typescript';
 
-export async function getUserDataWithSnowflake(
+export async function getUserSubmissionsWithSnowflake(
 	snowflake: string,
 ): Promise<UserBasicData> {
 	const user: DBUser = await knex<DBUser>('users')
@@ -137,4 +140,83 @@ export async function getUserDataWithBearer(bearer: string): Promise<UserData> {
 	};
 
 	return userData;
+}
+
+export async function getUserDataWithSnowflake(
+	snowflake: string,
+): Promise<UserData> {
+	const dbUser: DBUser = await knex<DBUser>('users')
+		.where({ snowflake })
+		.first();
+
+	if (dbUser === undefined) {
+		return {
+			avatar: '',
+			name: '',
+			snowflake: '',
+			tag: '',
+		};
+	}
+
+	const userData: UserData = {
+		avatar: dbUser.avatar,
+		name: dbUser.discord_name_original,
+		snowflake: dbUser.snowflake,
+		tag: dbUser.discord_tag,
+	};
+
+	return userData;
+}
+
+export async function getUserProfile(snowflake: string): Promise<UserProfile> {
+	const dbVoiceLog: DBVoiceLog[] = await knex<DBVoiceLog>('voice_log').where({
+		snowflake,
+	});
+
+	const userVoiceLog: UserVoiceLog[] = [];
+	for (const dbVoice of dbVoiceLog) {
+		const oldLog: UserVoiceLog = userVoiceLog.find(
+			(log) => log.channel === dbVoice.channel,
+		);
+
+		if (oldLog === undefined) {
+			const newLog: UserVoiceLog = {
+				channel: dbVoice.channel,
+				time: dbVoice.time,
+			};
+			userVoiceLog.push(newLog);
+			continue;
+		}
+
+		oldLog.time += dbVoice.time;
+	}
+
+	const dbCommandLog: DBCommandLog[] = await knex<DBCommandLog>(
+		'command_log',
+	).where({ snowflake });
+
+	const userCommandLog: UserCommandLog[] = [];
+	for (const dbCommand of dbCommandLog) {
+		const oldLog: UserCommandLog = userCommandLog.find(
+			(log) => log.command === dbCommand.command,
+		);
+
+		if (oldLog === undefined) {
+			const newLog: UserCommandLog = {
+				command: dbCommand.command,
+				count: 1,
+			};
+			userCommandLog.push(newLog);
+			continue;
+		}
+
+		oldLog.count++;
+	}
+
+	const userProfile: UserProfile = {
+		commandLog: userCommandLog,
+		voiceLog: userVoiceLog,
+	};
+
+	return userProfile;
 }

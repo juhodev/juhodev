@@ -2,7 +2,7 @@ import * as jwt from 'jsonwebtoken';
 import { DBDiscordData } from '../../../db/types';
 import { fetchUserIdentity, userOnServer } from '../../discord';
 import { JWTData, JWTDiscordAuth } from '../auth/types';
-import { ERROR, UserRouteResponse } from '../userRoute/types';
+import { ERROR, UserRouteResponse } from '../user/types';
 
 export const verifyIdentity = async (req, res, next) => {
 	const bearer: string = req.headers.authorization;
