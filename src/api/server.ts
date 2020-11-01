@@ -10,8 +10,13 @@ import AuthRouter from './routes/auth/authRoute';
 import ImageRouter from './routes/images/imagesRoute';
 import ClipsRouter from './routes/clips/clipsRoute';
 import ProfileRouter from './routes/profile/profileRoute';
+import SteamRouter from './routes/steam/steamRoute';
+
+import Steam from '../steam/steam';
 
 const { ENVIRONMENT } = process.env;
+
+export const steam: Steam = new Steam();
 
 export function startApi() {
 	const app = express();
@@ -30,6 +35,7 @@ export function startApi() {
 	app.use('/api/images', ImageRouter);
 	app.use('/api/clips', ClipsRouter);
 	app.use('/api/profile', ProfileRouter);
+	app.use('/api/steam', SteamRouter);
 
 	app.use('/baavo', express.static('data/baavo'));
 	app.use('/img', express.static('data/imgs'));

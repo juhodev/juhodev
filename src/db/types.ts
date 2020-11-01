@@ -1,3 +1,5 @@
+import { type } from 'os';
+
 export type Table = {
 	name: string;
 	columns: Column[];
@@ -134,4 +136,49 @@ export type DBClipWithUserInfo = {
 	discord_created: number;
 	avatar: string;
 	first_seen: number;
+};
+
+export type DBCsgoGame = {
+	id: number;
+	map: string;
+	date: number;
+	wait_time: number;
+	match_duration: number;
+};
+
+export type DBCsgoPlayer = {
+	id: string;
+	steam_link: string;
+	avatar_link: string;
+	name: string;
+};
+
+export type DBCsgoStats = {
+	id?: number;
+	player_id: string;
+	match_id: number;
+	ping: number;
+	kills: number;
+	assists: number;
+	deaths: number;
+	mvps: number;
+	hsp: number;
+	score: number;
+};
+
+export type DBPlayerStatsWithGame = {
+	id: string;
+	match_id: number;
+	player_id: string;
+	ping: number;
+	kills: number;
+	assists: number;
+	deaths: number;
+	mvps: number;
+	hsp: number;
+	score: number;
+	map: string;
+	date: number;
+	wait_time: number;
+	match_duration: number;
 };

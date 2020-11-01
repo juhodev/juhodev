@@ -1,4 +1,5 @@
 import Knex = require('knex');
+import { idText } from 'typescript';
 import { ColumnType, Table } from './types';
 import { knex } from './utils';
 
@@ -274,6 +275,102 @@ export async function initDatabase() {
 				{
 					name: 'discriminator',
 					type: ColumnType.STRING,
+				},
+			],
+		},
+		{
+			name: 'csgo_games',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.INTEGER,
+					autoIncrement: true,
+					primary: true,
+				},
+				{
+					name: 'map',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'date',
+					type: ColumnType.BIG_INTEGER,
+				},
+				{
+					name: 'wait_time',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'match_duration',
+					type: ColumnType.INTEGER,
+				},
+			],
+		},
+		{
+			name: 'csgo_players',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.STRING,
+					primary: true,
+				},
+				{
+					name: 'steam_link',
+					type: ColumnType.TEXT,
+				},
+				{
+					name: 'avatar_link',
+					type: ColumnType.TEXT,
+				},
+				{
+					name: 'name',
+					type: ColumnType.TEXT,
+				},
+			],
+		},
+		{
+			name: 'csgo_stats',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.INTEGER,
+					primary: true,
+					autoIncrement: true,
+				},
+				{
+					name: 'player_id',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'match_id',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'ping',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'kills',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'assists',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'deaths',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'mvps',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'hsp',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'score',
+					type: ColumnType.INTEGER,
 				},
 			],
 		},

@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import { DB_DATA_DIR } from './database/types';
 import { DBImage } from './db/types';
 import { knex } from './db/utils';
+import { uuid } from 'uuidv4';
 
 const streamPipeline = util.promisify(require('stream').pipeline);
 
@@ -31,5 +32,23 @@ export async function downloadImage(dbImage: DBImage): Promise<boolean> {
 		return true;
 	} else {
 		return false;
+	}
+}
+
+export async function downloadTxt(url: string): Promise<string> {
+	const dir: string = path.resolve(DB_DATA_DIR, 'downloads');
+	if (!fs.existsSync(dir)) {
+		fs.mkdirSync(dir);
+	}
+
+	const response = await fetch(url, { size: 1024 * 1024 * 20 });
+	if (response.ok) {
+		const fileName = `download-${uuid()}.txt`;
+		const file = path.resolve(dir, fileName);
+		await streamPipeline(response.body, fs.createWriteStream(file));
+
+		return file;
+	} else {
+		return undefined;
 	}
 }
