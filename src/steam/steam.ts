@@ -94,7 +94,9 @@ class Steam {
 		}
 
 		return this.csgoUsers
-			.filter((user) => user.name.toLowerCase().startsWith(name))
+			.filter((user) =>
+				user.name.toLowerCase().startsWith(name.toLowerCase()),
+			)
 			.sort((a, b) => a.name.localeCompare(b.name));
 	}
 
