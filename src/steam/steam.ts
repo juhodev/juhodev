@@ -69,6 +69,10 @@ class Steam {
 
 		await knex<DBCsgoPlayer>('csgo_players').insert(newPlayers);
 		await knex<DBCsgoStats>('csgo_stats').insert(newStats);
+
+		// Remove all caches profiles and players when new data is added.
+		this.profiles.clear();
+		this.csgoUsers = [];
 	}
 
 	async getProfile(id: string): Promise<CsgoProfile> {
