@@ -1,4 +1,4 @@
-import { CsgoProfile, CsgoUser } from '../../../steam/types';
+import { CsgoMatch, CsgoProfile, CsgoUser } from '../../../steam/types';
 import { UserData } from '../../types';
 
 export type SteamRouteResponse = {
@@ -13,3 +13,10 @@ export type SteamSearchResponse = {
 	errorCode?: number;
 	searchResult?: CsgoUser[];
 };
+
+export type SteamMatchResponse = {
+	error: boolean;
+	userData?: UserData;
+	errorCode?: number;
+	csgoMatch: CsgoMatch;
+}

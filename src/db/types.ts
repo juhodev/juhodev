@@ -182,3 +182,18 @@ export type DBPlayerStatsWithGame = {
 	wait_time: number;
 	match_duration: number;
 };
+
+export type DBPlayerStatsWithPlayerInfo = {
+	id: string;
+	steam_link: string;
+	avatar_link: string;
+	name: string;
+	match_id: number;
+	ping: number;
+	kills: number;
+	assists: number;
+	deaths: number;
+	mvps: number;
+	hsp: number;
+	score: number;
+}

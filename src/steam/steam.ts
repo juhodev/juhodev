@@ -3,9 +3,17 @@ import {
 	DBCsgoPlayer,
 	DBCsgoStats,
 	DBPlayerStatsWithGame,
+	DBPlayerStatsWithPlayerInfo,
 } from '../db/types';
 import { knex } from '../db/utils';
-import { CsgoGameStats, CsgoMapStats, CsgoProfile, CsgoUser } from './types';
+import {
+	CsgoMatch,
+	CsgoGameStats,
+	CsgoMapStats,
+	CsgoPlayer,
+	CsgoProfile,
+	CsgoUser,
+} from './types';
 import { downloadTxt } from '../utils';
 import * as fs from 'fs';
 
@@ -23,10 +31,12 @@ type StatsBatch = {
 class Steam {
 	private profiles: Map<string, CsgoProfile>;
 	private csgoUsers: CsgoUser[];
+	private csgoMatchCache: Map<number, CsgoMatch>;
 
 	constructor() {
 		this.profiles = new Map();
 		this.csgoUsers = [];
+		this.csgoMatchCache = new Map();
 	}
 
 	async saveData(url: string) {
@@ -258,6 +268,62 @@ class Steam {
 		};
 
 		this.profiles.set(id, profile);
+	}
+
+	async getMatch(matchId: number): Promise<CsgoMatch> {
+		if (this.csgoMatchCache.has(matchId)) {
+			return this.csgoMatchCache.get(matchId);
+		}
+
+		const game: CsgoMatch = await this.getMatchFromDB(matchId);
+		this.csgoMatchCache.set(matchId, game);
+
+		return game;
+	}
+
+	async getMatchFromDB(matchId: number): Promise<CsgoMatch> {
+		const dbMatch: DBCsgoGame = await knex<DBCsgoGame>('csgo_games')
+			.where({
+				id: matchId,
+			})
+			.first();
+
+		const dbPlayers: DBPlayerStatsWithPlayerInfo[] = await knex<
+			DBPlayerStatsWithPlayerInfo
+		>('csgo_players')
+			.select('*')
+			.innerJoin('csgo_stats', function () {
+				this.on('csgo_stats.player_id', '=', 'csgo_players.id').andOn(
+					'csgo_stats.match_id',
+					'=',
+					knex.raw(dbMatch.id),
+				);
+			});
+
+		const players: CsgoPlayer[] = dbPlayers.map(
+			(dbPlayer): CsgoPlayer => {
+				return {
+					name: dbPlayer.name,
+					avatar: dbPlayer.avatar_link,
+					ping: dbPlayer.ping,
+					kills: dbPlayer.kills,
+					assists: dbPlayer.assists,
+					deaths: dbPlayer.deaths,
+					mvps: dbPlayer.mvps,
+					hsp: dbPlayer.hsp,
+					score: dbPlayer.score,
+				};
+			},
+		);
+
+		const game: CsgoMatch = {
+			map: dbMatch.map,
+			matchDuration: dbMatch.match_duration,
+			players: players,
+			waitTime: dbMatch.wait_time,
+		};
+
+		return game;
 	}
 
 	private getGameData(dbGames: DBPlayerStatsWithGame[]): GameData {

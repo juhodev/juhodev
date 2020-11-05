@@ -1,8 +1,12 @@
 import expressPromiseRouter from 'express-promise-router';
 import { steam } from '../../server';
 import { verifyIdentity } from '../middleware/middleware';
-import { CsgoProfile, CsgoUser } from '../../../steam/types';
-import { SteamRouteResponse, SteamSearchResponse } from './types';
+import { CsgoMatch, CsgoProfile, CsgoUser } from '../../../steam/types';
+import {
+	SteamMatchResponse,
+	SteamRouteResponse,
+	SteamSearchResponse,
+} from './types';
 import { UserData } from '../../types';
 import { getUserDataWithBearer } from '../../user';
 
@@ -15,6 +19,23 @@ router.get('/search', [verifyIdentity], async (req, res) => {
 	const response: SteamSearchResponse = {
 		error: false,
 		searchResult: csgoUsers,
+	};
+
+	res.json(response);
+});
+
+router.get('/match', [verifyIdentity], async (req, res) => {
+	const { id } = req.query;
+
+	const bearer: string = req.headers.authorization;
+	const userData: UserData = await getUserDataWithBearer(bearer);
+
+	const csgoMatch: CsgoMatch = await steam.getMatchFromDB(id);
+
+	const response: SteamMatchResponse = {
+		error: false,
+		csgoMatch,
+		userData,
 	};
 
 	res.json(response);

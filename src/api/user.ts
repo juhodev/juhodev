@@ -22,7 +22,6 @@ import {
 } from './routes/user/types';
 import { UserCommandLog, UserData, UserProfile, UserVoiceLog } from './types';
 import * as jwt from 'jsonwebtoken';
-import { updateInferTypeNode } from 'typescript';
 
 export async function getUserSubmissionsWithSnowflake(
 	snowflake: string,
