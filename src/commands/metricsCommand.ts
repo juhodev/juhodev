@@ -1,4 +1,10 @@
-import { DMChannel, MessageEmbed, NewsChannel, TextChannel } from 'discord.js';
+import {
+	DMChannel,
+	MessageEmbed,
+	NewsChannel,
+	Snowflake,
+	TextChannel,
+} from 'discord.js';
 import { DBUser, DBVoiceLog } from '../db/types';
 import { knex } from '../db/utils';
 import { msToTime } from '../utils';
@@ -65,21 +71,32 @@ async function sendTotalTimes(channel: TextChannel | DMChannel | NewsChannel) {
 	const userTimes: DBVoiceLog[] = await knex<DBVoiceLog>('voice_log').where(
 		{},
 	);
-	const totalTimes: Map<string, number> = new Map();
+	// const totalTimes: Map<string, number> = new Map();
+
+	// Oh man I'm lazy
+	type Temp = {
+		snowflake: Snowflake;
+		time: number;
+	};
+	const totalTimes: Temp[] = [];
 
 	for (const userTime of userTimes) {
-		let userTotalTime: number = 0;
+		const oldTime: Temp = totalTimes.find(
+			(time) => (time.snowflake = userTime.snowflake),
+		);
 
-		if (totalTimes.has(userTime.snowflake)) {
-			userTotalTime = totalTimes.get(userTime.snowflake);
+		if (oldTime !== undefined) {
+			oldTime.time += userTime.time;
+			continue;
 		}
 
-		userTotalTime += userTime.time;
-		totalTimes.set(userTime.snowflake, userTotalTime);
+		totalTimes.push({ snowflake: userTime.snowflake, time: userTime.time });
 	}
 
-	for (const [snowflake, time] of totalTimes) {
-		message += `<@${snowflake}>: ${msToTime(time)}`;
+	const sortedTimes = totalTimes.sort((a, b) => a.time - b.time).reverse();
+
+	for (const userTime of sortedTimes) {
+		message += `<@${userTime.snowflake}>: ${msToTime(userTime.time)}`;
 		message += '\n';
 	}
 
