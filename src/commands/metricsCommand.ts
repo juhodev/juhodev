@@ -71,7 +71,6 @@ async function sendTotalTimes(channel: TextChannel | DMChannel | NewsChannel) {
 	const userTimes: DBVoiceLog[] = await knex<DBVoiceLog>('voice_log').where(
 		{},
 	);
-	// const totalTimes: Map<string, number> = new Map();
 
 	// Oh man I'm lazy
 	type Temp = {
@@ -82,7 +81,7 @@ async function sendTotalTimes(channel: TextChannel | DMChannel | NewsChannel) {
 
 	for (const userTime of userTimes) {
 		const oldTime: Temp = totalTimes.find(
-			(time) => (time.snowflake = userTime.snowflake),
+			(time) => time.snowflake === userTime.snowflake,
 		);
 
 		if (oldTime !== undefined) {
