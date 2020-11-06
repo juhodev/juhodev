@@ -304,6 +304,7 @@ class Steam {
 			(dbPlayer): CsgoPlayer => {
 				return {
 					name: dbPlayer.name,
+					playerId: dbPlayer.player_id,
 					avatar: dbPlayer.avatar_link,
 					ping: dbPlayer.ping,
 					kills: dbPlayer.kills,
@@ -328,26 +329,26 @@ class Steam {
 
 	private getGameData(dbGames: DBPlayerStatsWithGame[]): GameData {
 		const totalData: CsgoGameStats = {
-			assists: 0,
-			deaths: 0,
-			hsp: 0,
-			kills: 0,
-			matchDuration: 0,
-			waitTime: 0,
-			mvps: 0,
-			ping: 0,
-			score: 0,
+			assists: { value: 0 },
+			deaths: { value: 0 },
+			hsp: { value: 0 },
+			kills: { value: 0 },
+			matchDuration: { value: 0 },
+			waitTime: { value: 0 },
+			mvps: { value: 0 },
+			ping: { value: 0 },
+			score: { value: 0 },
 		};
 		const highestData: CsgoGameStats = {
-			assists: 0,
-			deaths: 0,
-			hsp: 0,
-			kills: 0,
-			matchDuration: 0,
-			waitTime: 0,
-			mvps: 0,
-			ping: 0,
-			score: 0,
+			assists: { value: 0, matchId: 0 },
+			deaths: { value: 0, matchId: 0 },
+			hsp: { value: 0, matchId: 0 },
+			kills: { value: 0, matchId: 0 },
+			matchDuration: { value: 0, matchId: 0 },
+			waitTime: { value: 0, matchId: 0 },
+			mvps: { value: 0, matchId: 0 },
+			ping: { value: 0, matchId: 0 },
+			score: { value: 0, matchId: 0 },
 		};
 		const mapStats: CsgoMapStats[] = [];
 		const fields = [
@@ -362,23 +363,26 @@ class Steam {
 
 		for (const dbGame of dbGames) {
 			for (const field of fields) {
-				totalData[field] += dbGame[field];
+				totalData[field].value += dbGame[field];
 
-				if (highestData[field] < dbGame[field]) {
-					highestData[field] = dbGame[field];
+				if (highestData[field].value < dbGame[field]) {
+					highestData[field].value = dbGame[field];
+					highestData[field].matchId = dbGame['match_id'];
 				}
 			}
 
 			const { wait_time, match_duration, map } = dbGame;
-			totalData.waitTime += wait_time;
-			totalData.matchDuration += match_duration;
+			totalData.waitTime.value += wait_time;
+			totalData.matchDuration.value += match_duration;
 
-			if (highestData.waitTime < wait_time) {
-				highestData.waitTime = wait_time;
+			if (highestData.waitTime.value < wait_time) {
+				highestData.waitTime.value = wait_time;
+				highestData.waitTime.matchId = dbGame['match_id'];
 			}
 
-			if (highestData.matchDuration < match_duration) {
-				highestData.matchDuration = match_duration;
+			if (highestData.matchDuration.value < match_duration) {
+				highestData.matchDuration.value = match_duration;
+				highestData.matchDuration.matchId = dbGame['match_id'];
 			}
 
 			let mapData: CsgoMapStats = mapStats.find(
@@ -406,15 +410,17 @@ class Steam {
 		return {
 			highest: highestData,
 			averages: {
-				assists: totalData.assists / dbGames.length,
-				deaths: totalData.deaths / dbGames.length,
-				hsp: totalData.hsp / dbGames.length,
-				kills: totalData.kills / dbGames.length,
-				matchDuration: totalData.matchDuration / dbGames.length,
-				waitTime: totalData.waitTime / dbGames.length,
-				mvps: totalData.mvps / dbGames.length,
-				ping: totalData.ping / dbGames.length,
-				score: totalData.score / dbGames.length,
+				assists: { value: totalData.assists.value / dbGames.length },
+				deaths: { value: totalData.deaths.value / dbGames.length },
+				hsp: { value: totalData.hsp.value / dbGames.length },
+				kills: { value: totalData.kills.value / dbGames.length },
+				matchDuration: {
+					value: totalData.matchDuration.value / dbGames.length,
+				},
+				waitTime: { value: totalData.waitTime.value / dbGames.length },
+				mvps: { value: totalData.mvps.value / dbGames.length },
+				ping: { value: totalData.ping.value / dbGames.length },
+				score: { value: totalData.score.value / dbGames.length },
 			},
 			mapStats: mapStats.map(
 				(map): CsgoMapStats => {

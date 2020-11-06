@@ -10,15 +10,15 @@ export type CsgoProfile = {
 };
 
 export type CsgoGameStats = {
-	ping: number;
-	kills: number;
-	assists: number;
-	deaths: number;
-	mvps: number;
-	hsp: number;
-	score: number;
-	matchDuration: number;
-	waitTime: number;
+	ping: { value: number; matchId?: number };
+	kills: { value: number; matchId?: number };
+	assists: { value: number; matchId?: number };
+	deaths: { value: number; matchId?: number };
+	mvps: { value: number; matchId?: number };
+	hsp: { value: number; matchId?: number };
+	score: { value: number; matchId?: number };
+	matchDuration: { value: number; matchId?: number };
+	waitTime: { value: number; matchId?: number };
 };
 
 export type CsgoMapStats = {
@@ -35,6 +35,7 @@ export type CsgoUser = {
 
 export type CsgoPlayer = {
 	name: string;
+	playerId: string;
 	avatar: string;
 	ping: number;
 	kills: number;
@@ -43,7 +44,7 @@ export type CsgoPlayer = {
 	mvps: number;
 	hsp: number;
 	score: number;
-}
+};
 
 export type CsgoMatch = {
 	players: CsgoPlayer[];

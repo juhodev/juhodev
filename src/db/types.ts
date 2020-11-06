@@ -185,6 +185,7 @@ export type DBPlayerStatsWithGame = {
 
 export type DBPlayerStatsWithPlayerInfo = {
 	id: string;
+	player_id: string;
 	steam_link: string;
 	avatar_link: string;
 	name: string;
