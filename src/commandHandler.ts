@@ -27,6 +27,10 @@ class CommandHandler {
 		const args = content.split(' ');
 		const command = args.shift();
 
+		if(command === '!poll') {
+			return;
+		}
+
 		console.log(`${author.username}: ${command} ${JSON.stringify(args)}`);
 
 		if (!this.commands.has(command)) {
