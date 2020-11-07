@@ -1,14 +1,22 @@
 import expressPromiseRouter from 'express-promise-router';
 import { steam } from '../../server';
 import { verifyIdentity } from '../middleware/middleware';
-import { CsgoMatch, CsgoProfile, CsgoUser } from '../../../steam/types';
+import {
+	AddResponse,
+	CsgoMatch,
+	CsgoProfile,
+	CsgoUser,
+	UploadCode,
+} from '../../../steam/types';
 import {
 	SteamMatchResponse,
 	SteamRouteResponse,
 	SteamSearchResponse,
+	SteamUploadCodeResponse,
 } from './types';
 import { UserData } from '../../types';
 import { getUserDataWithBearer } from '../../user';
+import { response } from 'express';
 
 const router = expressPromiseRouter();
 
@@ -41,6 +49,31 @@ router.get('/match', [verifyIdentity], async (req, res) => {
 	res.json(response);
 });
 
+router.post('/stats', [], async (req, res) => {
+	const { games, uploadCode } = req.body;
+
+	const addResponse: AddResponse = await steam.addDataFromExtension(
+		games,
+		uploadCode,
+	);
+
+	res.json(addResponse);
+});
+
+router.get('/uploadCode', [verifyIdentity], async (req, res) => {
+	const bearer: string = req.headers.authorization;
+	const userData: UserData = await getUserDataWithBearer(bearer);
+	const uploadCode: UploadCode = steam.getUploadCode(userData.snowflake);
+
+	const response: SteamUploadCodeResponse = {
+		error: false,
+		uploadCode: uploadCode.code,
+		userData,
+	};
+
+	res.json(response);
+});
+
 router.get('/:id', [verifyIdentity], async (req, res) => {
 	const { id } = req.params;
 	const profile: CsgoProfile = await steam.getProfile(id);
@@ -55,19 +88,6 @@ router.get('/:id', [verifyIdentity], async (req, res) => {
 	};
 
 	res.json(response);
-});
-
-router.post('/stats', [], async (req, res) => {
-	const { games } = req.body;
-	steam.addDataFromExtension(games);
-	res.json({ ok: 200 });
-});
-
-router.post('/', [], async (req, res) => {
-	const { url } = req.body;
-
-	await steam.saveData(url);
-	res.sendStatus(200);
 });
 
 export default router;

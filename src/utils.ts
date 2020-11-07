@@ -10,7 +10,7 @@ import { uuid } from 'uuidv4';
 const streamPipeline = util.promisify(require('stream').pipeline);
 
 export function msToTime(ms: number) {
-	const hours = Math.floor((ms / (1000 * 60 * 60)));
+	const hours = Math.floor(ms / (1000 * 60 * 60));
 	const minutes = Math.floor((ms / (1000 * 60)) % 60);
 
 	return `${hours} hours ${minutes} minutes`;
@@ -51,4 +51,18 @@ export async function downloadTxt(url: string): Promise<string> {
 	} else {
 		return undefined;
 	}
+}
+
+// https://stackoverflow.com/a/1349426
+export function makeId(length: number): string {
+	let result: string = '';
+	const characters: string =
+		'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+	const charactersLength = characters.length;
+	for (let i = 0; i < length; i++) {
+		result += characters.charAt(
+			Math.floor(Math.random() * charactersLength),
+		);
+	}
+	return result;
 }

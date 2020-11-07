@@ -147,6 +147,7 @@ export type DBCsgoGame = {
 	ctRounds: number;
 	tRounds: number;
 	winner: string;
+	uploaded_by: string;
 };
 
 export type DBCsgoPlayer = {
@@ -154,6 +155,7 @@ export type DBCsgoPlayer = {
 	steam_link: string;
 	avatar_link: string;
 	name: string;
+	uploaded_by: string;
 };
 
 export type DBCsgoStats = {
@@ -168,6 +170,7 @@ export type DBCsgoStats = {
 	hsp: number;
 	score: number;
 	side: string;
+	uploaded_by: string;
 };
 
 export type DBPlayerStatsWithGame = {
@@ -206,4 +209,4 @@ export type DBPlayerStatsWithPlayerInfo = {
 	hsp: number;
 	score: number;
 	side: string;
-}
+};

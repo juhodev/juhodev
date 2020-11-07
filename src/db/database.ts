@@ -315,6 +315,10 @@ export async function initDatabase() {
 					name: 'winner',
 					type: ColumnType.STRING,
 				},
+				{
+					name: 'uploaded_by',
+					type: ColumnType.STRING,
+				},
 			],
 		},
 		{
@@ -336,6 +340,10 @@ export async function initDatabase() {
 				{
 					name: 'name',
 					type: ColumnType.TEXT,
+				},
+				{
+					name: 'uploaded_by',
+					type: ColumnType.STRING,
 				},
 			],
 		},
@@ -386,6 +394,10 @@ export async function initDatabase() {
 				},
 				{
 					name: 'side',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'uploaded_by',
 					type: ColumnType.STRING,
 				},
 			],

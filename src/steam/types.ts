@@ -85,3 +85,13 @@ export type ExtensionPlayerData = {
 	side: string;
 	score: number;
 };
+
+export type UploadCode = {
+	createdAt: number;
+	code: string;
+	createdFor: string;
+};
+
+export type AddResponse = {
+	alreadyExists: boolean;
+};

@@ -16,8 +16,10 @@ import {
 	ExtensionMatch,
 	ExtensionMapData,
 	ExtensionPlayerData,
+	UploadCode,
+	AddResponse,
 } from './types';
-import { downloadTxt } from '../utils';
+import { downloadTxt, makeId } from '../utils';
 import * as fs from 'fs';
 import { time } from 'console';
 
@@ -37,56 +39,13 @@ class Steam {
 	private csgoUsers: CsgoUser[];
 	private csgoMatchCache: Map<number, CsgoMatch>;
 
+	private uploadCodes: UploadCode[];
+
 	constructor() {
 		this.profiles = new Map();
 		this.csgoUsers = [];
 		this.csgoMatchCache = new Map();
-	}
-
-	async saveData(url: string) {
-		const filePath: string = await downloadTxt(url);
-		const data = this.readData(filePath);
-		const players: DBCsgoPlayer[] = [];
-		const stats: DBCsgoStats[] = [];
-
-		for (const game of data) {
-			const statsBatch: StatsBatch = await this.save(game, players);
-
-			players.push(...statsBatch.dbPlayers);
-			stats.push(...statsBatch.dbStats);
-		}
-
-		const oldPlayers: DBCsgoPlayer[] = await knex<DBCsgoPlayer>(
-			'csgo_players',
-		).where({});
-		const oldStats: DBCsgoStats[] = await knex<DBCsgoStats>(
-			'csgo_stats',
-		).where({});
-
-		const newPlayers: DBCsgoPlayer[] = players.filter((player) => {
-			const oldPlayer: DBCsgoPlayer = oldPlayers.find(
-				(x) => x.id === player.id,
-			);
-
-			return oldPlayer === undefined;
-		});
-
-		const newStats: DBCsgoStats[] = stats.filter((stat) => {
-			const oldStat: DBCsgoStats = oldStats.find(
-				(x) =>
-					x.player_id === stat.player_id &&
-					x.match_id === stat.match_id,
-			);
-
-			return oldStat === undefined;
-		});
-
-		await knex<DBCsgoPlayer>('csgo_players').insert(newPlayers);
-		await knex<DBCsgoStats>('csgo_stats').insert(newStats);
-
-		// Remove all caches profiles and players when new data is added.
-		this.profiles.clear();
-		this.csgoUsers = [];
+		this.uploadCodes = [];
 	}
 
 	async getProfile(id: string): Promise<CsgoProfile> {
@@ -131,34 +90,6 @@ class Steam {
 		return undefined;
 	}
 
-	private async save(
-		game: object,
-		oldPlayers: DBCsgoPlayer[],
-	): Promise<StatsBatch> {
-		const gameId: number = await this.saveGame(game['game']);
-
-		const players = game['players'];
-		const dbPlayersArray: DBCsgoPlayer[] = [];
-		const dbStatsArray: DBCsgoStats[] = [];
-		for (const player of players) {
-			const dbPlayer: DBCsgoPlayer = await this.getPlayer(
-				player,
-				oldPlayers,
-			);
-			const dbStats: DBCsgoStats = this.getStats(player, gameId);
-
-			if (dbPlayer !== undefined) {
-				dbPlayersArray.push(dbPlayer);
-			}
-			dbStatsArray.push(dbStats);
-		}
-
-		return {
-			dbPlayers: dbPlayersArray,
-			dbStats: dbStatsArray,
-		};
-	}
-
 	private async saveGame(game: object): Promise<number> {
 		const map: string = game['map'].split(' ')[1];
 		const date: number = new Date(game['date']).getTime();
@@ -193,52 +124,6 @@ class Steam {
 			.returning('id');
 
 		return gameId;
-	}
-
-	private async getPlayer(
-		player: object,
-		oldPlayers: DBCsgoPlayer[],
-	): Promise<DBCsgoPlayer> {
-		const id: string = player['miniprofile'];
-		if (oldPlayers.find((player) => player.id === id)) {
-			return undefined;
-		}
-
-		const steamLink: string = '';
-		const avatarLink: string = player['avatarSrc'];
-		const name: string = player['name'].replace(/[\u0800-\uFFFF]/g, '');
-
-		return {
-			id,
-			steam_link: steamLink,
-			avatar_link: avatarLink,
-			name,
-		};
-	}
-
-	private getStats(player: object, gameId: number): DBCsgoStats {
-		const id: string = player['miniprofile'];
-		const ping: number = player['ping'];
-		const kills: number = player['kills'];
-		const assists: number = player['assists'];
-		const deaths: number = player['deaths'];
-		const mvps: number = player['mvps'];
-		const hsp: number = player['hsp'];
-		const score: number = player['score'];
-		const side: string = player['side'];
-
-		return {
-			match_id: gameId,
-			player_id: id,
-			ping,
-			kills,
-			assists,
-			deaths,
-			mvps,
-			hsp,
-			score,
-			side,
-		};
 	}
 
 	private async buildProfile(id: string) {
@@ -338,15 +223,76 @@ class Steam {
 		return game;
 	}
 
-	async addDataFromExtension(matches: ExtensionMatch[]) {
-		for (const match of matches) {
-			await this.addMatchFromExtension(match);
+	async addDataFromExtension(
+		matches: ExtensionMatch[],
+		code: string,
+	): Promise<AddResponse> {
+		const uploadCode: UploadCode = this.uploadCodes.find(
+			(x) => x.code === code,
+		);
+
+		if (uploadCode === undefined) {
+			return;
 		}
+
+		const addResponse: AddResponse = {
+			alreadyExists: false,
+		};
+
+		const players: DBCsgoPlayer[] = [];
+		const stats: DBCsgoStats[] = [];
+
+		const oldPlayers: DBCsgoPlayer[] = await knex<DBCsgoPlayer>(
+			'csgo_players',
+		).where({});
+		const oldStats: DBCsgoStats[] = await knex<DBCsgoStats>(
+			'csgo_stats',
+		).where({});
+
+		for (const match of matches) {
+			const response: {
+				addResponse: AddResponse;
+				stats: StatsBatch;
+			} = await this.addMatchFromExtension(
+				match,
+				uploadCode,
+				oldPlayers,
+				oldStats,
+			);
+
+			if (
+				!addResponse.alreadyExists &&
+				response.addResponse.alreadyExists
+			) {
+				addResponse.alreadyExists = true;
+			}
+
+			players.push(...response.stats.dbPlayers);
+			stats.push(...response.stats.dbStats);
+			oldPlayers.push(...response.stats.dbPlayers);
+			oldStats.push(...response.stats.dbStats);
+		}
+
+		await knex<DBCsgoPlayer>('csgo_players').insert(players);
+		await knex<DBCsgoStats>('csgo_stats').insert(stats);
+
+		this.profiles.clear();
+		this.csgoUsers = [];
+
+		return addResponse;
 	}
 
-	async addMatchFromExtension(extensionMatch: ExtensionMatch) {
+	async addMatchFromExtension(
+		extensionMatch: ExtensionMatch,
+		uploadCode: UploadCode,
+		oldPlayers: DBCsgoPlayer[],
+		oldStats: DBCsgoStats[],
+	): Promise<{ addResponse: AddResponse; stats: StatsBatch }> {
 		const mapData: ExtensionMapData = extensionMatch.game;
-		const dbGame: DBCsgoGame = this.dbCsgoGameFromExtensionGame(mapData);
+		const dbGame: DBCsgoGame = this.dbCsgoGameFromExtensionGame(
+			mapData,
+			uploadCode,
+		);
 
 		const oldMatch: DBCsgoGame = await knex<DBCsgoGame>('csgo_games')
 			.where({
@@ -355,6 +301,8 @@ class Steam {
 				match_duration: dbGame.match_duration,
 			})
 			.first();
+
+		const alreadyExists: boolean = oldMatch !== undefined;
 
 		let matchId: number;
 
@@ -366,50 +314,83 @@ class Steam {
 			matchId = oldMatch.id;
 		}
 
+		const dbPlayersArray: DBCsgoPlayer[] = [];
+		const dbStatsArray: DBCsgoStats[] = [];
+
 		const players: ExtensionPlayerData[] = extensionMatch.players;
 		for (const player of players) {
-			const oldPlayer: DBCsgoPlayer = await knex<DBCsgoPlayer>(
-				'csgo_players',
-			)
-				.where({
-					id: player.miniprofile,
-				})
-				.first();
+			const dbPlayer: DBCsgoPlayer = {
+				avatar_link: player.avatarSrc,
+				id: player.miniprofile,
+				name: player.name,
+				steam_link: player.steamLink,
+				uploaded_by: uploadCode.createdFor,
+			};
 
+			const dbStats: DBCsgoStats = {
+				assists: player.assists,
+				deaths: player.deaths,
+				hsp: player.hsp,
+				player_id: player.miniprofile,
+				kills: player.kills,
+				mvps: player.mvps,
+				ping: player.ping,
+				score: player.score,
+				side: player.side,
+				match_id: matchId,
+				uploaded_by: uploadCode.createdFor,
+			};
+
+			const oldPlayer: DBCsgoPlayer = oldPlayers.find(
+				(p) => p.id === dbPlayer.id,
+			);
 			if (oldPlayer === undefined) {
-				await knex<DBCsgoPlayer>('csgo_players').insert({
-					avatar_link: player.avatarSrc,
-					id: player.miniprofile,
-					name: player.name,
-					steam_link: player.steamLink,
-				});
+				dbPlayersArray.push(dbPlayer);
 			}
 
-			const oldStats: DBCsgoStats = await knex<DBCsgoStats>('csgo_stats')
-				.where({
-					match_id: matchId,
-					player_id: player.miniprofile,
-				})
-				.first();
+			const oldStat: DBCsgoStats = oldStats.find(
+				(s) =>
+					s.match_id === dbStats.match_id &&
+					s.player_id === dbStats.player_id,
+			);
 
-			if (oldStats === undefined) {
-				await knex<DBCsgoStats>('csgo_stats').insert({
-					assists: player.assists,
-					deaths: player.deaths,
-					hsp: player.hsp,
-					player_id: player.miniprofile,
-					kills: player.kills,
-					mvps: player.mvps,
-					ping: player.ping,
-					score: player.score,
-					side: player.side,
-					match_id: matchId,
-				});
+			if (oldStat === undefined) {
+				dbStatsArray.push(dbStats);
 			}
 		}
+
+		const statsBatch: StatsBatch = {
+			dbPlayers: dbPlayersArray,
+			dbStats: dbStatsArray,
+		};
+
+		return { addResponse: { alreadyExists }, stats: statsBatch };
 	}
 
-	private dbCsgoGameFromExtensionGame(mapData: ExtensionMapData): DBCsgoGame {
+	getUploadCode(snowflake: string): UploadCode {
+		const oldCode: UploadCode = this.uploadCodes.find(
+			(x) => x.createdFor === snowflake,
+		);
+		if (oldCode !== undefined) {
+			return oldCode;
+		}
+
+		const code = makeId(8).toUpperCase();
+
+		const uploadCode: UploadCode = {
+			createdAt: new Date().getTime(),
+			createdFor: snowflake,
+			code,
+		};
+
+		this.uploadCodes.push(uploadCode);
+		return uploadCode;
+	}
+
+	private dbCsgoGameFromExtensionGame(
+		mapData: ExtensionMapData,
+		uploadCode: UploadCode,
+	): DBCsgoGame {
 		const date: number = new Date(mapData.date).getTime();
 
 		const timeAsString: string = mapData.matchDuration.split(': ')[1];
@@ -452,6 +433,7 @@ class Steam {
 			tRounds,
 			winner,
 			date,
+			uploaded_by: uploadCode.createdFor,
 		};
 	}
 
