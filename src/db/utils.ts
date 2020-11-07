@@ -7,5 +7,6 @@ export const knex: Knex = Knex({
 		user: 'root',
 		password: process.env.MYSQL_PASSWORD,
 		database: 'baavo',
+		charset: 'utf8mb4',
 	},
 });

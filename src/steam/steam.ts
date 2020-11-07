@@ -13,9 +13,13 @@ import {
 	CsgoPlayer,
 	CsgoProfile,
 	CsgoUser,
+	ExtensionMatch,
+	ExtensionMapData,
+	ExtensionPlayerData,
 } from './types';
 import { downloadTxt } from '../utils';
 import * as fs from 'fs';
+import { time } from 'console';
 
 type GameData = {
 	averages: CsgoGameStats;
@@ -221,6 +225,7 @@ class Steam {
 		const mvps: number = player['mvps'];
 		const hsp: number = player['hsp'];
 		const score: number = player['score'];
+		const side: string = player['side'];
 
 		return {
 			match_id: gameId,
@@ -232,6 +237,7 @@ class Steam {
 			mvps,
 			hsp,
 			score,
+			side,
 		};
 	}
 
@@ -313,6 +319,8 @@ class Steam {
 					mvps: dbPlayer.mvps,
 					hsp: dbPlayer.hsp,
 					score: dbPlayer.score,
+					steamLink: dbPlayer.steam_link,
+					side: dbPlayer.side,
 				};
 			},
 		);
@@ -322,9 +330,129 @@ class Steam {
 			matchDuration: dbMatch.match_duration,
 			players: players,
 			waitTime: dbMatch.wait_time,
+			ctRounds: dbMatch.ctRounds,
+			tRounds: dbMatch.tRounds,
+			winner: dbMatch.winner,
 		};
 
 		return game;
+	}
+
+	async addDataFromExtension(matches: ExtensionMatch[]) {
+		for (const match of matches) {
+			await this.addMatchFromExtension(match);
+		}
+	}
+
+	async addMatchFromExtension(extensionMatch: ExtensionMatch) {
+		const mapData: ExtensionMapData = extensionMatch.game;
+		const dbGame: DBCsgoGame = this.dbCsgoGameFromExtensionGame(mapData);
+
+		const oldMatch: DBCsgoGame = await knex<DBCsgoGame>('csgo_games')
+			.where({
+				map: dbGame.map,
+				date: dbGame.date,
+				match_duration: dbGame.match_duration,
+			})
+			.first();
+
+		let matchId: number;
+
+		if (oldMatch === undefined) {
+			matchId = await knex<DBCsgoGame>('csgo_games')
+				.insert(dbGame)
+				.returning('id');
+		} else {
+			matchId = oldMatch.id;
+		}
+
+		const players: ExtensionPlayerData[] = extensionMatch.players;
+		for (const player of players) {
+			const oldPlayer: DBCsgoPlayer = await knex<DBCsgoPlayer>(
+				'csgo_players',
+			)
+				.where({
+					id: player.miniprofile,
+				})
+				.first();
+
+			if (oldPlayer === undefined) {
+				await knex<DBCsgoPlayer>('csgo_players').insert({
+					avatar_link: player.avatarSrc,
+					id: player.miniprofile,
+					name: player.name,
+					steam_link: player.steamLink,
+				});
+			}
+
+			const oldStats: DBCsgoStats = await knex<DBCsgoStats>('csgo_stats')
+				.where({
+					match_id: matchId,
+					player_id: player.miniprofile,
+				})
+				.first();
+
+			if (oldStats === undefined) {
+				await knex<DBCsgoStats>('csgo_stats').insert({
+					assists: player.assists,
+					deaths: player.deaths,
+					hsp: player.hsp,
+					player_id: player.miniprofile,
+					kills: player.kills,
+					mvps: player.mvps,
+					ping: player.ping,
+					score: player.score,
+					side: player.side,
+					match_id: matchId,
+				});
+			}
+		}
+	}
+
+	private dbCsgoGameFromExtensionGame(mapData: ExtensionMapData): DBCsgoGame {
+		const date: number = new Date(mapData.date).getTime();
+
+		const timeAsString: string = mapData.matchDuration.split(': ')[1];
+		const timeSplit: string[] = timeAsString.split(':');
+
+		const durationMinutes: number = parseInt(timeSplit[0]);
+		const durationSeconds: number = parseInt(timeSplit[1]);
+		const matchDuration: number = durationMinutes * 60 + durationSeconds;
+
+		const waitAsString: string = mapData.waitTime.split(': ')[1];
+		const waitSplit: string[] = waitAsString.split(':');
+
+		const waitMinutes: number = parseInt(waitSplit[0]);
+		const waitSeconds: number = parseInt(waitSplit[1]);
+		const waitTime: number = waitMinutes * 60 + waitSeconds;
+
+		const mapFirstSpaceIndex: number = mapData.map.indexOf(' ');
+		const map: string = mapData.map.substr(
+			mapFirstSpaceIndex,
+			mapData.map.length,
+		);
+
+		const scoreSplit: string[] = mapData.score.split(':');
+		const ctRounds: number = parseInt(scoreSplit[0]);
+		const tRounds: number = parseInt(scoreSplit[1]);
+		let winner: string;
+		if (ctRounds > tRounds) {
+			winner = 'CT';
+		} else if (tRounds > ctRounds) {
+			winner = 'T';
+		} else {
+			winner = 'TIE';
+		}
+
+		return {
+			match_duration: matchDuration,
+			wait_time: waitTime,
+			map,
+			ctRounds,
+			tRounds,
+			winner,
+			date,
+		};
 	}
 
 	private getGameData(dbGames: DBPlayerStatsWithGame[]): GameData {

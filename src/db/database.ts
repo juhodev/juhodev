@@ -303,6 +303,18 @@ export async function initDatabase() {
 					name: 'match_duration',
 					type: ColumnType.INTEGER,
 				},
+				{
+					name: 'ctRounds',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'tRounds',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'winner',
+					type: ColumnType.STRING,
+				},
 			],
 		},
 		{
@@ -371,6 +383,10 @@ export async function initDatabase() {
 				{
 					name: 'score',
 					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'side',
+					type: ColumnType.STRING,
 				},
 			],
 		},

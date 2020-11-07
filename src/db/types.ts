@@ -139,11 +139,14 @@ export type DBClipWithUserInfo = {
 };
 
 export type DBCsgoGame = {
-	id: number;
+	id?: number;
 	map: string;
 	date: number;
 	wait_time: number;
 	match_duration: number;
+	ctRounds: number;
+	tRounds: number;
+	winner: string;
 };
 
 export type DBCsgoPlayer = {
@@ -164,6 +167,7 @@ export type DBCsgoStats = {
 	mvps: number;
 	hsp: number;
 	score: number;
+	side: string;
 };
 
 export type DBPlayerStatsWithGame = {
@@ -177,10 +181,14 @@ export type DBPlayerStatsWithGame = {
 	mvps: number;
 	hsp: number;
 	score: number;
+	side: string;
 	map: string;
 	date: number;
 	wait_time: number;
 	match_duration: number;
+	ctRounds: number;
+	tRounds: number;
+	winner: string;
 };
 
 export type DBPlayerStatsWithPlayerInfo = {
@@ -197,4 +205,5 @@ export type DBPlayerStatsWithPlayerInfo = {
 	mvps: number;
 	hsp: number;
 	score: number;
+	side: string;
 }

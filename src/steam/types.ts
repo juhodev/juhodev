@@ -36,6 +36,7 @@ export type CsgoUser = {
 export type CsgoPlayer = {
 	name: string;
 	playerId: string;
+	steamLink: string;
 	avatar: string;
 	ping: number;
 	kills: number;
@@ -44,6 +45,7 @@ export type CsgoPlayer = {
 	mvps: number;
 	hsp: number;
 	score: number;
+	side: string;
 };
 
 export type CsgoMatch = {
@@ -51,4 +53,35 @@ export type CsgoMatch = {
 	map: string;
 	matchDuration: number;
 	waitTime: number;
+	ctRounds: number;
+	tRounds: number;
+	winner: string;
+};
+
+export type ExtensionMatch = {
+	game: ExtensionMapData;
+	players: ExtensionPlayerData[];
+};
+
+export type ExtensionMapData = {
+	map: string;
+	matchDuration: string;
+	date: string;
+	score: string;
+	waitTime: string;
+};
+
+export type ExtensionPlayerData = {
+	avatarSrc: string;
+	miniprofile: string;
+	name: string;
+	steamLink: string;
+	assists: number;
+	deaths: number;
+	hsp: number;
+	kills: number;
+	mvps: number;
+	ping: number;
+	side: string;
+	score: number;
 };

@@ -57,6 +57,12 @@ router.get('/:id', [verifyIdentity], async (req, res) => {
 	res.json(response);
 });
 
+router.post('/stats', [], async (req, res) => {
+	const { games } = req.body;
+	steam.addDataFromExtension(games);
+	res.json({ ok: 200 });
+});
+
 router.post('/', [], async (req, res) => {
 	const { url } = req.body;
 
