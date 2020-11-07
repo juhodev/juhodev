@@ -236,7 +236,7 @@ class Steam {
 		}
 
 		const addResponse: AddResponse = {
-			alreadyExists: false,
+			alreadyExists: true,
 		};
 
 		const players: DBCsgoPlayer[] = [];
@@ -260,11 +260,8 @@ class Steam {
 				oldStats,
 			);
 
-			if (
-				!addResponse.alreadyExists &&
-				response.addResponse.alreadyExists
-			) {
-				addResponse.alreadyExists = true;
+			if (!addResponse.alreadyExists) {
+				addResponse.alreadyExists = false;
 			}
 
 			players.push(...response.stats.dbPlayers);
