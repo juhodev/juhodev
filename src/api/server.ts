@@ -30,12 +30,17 @@ export function startApi() {
 		next();
 	});
 
+	const corsOptions = {
+		origin: 'https://steamcommunity.com',
+		optionsSuccessStatus: 200,
+	};
+
 	app.use('/api/user', UserRouter);
 	app.use('/api/auth', AuthRouter);
 	app.use('/api/images', ImageRouter);
 	app.use('/api/clips', ClipsRouter);
 	app.use('/api/profile', ProfileRouter);
-	app.use('/api/steam', SteamRouter);
+	app.use('/api/steam', cors(corsOptions), SteamRouter);
 
 	app.use('/baavo', express.static('data/baavo'));
 	app.use('/img', express.static('data/imgs'));
