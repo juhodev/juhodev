@@ -215,8 +215,8 @@ class Steam {
 			matchDuration: dbMatch.match_duration,
 			players: players,
 			waitTime: dbMatch.wait_time,
-			ctRounds: dbMatch.ctRounds,
-			tRounds: dbMatch.tRounds,
+			ctRounds: dbMatch.ct_rounds,
+			tRounds: dbMatch.t_rounds,
 			winner: dbMatch.winner,
 		};
 
@@ -409,7 +409,7 @@ class Steam {
 
 		const mapFirstSpaceIndex: number = mapData.map.indexOf(' ');
 		const map: string = mapData.map.substr(
-			mapFirstSpaceIndex,
+			mapFirstSpaceIndex + 1,
 			mapData.map.length,
 		);
 
@@ -429,8 +429,8 @@ class Steam {
 			match_duration: matchDuration,
 			wait_time: waitTime,
 			map,
-			ctRounds,
-			tRounds,
+			ct_rounds: ctRounds,
+			t_rounds: tRounds,
 			winner,
 			date,
 			uploaded_by: uploadCode.createdFor,

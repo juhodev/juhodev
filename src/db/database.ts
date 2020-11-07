@@ -304,11 +304,11 @@ export async function initDatabase() {
 					type: ColumnType.INTEGER,
 				},
 				{
-					name: 'ctRounds',
+					name: 'ct_rounds',
 					type: ColumnType.INTEGER,
 				},
 				{
-					name: 'tRounds',
+					name: 't_rounds',
 					type: ColumnType.INTEGER,
 				},
 				{
