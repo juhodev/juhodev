@@ -17,6 +17,7 @@ import GifCommand from './commands/gifCommand';
 import ImgCommand from './commands/imgCommand';
 import ClipsCommand from './commands/clipsCommand';
 import MigrateCommand from './commands/migrateCommand';
+import CsgoCommand from './commands/csgoCommand';
 
 import { logUsers } from './userLogger';
 import { startApi } from './api/server';
@@ -40,6 +41,7 @@ import { startApi } from './api/server';
 	commandHandler.registerCommand(ImgCommand);
 	commandHandler.registerCommand(ClipsCommand);
 	commandHandler.registerCommand(MigrateCommand);
+	commandHandler.registerCommand(CsgoCommand);
 
 	client.on('ready', () => {
 		console.log('Connected');

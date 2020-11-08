@@ -35,26 +35,41 @@ type StatsBatch = {
 };
 
 class Steam {
-	private profiles: Map<string, CsgoProfile>;
+	private profiles: CsgoProfile[];
 	private csgoUsers: CsgoUser[];
 	private csgoMatchCache: Map<number, CsgoMatch>;
 
 	private uploadCodes: UploadCode[];
 
 	constructor() {
-		this.profiles = new Map();
+		this.profiles = [];
 		this.csgoUsers = [];
 		this.csgoMatchCache = new Map();
 		this.uploadCodes = [];
 	}
 
 	async getProfile(id: string): Promise<CsgoProfile> {
-		if (this.profiles.has(id)) {
-			return this.profiles.get(id);
+		const oldProfile: CsgoProfile = this.profiles.find(
+			(prof) => prof.id === id,
+		);
+		if (oldProfile !== undefined) {
+			return oldProfile;
 		}
 
-		await this.buildProfile(id);
-		return this.profiles.get(id);
+		const profile: CsgoProfile = await this.buildProfile(id);
+		return profile;
+	}
+
+	async getProfileWithLink(link: string): Promise<CsgoProfile> {
+		const player: DBCsgoPlayer = await knex<DBCsgoPlayer>('csgo_players')
+			.where({ steam_link: link })
+			.first();
+
+		if (player === undefined) {
+			return undefined;
+		}
+
+		return await this.getProfile(player.id);
 	}
 
 	async search(name: string): Promise<CsgoUser[]> {
@@ -77,56 +92,7 @@ class Steam {
 			.sort((a, b) => a.name.localeCompare(b.name));
 	}
 
-	private readData(filePath: string) {
-		const fileString: string = fs.readFileSync(filePath, 'utf-8');
-		const lines: string[] = fileString.split('\n');
-
-		for (const line of lines) {
-			if (line.startsWith('[{"game')) {
-				return JSON.parse(line);
-			}
-		}
-
-		return undefined;
-	}
-
-	private async saveGame(game: object): Promise<number> {
-		const map: string = game['map'].split(' ')[1];
-		const date: number = new Date(game['date']).getTime();
-
-		const waitTimeString: string = game['waitTime'].split('Time: ')[1];
-		const waitTimeSplit: string[] = waitTimeString.split(':');
-		const waitTime: number =
-			parseInt(waitTimeSplit[0]) * 60 + parseInt(waitTimeSplit[1]);
-
-		const matchDurationString: string = game['matchDuration'].split(
-			'Duration: ',
-		)[1];
-		const matchDurationSplit: string[] = matchDurationString.split(':');
-		const matchDuration: number =
-			parseInt(matchDurationSplit[0]) * 60 +
-			parseInt(matchDurationSplit[1]);
-
-		const oldGame: DBCsgoGame = await knex<DBCsgoGame>('csgo_games')
-			.where({ map, date })
-			.first();
-		if (oldGame !== undefined) {
-			return oldGame.id;
-		}
-
-		const gameId: number = await knex<DBCsgoGame>('csgo_games')
-			.insert({
-				map,
-				date,
-				wait_time: waitTime,
-				match_duration: matchDuration,
-			})
-			.returning('id');
-
-		return gameId;
-	}
-
-	private async buildProfile(id: string) {
+	private async buildProfile(id: string): Promise<CsgoProfile> {
 		const player: DBCsgoPlayer = await knex('csgo_players')
 			.where({ id })
 			.first();
@@ -158,7 +124,8 @@ class Steam {
 			mapStats: gameData.mapStats,
 		};
 
-		this.profiles.set(id, profile);
+		this.profiles.push(profile);
+		return profile;
 	}
 
 	async getMatch(matchId: number): Promise<CsgoMatch> {
@@ -273,7 +240,7 @@ class Steam {
 		await knex<DBCsgoPlayer>('csgo_players').insert(players);
 		await knex<DBCsgoStats>('csgo_stats').insert(stats);
 
-		this.profiles.clear();
+		this.profiles = [];
 		this.csgoUsers = [];
 
 		return addResponse;
