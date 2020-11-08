@@ -260,7 +260,7 @@ class Steam {
 				oldStats,
 			);
 
-			if (!addResponse.alreadyExists) {
+			if (!response.addResponse.alreadyExists) {
 				addResponse.alreadyExists = false;
 			}
 

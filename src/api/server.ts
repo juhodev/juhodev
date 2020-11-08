@@ -30,10 +30,18 @@ export function startApi() {
 		next();
 	});
 
-	const corsOptions = {
-		origin: 'https://steamcommunity.com',
-		optionsSuccessStatus: 200,
-	};
+	let corsOptions;
+	if (ENVIRONMENT === 'dev') {
+		corsOptions = {
+			origin: '*',
+			optionsSuccessStatus: 200,
+		};
+	} else {
+		corsOptions = {
+			origin: 'https://steamcommunity.com',
+			optionsSuccessStatus: 200,
+		};
+	}
 
 	app.use('/api/user', UserRouter);
 	app.use('/api/auth', AuthRouter);
