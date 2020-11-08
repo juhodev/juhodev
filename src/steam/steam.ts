@@ -61,6 +61,10 @@ class Steam {
 	}
 
 	async getProfileWithLink(link: string): Promise<CsgoProfile> {
+		if (link.endsWith('/')) {
+			link = link.substr(0, link.length - 1);
+		}
+
 		const player: DBCsgoPlayer = await knex<DBCsgoPlayer>('csgo_players')
 			.where({ steam_link: link })
 			.first();
