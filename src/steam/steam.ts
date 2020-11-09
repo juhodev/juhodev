@@ -117,12 +117,35 @@ class Steam {
 		const matchesPlayed: number = userGames.length;
 		const gameData: GameData = this.getGameData(userGames);
 
+		let won: number = 0;
+		let lost: number = 0;
+		let tied: number = 0;
+
+		for (const game of userGames) {
+			const playerSide: string = game.side;
+			const winner: string = game.winner;
+
+			if (winner === 'TIE') {
+				tied++;
+				continue;
+			}
+
+			if (playerSide === winner) {
+				won++;
+			} else {
+				lost++;
+			}
+		}
+
 		const profile: CsgoProfile = {
 			name,
 			id,
 			steamLink,
 			avatarLink,
 			matchesPlayed,
+			won,
+			lost,
+			tied,
 			gameAverages: gameData.averages,
 			gameHighest: gameData.highest,
 			mapStats: gameData.mapStats,

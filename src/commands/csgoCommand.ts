@@ -38,6 +38,15 @@ async function sendProfile(
 		.addField('Games saved', csgoProfile.matchesPlayed)
 		.addFields(
 			{
+				name: 'Won',
+				value: csgoProfile.won,
+				inline: true,
+			},
+			{ name: 'Lost', value: csgoProfile.lost, inline: true },
+			{ name: 'Tied', value: csgoProfile.tied, inline: true },
+		)
+		.addFields(
+			{
 				name: 'Kills',
 				value: `${Math.round(csgoProfile.gameAverages.kills.value)} (${
 					csgoProfile.gameHighest.kills.value
