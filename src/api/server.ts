@@ -4,6 +4,7 @@ import * as cors from 'cors';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as https from 'https';
+import * as responseTime from 'response-time';
 
 import UserRouter from './routes/user/userRoute';
 import AuthRouter from './routes/auth/authRoute';
@@ -20,6 +21,11 @@ export const steam: Steam = new Steam();
 
 export function startApi() {
 	const app = express();
+	app.use(
+		responseTime((req, res, time) => {
+			console.log(`Request ${req.url}, ${Math.round(time)}ms`);
+		}),
+	);
 	app.use(bodyParser.json());
 	if (process.env.ENVIRONMENT === 'dev') {
 		app.use(cors());

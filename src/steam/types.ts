@@ -10,6 +10,7 @@ export type CsgoProfile = {
 	gameAverages: CsgoGameStats;
 	gameHighest: CsgoGameStats;
 	mapStats: CsgoMapStats[];
+	tenBestGames: GameWithStats[];
 };
 
 export type CsgoGameStats = {
@@ -59,6 +60,15 @@ export type CsgoMatch = {
 	ctRounds: number;
 	tRounds: number;
 	winner: string;
+};
+
+export type GameWithStats = {
+	id: number;
+	map: string;
+	matchDuration: number;
+	ctRounds: number;
+	tRounds: number;
+	player: CsgoPlayer;
 };
 
 export type ExtensionMatch = {

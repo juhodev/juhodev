@@ -189,8 +189,8 @@ export type DBPlayerStatsWithGame = {
 	date: number;
 	wait_time: number;
 	match_duration: number;
-	ctRounds: number;
-	tRounds: number;
+	ct_rounds: number;
+	t_rounds: number;
 	winner: string;
 };
 

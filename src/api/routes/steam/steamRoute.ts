@@ -16,7 +16,6 @@ import {
 } from './types';
 import { UserData } from '../../types';
 import { getUserDataWithBearer } from '../../user';
-import { response } from 'express';
 
 const router = expressPromiseRouter();
 

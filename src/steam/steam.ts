@@ -18,10 +18,9 @@ import {
 	ExtensionPlayerData,
 	UploadCode,
 	AddResponse,
+	GameWithStats,
 } from './types';
 import { downloadTxt, makeId } from '../utils';
-import * as fs from 'fs';
-import { time } from 'console';
 
 type GameData = {
 	averages: CsgoGameStats;
@@ -113,6 +112,35 @@ class Steam {
 			(game) => game.player_id === id,
 		);
 
+		const tenBestDbGames: DBPlayerStatsWithGame[] = this.bestTenGamesInARow(
+			userGames,
+		);
+		const tenBestCsgoGames: GameWithStats[] = tenBestDbGames.map(
+			(game): GameWithStats => {
+				return {
+					id: game.match_id,
+					ctRounds: game.ct_rounds,
+					tRounds: game.t_rounds,
+					map: game.map,
+					matchDuration: game.match_duration,
+					player: {
+						assists: game.assists,
+						deaths: game.deaths,
+						hsp: game.hsp,
+						kills: game.kills,
+						mvps: game.mvps,
+						ping: game.ping,
+						score: game.score,
+						side: game.side,
+						name: player.name,
+						playerId: player.id,
+						avatar: player.avatar_link,
+						steamLink: player.steam_link,
+					},
+				};
+			},
+		);
+
 		const { name, steam_link: steamLink, avatar_link: avatarLink } = player;
 		const matchesPlayed: number = userGames.length;
 		const gameData: GameData = this.getGameData(userGames);
@@ -149,6 +177,7 @@ class Steam {
 			gameAverages: gameData.averages,
 			gameHighest: gameData.highest,
 			mapStats: gameData.mapStats,
+			tenBestGames: tenBestCsgoGames,
 		};
 
 		this.profiles.push(profile);
@@ -535,6 +564,42 @@ class Steam {
 				},
 			),
 		};
+	}
+
+	private bestTenGamesInARow(
+		games: DBPlayerStatsWithGame[],
+	): DBPlayerStatsWithGame[] {
+		const currentGames: DBPlayerStatsWithGame[] = [];
+		let total: number = 0;
+
+		let bestTotal: number = 0;
+		let bestGames: DBPlayerStatsWithGame[] = [];
+
+		for (const game of games) {
+			if (currentGames.length <= 10) {
+				total += game.score;
+				currentGames.push(game);
+
+				if (currentGames.length === 10) {
+					bestTotal = total;
+					bestGames = [...currentGames];
+				}
+				continue;
+			}
+
+			const removedGame: DBPlayerStatsWithGame = currentGames.shift();
+			total -= removedGame.score;
+
+			currentGames.push(game);
+			total += game.score;
+
+			if (total > bestTotal) {
+				bestTotal = total;
+				bestGames = [...currentGames];
+			}
+		}
+
+		return bestGames;
 	}
 }
 
