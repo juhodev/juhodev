@@ -7,6 +7,7 @@ import {
 	CsgoProfile,
 	CsgoUser,
 	GameWithStats,
+	MapStatistics,
 	SteamUser,
 	UploadCode,
 } from '../../../steam/types';
@@ -80,8 +81,11 @@ router.get('/games', [verifyIdentity], async (req, res) => {
 	const { id, page } = req.query;
 
 	const games: GameWithStats[] = await steam.getPlayerMatches(id, page);
+	const mapStatistics: MapStatistics = await steam.getPlayerMapStatistics(id);
+
 	const response: SteamGamesResponse = {
 		games,
+		mapStatistics,
 		error: false,
 	};
 
@@ -92,7 +96,6 @@ router.get('/user', [verifyIdentity], async (req, res) => {
 	const { id } = req.query;
 
 	const user: SteamUser = await steam.getUser(id);
-	console.log(user);
 	const response: SteamUserResponse = {
 		user,
 		error: false,

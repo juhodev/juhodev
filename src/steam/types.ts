@@ -116,3 +116,12 @@ export type UploadCode = {
 export type AddResponse = {
 	alreadyExists: boolean;
 };
+
+export type CsgoMap = {
+	name: string;
+	timesPlayed: number;
+};
+
+export type MapStatistics = {
+	maps: CsgoMap[];
+};

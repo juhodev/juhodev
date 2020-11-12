@@ -3,6 +3,7 @@ import {
 	CsgoProfile,
 	CsgoUser,
 	GameWithStats,
+	MapStatistics,
 	SteamUser,
 } from '../../../steam/types';
 import { UserData } from '../../types';
@@ -37,7 +38,8 @@ export type SteamUploadCodeResponse = {
 export type SteamGamesResponse = {
 	error: boolean;
 	errorCode?: number;
-	games: GameWithStats[];
+	games?: GameWithStats[];
+	mapStatistics: MapStatistics;
 };
 
 export type SteamUserResponse = {

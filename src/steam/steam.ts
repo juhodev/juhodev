@@ -20,6 +20,8 @@ import {
 	AddResponse,
 	GameWithStats,
 	SteamUser,
+	MapStatistics,
+	CsgoMap,
 } from './types';
 import { downloadTxt, makeId } from '../utils';
 
@@ -38,6 +40,7 @@ class Steam {
 	private profiles: CsgoProfile[];
 	private csgoUsers: CsgoUser[];
 	private csgoMatchCache: Map<number, CsgoMatch>;
+	private csgoMapStatisticsCache: Map<string, MapStatistics>;
 
 	private uploadCodes: UploadCode[];
 
@@ -46,6 +49,7 @@ class Steam {
 		this.csgoUsers = [];
 		this.csgoMatchCache = new Map();
 		this.uploadCodes = [];
+		this.csgoMapStatisticsCache = new Map();
 	}
 
 	async getProfile(id: string): Promise<CsgoProfile> {
@@ -313,9 +317,7 @@ class Steam {
 		await knex<DBCsgoPlayer>('csgo_players').insert(players);
 		await knex<DBCsgoStats>('csgo_stats').insert(stats);
 
-		this.profiles = [];
-		this.csgoUsers = [];
-
+		this.invalidateCaches();
 		return addResponse;
 	}
 
@@ -461,6 +463,40 @@ class Steam {
 		);
 
 		return gamesWithStats;
+	}
+
+	async getPlayerMapStatistics(playerId: string): Promise<MapStatistics> {
+		if (this.csgoMapStatisticsCache.has(playerId)) {
+			return this.csgoMapStatisticsCache.get(playerId);
+		}
+
+		const dbGames: DBPlayerStatsWithGame[] = await knex(
+			'csgo_stats',
+		).innerJoin('csgo_games', function () {
+			this.on('csgo_games.id', '=', 'csgo_stats.match_id').andOn(
+				'csgo_stats.player_id',
+				'=',
+				knex.raw(playerId),
+			);
+		});
+
+		const maps: CsgoMap[] = [];
+
+		for (const game of dbGames) {
+			const oldMap: CsgoMap = maps.find((x) => x.name === game.map);
+
+			if (oldMap !== undefined) {
+				oldMap.timesPlayed++;
+				continue;
+			}
+
+			maps.push({ name: game.map, timesPlayed: 1 });
+		}
+
+		const statistics: MapStatistics = { maps };
+		this.csgoMapStatisticsCache.set(playerId, statistics);
+
+		return statistics;
 	}
 
 	private async getPlayerStatsWithGames(
@@ -678,6 +714,17 @@ class Steam {
 		}
 
 		return bestGames;
+	}
+
+	/**
+	 * This invalidates all caches when new data is received from the extension. In reality I shouldn't need to
+	 * clear all the caches but this will happen so infrequently that building new data isn't going to be a
+	 * problem.
+	 */
+	private invalidateCaches() {
+		this.csgoUsers = [];
+		this.profiles = [];
+		this.csgoMapStatisticsCache.clear();
 	}
 }
 
