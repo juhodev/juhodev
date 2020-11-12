@@ -52,6 +52,13 @@ export type CsgoPlayer = {
 	side: string;
 };
 
+export type SteamUser = {
+	name: string;
+	steamId: string;
+	steamLink: string;
+	avatar: string;
+};
+
 export type CsgoMatch = {
 	players: CsgoPlayer[];
 	map: string;
@@ -64,6 +71,7 @@ export type CsgoMatch = {
 
 export type GameWithStats = {
 	id: number;
+	date: number;
 	map: string;
 	matchDuration: number;
 	ctRounds: number;

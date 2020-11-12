@@ -40,6 +40,11 @@ class UserMetrics {
 			const voiceChannel: VoiceChannel = channel;
 			const { members } = voiceChannel;
 
+			// Don't log afk user times
+			if (members.size <= 1) {
+				continue;
+			}
+
 			for (const [_, member] of members) {
 				const knexUpdateOrInsert: string = `INSERT INTO voice_log (combined, snowflake, channel, time) values (?, ?, ?, ?) ON DUPLICATE KEY UPDATE time=time+${LOG_INTERVAL}`;
 

@@ -19,6 +19,7 @@ import {
 	UploadCode,
 	AddResponse,
 	GameWithStats,
+	SteamUser,
 } from './types';
 import { downloadTxt, makeId } from '../utils';
 
@@ -119,6 +120,7 @@ class Steam {
 			(game): GameWithStats => {
 				return {
 					id: game.match_id,
+					date: game.date,
 					ctRounds: game.ct_rounds,
 					tRounds: game.t_rounds,
 					map: game.map,
@@ -244,6 +246,21 @@ class Steam {
 		};
 
 		return game;
+	}
+
+	async getUser(id: string): Promise<SteamUser> {
+		const dbPlayer: DBCsgoPlayer = await knex<DBCsgoPlayer>('csgo_players')
+			.where({ id })
+			.first();
+
+		const user: SteamUser = {
+			avatar: dbPlayer.avatar_link,
+			name: dbPlayer.name,
+			steamId: dbPlayer.id,
+			steamLink: dbPlayer.steam_link,
+		};
+
+		return user;
 	}
 
 	async addDataFromExtension(
@@ -405,6 +422,67 @@ class Steam {
 
 		this.uploadCodes.push(uploadCode);
 		return uploadCode;
+	}
+
+	async getPlayerMatches(
+		playerId: string,
+		page: number,
+	): Promise<GameWithStats[]> {
+		const games: DBPlayerStatsWithGame[] = await this.getPlayerStatsWithGames(
+			playerId,
+			page,
+		);
+
+		const gamesWithStats: GameWithStats[] = games.map(
+			(game): GameWithStats => {
+				return {
+					id: game.match_id,
+					date: game.date,
+					ctRounds: game.ct_rounds,
+					tRounds: game.t_rounds,
+					map: game.map,
+					matchDuration: game.match_duration,
+					player: {
+						assists: game.assists,
+						deaths: game.deaths,
+						hsp: game.hsp,
+						kills: game.kills,
+						mvps: game.mvps,
+						ping: game.ping,
+						score: game.score,
+						side: game.side,
+						name: '',
+						playerId: playerId,
+						avatar: '',
+						steamLink: '',
+					},
+				};
+			},
+		);
+
+		return gamesWithStats;
+	}
+
+	private async getPlayerStatsWithGames(
+		playerId: string,
+		page: number,
+	): Promise<DBPlayerStatsWithGame[]> {
+		const resultsInPage: number = 10;
+		const firstResult: number = page * resultsInPage;
+
+		const dbGames: DBPlayerStatsWithGame[] = await knex('csgo_stats')
+			.innerJoin('csgo_games', function () {
+				this.on('csgo_games.id', '=', 'csgo_stats.match_id').andOn(
+					'csgo_stats.player_id',
+					'=',
+					knex.raw(playerId),
+				);
+			})
+			.limit(10)
+			.offset(firstResult)
+			.orderBy('csgo_games.date');
+
+		return dbGames;
 	}
 
 	private dbCsgoGameFromExtensionGame(

@@ -6,13 +6,17 @@ import {
 	CsgoMatch,
 	CsgoProfile,
 	CsgoUser,
+	GameWithStats,
+	SteamUser,
 	UploadCode,
 } from '../../../steam/types';
 import {
+	SteamGamesResponse,
 	SteamMatchResponse,
 	SteamRouteResponse,
 	SteamSearchResponse,
 	SteamUploadCodeResponse,
+	SteamUserResponse,
 } from './types';
 import { UserData } from '../../types';
 import { getUserDataWithBearer } from '../../user';
@@ -36,7 +40,6 @@ router.get('/match', [verifyIdentity], async (req, res) => {
 
 	const bearer: string = req.headers.authorization;
 	const userData: UserData = await getUserDataWithBearer(bearer);
-
 	const csgoMatch: CsgoMatch = await steam.getMatchFromDB(id);
 
 	const response: SteamMatchResponse = {
@@ -68,6 +71,31 @@ router.get('/uploadCode', [verifyIdentity], async (req, res) => {
 		error: false,
 		uploadCode: uploadCode.code,
 		userData,
+	};
+
+	res.json(response);
+});
+
+router.get('/games', [verifyIdentity], async (req, res) => {
+	const { id, page } = req.query;
+
+	const games: GameWithStats[] = await steam.getPlayerMatches(id, page);
+	const response: SteamGamesResponse = {
+		games,
+		error: false,
+	};
+
+	res.json(response);
+});
+
+router.get('/user', [verifyIdentity], async (req, res) => {
+	const { id } = req.query;
+
+	const user: SteamUser = await steam.getUser(id);
+	console.log(user);
+	const response: SteamUserResponse = {
+		user,
+		error: false,
 	};
 
 	res.json(response);

@@ -1,4 +1,10 @@
-import { CsgoMatch, CsgoProfile, CsgoUser } from '../../../steam/types';
+import {
+	CsgoMatch,
+	CsgoProfile,
+	CsgoUser,
+	GameWithStats,
+	SteamUser,
+} from '../../../steam/types';
 import { UserData } from '../../types';
 
 export type SteamRouteResponse = {
@@ -26,4 +32,16 @@ export type SteamUploadCodeResponse = {
 	userData?: UserData;
 	errorCode?: number;
 	uploadCode?: string;
+};
+
+export type SteamGamesResponse = {
+	error: boolean;
+	errorCode?: number;
+	games: GameWithStats[];
+};
+
+export type SteamUserResponse = {
+	error: boolean;
+	errorCode?: number;
+	user?: SteamUser;
 };
