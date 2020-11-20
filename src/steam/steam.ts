@@ -219,7 +219,10 @@ class Steam {
 			dateMatches.push({ date: date.getTime(), matches: 1 });
 		}
 
-		return dateMatches;
+		const datesOrdered: DateMatches[] = dateMatches.sort(
+			(a, b) => a.date - b.date,
+		);
+		return datesOrdered;
 	}
 
 	async getMatchFromDB(matchId: number): Promise<CsgoMatch> {
