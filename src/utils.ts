@@ -66,3 +66,19 @@ export function makeId(length: number): string {
 	}
 	return result;
 }
+
+export function getAllDatesBetweenTwoDates(
+	firstDate: Date,
+	lastDate: Date,
+): Date[] {
+	const array: Date[] = [];
+	const dayInMilliseconds: number = 1000 * 60 * 60 * 24;
+
+	let currentDate: Date = firstDate;
+	while (currentDate.getTime() < lastDate.getTime()) {
+		array.push(new Date(currentDate.getTime()));
+		currentDate = new Date(currentDate.getTime() + dayInMilliseconds);
+	}
+
+	return array;
+}

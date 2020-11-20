@@ -24,7 +24,7 @@ import {
 	CsgoMap,
 	DateMatches,
 } from './types';
-import { downloadTxt, makeId } from '../utils';
+import { getAllDatesBetweenTwoDates, makeId } from '../utils';
 import { db } from '..';
 
 type GameData = {
@@ -195,34 +195,47 @@ class Steam {
 			playerId,
 		);
 
-		const roundedDates: Date[] = matches.map((match) => {
-			const date: Date = new Date(match.date);
-			const roundedDate: Date = new Date();
-			roundedDate.setFullYear(date.getFullYear());
-			roundedDate.setMonth(date.getMonth());
-			roundedDate.setDate(date.getDate());
+		const sortedDates = matches
+			.map((match) => match.date)
+			.sort((a, b) => a - b);
 
-			return roundedDate;
+		const allDates: Date[] = getAllDatesBetweenTwoDates(
+			new Date(sortedDates[0]),
+			new Date(new Date()),
+		);
+
+		const dateMatches: DateMatches[] = allDates.map((date) => {
+			return {
+				date: date.getTime(),
+				matches: 0,
+			};
 		});
 
-		const dateMatches: DateMatches[] = [];
-		for (const date of roundedDates) {
+		for (const date of allDates) {
+			const gamesThisDate: DBPlayerStatsWithMatch[] = matches.filter(
+				(match) => {
+					const matchDate: Date = new Date(match.date);
+					const thisDate: Date = new Date(date);
+
+					return (
+						matchDate.getFullYear() === thisDate.getFullYear() &&
+						matchDate.getMonth() === thisDate.getMonth() &&
+						matchDate.getDate() === thisDate.getDate()
+					);
+				},
+			);
+
 			const oldDate: DateMatches = dateMatches.find(
 				(dateMatch) => dateMatch.date === date.getTime(),
 			);
 
 			if (oldDate !== undefined) {
-				oldDate.matches++;
+				oldDate.matches = gamesThisDate.length;
 				continue;
 			}
-
-			dateMatches.push({ date: date.getTime(), matches: 1 });
 		}
 
-		const datesOrdered: DateMatches[] = dateMatches.sort(
-			(a, b) => a.date - b.date,
-		);
-		return datesOrdered;
+		return dateMatches;
 	}
 
 	async getMatchFromDB(matchId: number): Promise<CsgoMatch> {
