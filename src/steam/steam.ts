@@ -43,6 +43,7 @@ class Steam {
 	private csgoUsers: CsgoUser[];
 	private csgoMatchCache: Map<number, CsgoMatch>;
 	private csgoMapStatisticsCache: Map<string, MapStatistics>;
+	private csgoMatchFrequency: Map<string, DateMatches[]>;
 
 	private uploadCodes: UploadCode[];
 
@@ -52,6 +53,7 @@ class Steam {
 		this.csgoMatchCache = new Map();
 		this.uploadCodes = [];
 		this.csgoMapStatisticsCache = new Map();
+		this.csgoMatchFrequency = new Map();
 	}
 
 	async getProfile(id: string): Promise<CsgoProfile> {
@@ -191,6 +193,10 @@ class Steam {
 	}
 
 	async getPlayerMatchFrequency(playerId: string): Promise<DateMatches[]> {
+		if (this.csgoMatchFrequency.has(playerId)) {
+			return this.csgoMatchFrequency.get(playerId);
+		}
+
 		const matches: DBPlayerStatsWithMatch[] = await db.getCsgoPlayerStatsWithMatches(
 			playerId,
 		);
@@ -235,6 +241,7 @@ class Steam {
 			}
 		}
 
+		this.csgoMatchFrequency.set(playerId, dateMatches);
 		return dateMatches;
 	}
 
@@ -735,6 +742,7 @@ class Steam {
 		this.csgoUsers = [];
 		this.profiles = [];
 		this.csgoMapStatisticsCache.clear();
+		this.csgoMatchFrequency.clear();
 	}
 }
 
