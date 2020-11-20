@@ -2,6 +2,7 @@ import {
 	CsgoMatch,
 	CsgoProfile,
 	CsgoUser,
+	DateMatches,
 	GameWithStats,
 	MapStatistics,
 	SteamUser,
@@ -39,7 +40,8 @@ export type SteamGamesResponse = {
 	error: boolean;
 	errorCode?: number;
 	games?: GameWithStats[];
-	mapStatistics: MapStatistics;
+	mapStatistics?: MapStatistics;
+	matchFrequency?: DateMatches[];
 };
 
 export type SteamUserResponse = {

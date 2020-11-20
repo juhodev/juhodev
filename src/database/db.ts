@@ -241,7 +241,7 @@ class DB {
 		return dbMatches;
 	}
 
-	async getCsgoPlayerStatsWithMatchs(
+	async getCsgoPlayerStatsWithMatches(
 		playerId: string,
 	): Promise<DBPlayerStatsWithMatch[]> {
 		if (this.csgoPlayersWithMatchesCache.length !== 0) {

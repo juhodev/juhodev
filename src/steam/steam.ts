@@ -22,6 +22,7 @@ import {
 	SteamUser,
 	MapStatistics,
 	CsgoMap,
+	DateMatches,
 } from './types';
 import { downloadTxt, makeId } from '../utils';
 import { db } from '..';
@@ -187,6 +188,38 @@ class Steam {
 		this.csgoMatchCache.set(matchId, game);
 
 		return game;
+	}
+
+	async getPlayerMatchFrequency(playerId: string): Promise<DateMatches[]> {
+		const matches: DBPlayerStatsWithMatch[] = await db.getCsgoPlayerStatsWithMatches(
+			playerId,
+		);
+
+		const roundedDates: Date[] = matches.map((match) => {
+			const date: Date = new Date(match.date);
+			const roundedDate: Date = new Date();
+			roundedDate.setFullYear(date.getFullYear());
+			roundedDate.setMonth(date.getMonth());
+			roundedDate.setDate(date.getDate());
+
+			return roundedDate;
+		});
+
+		const dateMatches: DateMatches[] = [];
+		for (const date of roundedDates) {
+			const oldDate: DateMatches = dateMatches.find(
+				(dateMatch) => dateMatch.date === date.getTime(),
+			);
+
+			if (oldDate !== undefined) {
+				oldDate.matches++;
+				continue;
+			}
+
+			dateMatches.push({ date: date.getTime(), matches: 1 });
+		}
+
+		return dateMatches;
 	}
 
 	async getMatchFromDB(matchId: number): Promise<CsgoMatch> {
@@ -437,7 +470,7 @@ class Steam {
 			return this.csgoMapStatisticsCache.get(playerId);
 		}
 
-		const dbGames: DBPlayerStatsWithMatch[] = await db.getCsgoPlayerStatsWithMatchs(
+		const dbGames: DBPlayerStatsWithMatch[] = await db.getCsgoPlayerStatsWithMatches(
 			playerId,
 		);
 		const maps: CsgoMap[] = [];

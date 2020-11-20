@@ -125,3 +125,8 @@ export type CsgoMap = {
 export type MapStatistics = {
 	maps: CsgoMap[];
 };
+
+export type DateMatches = {
+	date: number;
+	matches: number;
+};
