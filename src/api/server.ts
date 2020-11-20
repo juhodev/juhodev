@@ -31,11 +31,6 @@ export function startApi() {
 		app.use(cors());
 	}
 
-	app.use((req, res, next) => {
-		console.log(`Request ${req.url}`);
-		next();
-	});
-
 	let corsOptions;
 	if (ENVIRONMENT === 'dev') {
 		corsOptions = {

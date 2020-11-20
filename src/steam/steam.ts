@@ -1,8 +1,8 @@
 import {
-	DBCsgoGame,
+	DBCsgoMatch,
 	DBCsgoPlayer,
 	DBCsgoStats,
-	DBPlayerStatsWithGame,
+	DBPlayerStatsWithMatch,
 	DBPlayerStatsWithPlayerInfo,
 } from '../db/types';
 import { knex } from '../db/utils';
@@ -24,6 +24,7 @@ import {
 	CsgoMap,
 } from './types';
 import { downloadTxt, makeId } from '../utils';
+import { db } from '..';
 
 type GameData = {
 	averages: CsgoGameStats;
@@ -85,15 +86,8 @@ class Steam {
 			return [];
 		}
 
-		if (this.csgoUsers.length === 0) {
-			const csgoUsers = await knex<CsgoUser>('csgo_players')
-				.where({})
-				.select('id', 'name');
-
-			this.csgoUsers = csgoUsers;
-		}
-
-		return this.csgoUsers
+		const players: DBCsgoPlayer[] = await db.getCsgoPlayers();
+		return players
 			.filter((user) =>
 				user.name.toLowerCase().startsWith(name.toLowerCase()),
 			)
@@ -101,26 +95,20 @@ class Steam {
 	}
 
 	private async buildProfile(id: string): Promise<CsgoProfile> {
-		const player: DBCsgoPlayer = await knex('csgo_players')
-			.where({ id })
-			.first();
-
+		const player: DBCsgoPlayer = await db.getCsgoPlayer(id);
 		if (player === undefined) {
 			return undefined;
 		}
 
-		const dbGames: DBPlayerStatsWithGame[] = await knex('csgo_stats')
-			.join('csgo_games', 'csgo_games.id', 'csgo_stats.match_id')
-			.select('*');
-
-		const userGames: DBPlayerStatsWithGame[] = dbGames.filter(
-			(game) => game.player_id === id,
+		const dbMatches: DBPlayerStatsWithMatch[] = await db.getCsgoPlayersWithMatches();
+		const userGames: DBPlayerStatsWithMatch[] = dbMatches.filter(
+			(match) => match.player_id === id,
 		);
 
-		const tenBestDbGames: DBPlayerStatsWithGame[] = this.bestTenGamesInARow(
+		const tenBestDbMatches: DBPlayerStatsWithMatch[] = this.bestTenGamesInARow(
 			userGames,
 		);
-		const tenBestCsgoGames: GameWithStats[] = tenBestDbGames.map(
+		const tenBestCsgoGames: GameWithStats[] = tenBestDbMatches.map(
 			(game): GameWithStats => {
 				return {
 					id: game.match_id,
@@ -202,23 +190,10 @@ class Steam {
 	}
 
 	async getMatchFromDB(matchId: number): Promise<CsgoMatch> {
-		const dbMatch: DBCsgoGame = await knex<DBCsgoGame>('csgo_games')
-			.where({
-				id: matchId,
-			})
-			.first();
-
-		const dbPlayers: DBPlayerStatsWithPlayerInfo[] = await knex<
-			DBPlayerStatsWithPlayerInfo
-		>('csgo_players')
-			.select('*')
-			.innerJoin('csgo_stats', function () {
-				this.on('csgo_stats.player_id', '=', 'csgo_players.id').andOn(
-					'csgo_stats.match_id',
-					'=',
-					knex.raw(dbMatch.id),
-				);
-			});
+		const dbMatch: DBCsgoMatch = await db.getCsgoMatch(matchId);
+		const dbPlayers: DBPlayerStatsWithPlayerInfo[] = await db.getCsgoPlayersInAMatch(
+			dbMatch.id,
+		);
 
 		const players: CsgoPlayer[] = dbPlayers.map(
 			(dbPlayer): CsgoPlayer => {
@@ -253,9 +228,7 @@ class Steam {
 	}
 
 	async getUser(id: string): Promise<SteamUser> {
-		const dbPlayer: DBCsgoPlayer = await knex<DBCsgoPlayer>('csgo_players')
-			.where({ id })
-			.first();
+		const dbPlayer: DBCsgoPlayer = await db.getCsgoPlayer(id);
 
 		const user: SteamUser = {
 			avatar: dbPlayer.avatar_link,
@@ -286,12 +259,8 @@ class Steam {
 		const players: DBCsgoPlayer[] = [];
 		const stats: DBCsgoStats[] = [];
 
-		const oldPlayers: DBCsgoPlayer[] = await knex<DBCsgoPlayer>(
-			'csgo_players',
-		).where({});
-		const oldStats: DBCsgoStats[] = await knex<DBCsgoStats>(
-			'csgo_stats',
-		).where({});
+		const oldPlayers: DBCsgoPlayer[] = await db.getCsgoPlayers();
+		const oldStats: DBCsgoStats[] = await db.getCsgoStats();
 
 		for (const match of matches) {
 			const response: {
@@ -317,6 +286,7 @@ class Steam {
 		await knex<DBCsgoPlayer>('csgo_players').insert(players);
 		await knex<DBCsgoStats>('csgo_stats').insert(stats);
 
+		db.clearCsgoCaches();
 		this.invalidateCaches();
 		return addResponse;
 	}
@@ -328,25 +298,22 @@ class Steam {
 		oldStats: DBCsgoStats[],
 	): Promise<{ addResponse: AddResponse; stats: StatsBatch }> {
 		const mapData: ExtensionMapData = extensionMatch.game;
-		const dbGame: DBCsgoGame = this.dbCsgoGameFromExtensionGame(
+		const dbGame: DBCsgoMatch = this.dbCsgoGameFromExtensionGame(
 			mapData,
 			uploadCode,
 		);
 
-		const oldMatch: DBCsgoGame = await knex<DBCsgoGame>('csgo_games')
-			.where({
-				map: dbGame.map,
-				date: dbGame.date,
-				match_duration: dbGame.match_duration,
-			})
-			.first();
+		const oldMatch: DBCsgoMatch = await db.findOldCsgoMatch(
+			dbGame.map,
+			dbGame.date,
+			dbGame.match_duration,
+		);
 
 		const alreadyExists: boolean = oldMatch !== undefined;
 
 		let matchId: number;
-
 		if (oldMatch === undefined) {
-			matchId = await knex<DBCsgoGame>('csgo_games')
+			matchId = await knex<DBCsgoMatch>('csgo_games')
 				.insert(dbGame)
 				.returning('id');
 		} else {
@@ -430,7 +397,7 @@ class Steam {
 		playerId: string,
 		page: number,
 	): Promise<GameWithStats[]> {
-		const games: DBPlayerStatsWithGame[] = await this.getPlayerStatsWithGames(
+		const games: DBPlayerStatsWithMatch[] = await this.getPlayerStatsWithGames(
 			playerId,
 			page,
 		);
@@ -470,16 +437,9 @@ class Steam {
 			return this.csgoMapStatisticsCache.get(playerId);
 		}
 
-		const dbGames: DBPlayerStatsWithGame[] = await knex(
-			'csgo_stats',
-		).innerJoin('csgo_games', function () {
-			this.on('csgo_games.id', '=', 'csgo_stats.match_id').andOn(
-				'csgo_stats.player_id',
-				'=',
-				knex.raw(playerId),
-			);
-		});
-
+		const dbGames: DBPlayerStatsWithMatch[] = await db.getCsgoPlayerStatsWithMatchs(
+			playerId,
+		);
 		const maps: CsgoMap[] = [];
 
 		for (const game of dbGames) {
@@ -502,11 +462,12 @@ class Steam {
 	private async getPlayerStatsWithGames(
 		playerId: string,
 		page: number,
-	): Promise<DBPlayerStatsWithGame[]> {
+	): Promise<DBPlayerStatsWithMatch[]> {
 		const resultsInPage: number = 10;
 		const firstResult: number = page * resultsInPage;
 
-		const dbGames: DBPlayerStatsWithGame[] = await knex('csgo_stats')
+		// For now I'll query the database for these. In the future stop skipping the db cache and use it.
+		const dbGames: DBPlayerStatsWithMatch[] = await knex('csgo_stats')
 			.innerJoin('csgo_games', function () {
 				this.on('csgo_games.id', '=', 'csgo_stats.match_id').andOn(
 					'csgo_stats.player_id',
@@ -524,7 +485,7 @@ class Steam {
 	private dbCsgoGameFromExtensionGame(
 		mapData: ExtensionMapData,
 		uploadCode: UploadCode,
-	): DBCsgoGame {
+	): DBCsgoMatch {
 		const date: number = new Date(mapData.date).getTime();
 
 		const timeAsString: string = mapData.matchDuration.split(': ')[1];
@@ -571,7 +532,7 @@ class Steam {
 		};
 	}
 
-	private getGameData(dbGames: DBPlayerStatsWithGame[]): GameData {
+	private getGameData(dbGames: DBPlayerStatsWithMatch[]): GameData {
 		const totalData: CsgoGameStats = {
 			assists: { value: 0 },
 			deaths: { value: 0 },
@@ -681,13 +642,13 @@ class Steam {
 	}
 
 	private bestTenGamesInARow(
-		games: DBPlayerStatsWithGame[],
-	): DBPlayerStatsWithGame[] {
-		const currentGames: DBPlayerStatsWithGame[] = [];
+		games: DBPlayerStatsWithMatch[],
+	): DBPlayerStatsWithMatch[] {
+		const currentGames: DBPlayerStatsWithMatch[] = [];
 		let total: number = 0;
 
 		let bestTotal: number = 0;
-		let bestGames: DBPlayerStatsWithGame[] = [];
+		let bestGames: DBPlayerStatsWithMatch[] = [];
 
 		for (const game of games) {
 			if (currentGames.length <= 10) {
@@ -701,7 +662,7 @@ class Steam {
 				continue;
 			}
 
-			const removedGame: DBPlayerStatsWithGame = currentGames.shift();
+			const removedGame: DBPlayerStatsWithMatch = currentGames.shift();
 			total -= removedGame.score;
 
 			currentGames.push(game);

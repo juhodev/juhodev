@@ -22,12 +22,12 @@ import CsgoCommand from './commands/csgoCommand';
 import { logUsers } from './userLogger';
 import { startApi } from './api/server';
 
+const db = new DB();
+
 (async () => {
 	await initDatabase();
 
 	const client = new Discord.Client();
-
-	const db = new DB();
 	db.load();
 
 	const userMetrics = new UserMetrics(db);
@@ -62,3 +62,5 @@ import { startApi } from './api/server';
 
 	startApi();
 })();
+
+export { db };

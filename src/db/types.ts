@@ -138,7 +138,7 @@ export type DBClipWithUserInfo = {
 	first_seen: number;
 };
 
-export type DBCsgoGame = {
+export type DBCsgoMatch = {
 	id?: number;
 	map: string;
 	date: number;
@@ -173,7 +173,7 @@ export type DBCsgoStats = {
 	uploaded_by: string;
 };
 
-export type DBPlayerStatsWithGame = {
+export type DBPlayerStatsWithMatch = {
 	id: string;
 	match_id: number;
 	player_id: string;
