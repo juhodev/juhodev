@@ -427,7 +427,7 @@ class Steam {
 			dbStats: dbStatsArray,
 		};
 
-		return { addResponse: { alreadyExists }, stats: statsBatch };
+		return { addResponse: { alreadyExists: false }, stats: statsBatch };
 	}
 
 	getUploadCode(snowflake: string): UploadCode {
