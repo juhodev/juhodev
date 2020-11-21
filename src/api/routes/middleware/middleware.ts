@@ -27,6 +27,8 @@ export const verifyWebsiteLogin = async (req, res, next) => {
 		res.json(response);
 		return;
 	}
+
+	next();
 };
 
 export const verifyIdentity = async (req, res, next) => {
