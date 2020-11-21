@@ -39,10 +39,7 @@ router.get('/search', [], async (req, res) => {
 
 router.get('/match', [], async (req, res) => {
 	const { id } = req.query;
-
-	const bearer: string = req.headers.authorization;
 	const csgoMatch: CsgoMatch = await steam.getMatchFromDB(id);
-
 	const response: SteamMatchResponse = {
 		error: false,
 		csgoMatch,

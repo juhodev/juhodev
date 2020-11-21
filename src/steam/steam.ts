@@ -271,6 +271,7 @@ class Steam {
 		);
 
 		const game: CsgoMatch = {
+			date: dbMatch.date,
 			map: dbMatch.map,
 			matchDuration: dbMatch.match_duration,
 			players: players,
