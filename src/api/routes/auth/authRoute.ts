@@ -12,6 +12,7 @@ import fetch from 'node-fetch';
 import { knex } from '../../../db/utils';
 import { DBDiscordData, DBDiscordToken } from '../../../db/types';
 import { uuid } from 'uuidv4';
+import { verifyWebsiteLogin } from '../middleware/middleware';
 
 const router = expressPromiseRouter();
 
@@ -30,7 +31,17 @@ router.post('/', (req, res) => {
 	}
 });
 
-router.post('/code', async (req, res) => {
+router.post('/preview', (req, res) => {
+	const { JWT_SECRET } = process.env;
+	const jwtData: JWTAuth = {
+		userType: UserType.PREVIEW_ONLY,
+	};
+
+	const token: string = jwt.sign(jwtData, JWT_SECRET);
+	res.json({ token });
+});
+
+router.post('/code', [verifyWebsiteLogin], async (req, res) => {
 	const { code } = req.body;
 
 	const {

@@ -41,13 +41,11 @@ router.get('/match', [], async (req, res) => {
 	const { id } = req.query;
 
 	const bearer: string = req.headers.authorization;
-	const userData: UserData = await getUserDataWithBearer(bearer);
 	const csgoMatch: CsgoMatch = await steam.getMatchFromDB(id);
 
 	const response: SteamMatchResponse = {
 		error: false,
 		csgoMatch,
-		userData,
 	};
 
 	res.json(response);
@@ -113,12 +111,8 @@ router.get('/:id', [], async (req, res) => {
 	const { id } = req.params;
 	const profile: CsgoProfile = await steam.getProfile(id);
 
-	const bearer: string = req.headers.authorization;
-	const userData: UserData = await getUserDataWithBearer(bearer);
-
 	const response: SteamRouteResponse = {
 		error: false,
-		userData,
 		csgoProfile: profile,
 	};
 
