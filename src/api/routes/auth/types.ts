@@ -1,15 +1,21 @@
-export type JWTData = JWTDiscordAuth | JWTBasicAuth;
+export type JWTData = JWTAuth;
 
 export type JWTDiscordAuth = {
 	uuid: string;
-	authStatus: boolean;
-	discordAuthenticated: boolean;
+	userType: UserType;
 };
 
 export type JWTBasicAuth = {
-	authStatus: boolean;
-	discordAuthenticated: boolean;
+	userType: UserType;
 };
+
+export type JWTAuth = JWTBasicAuth | JWTDiscordAuth;
+
+export enum UserType {
+	WEBSITE_LOGIN = 'WEBSITE_LOGIN',
+	DISCORD_LOGIN = 'DISCORD_LOGIN',
+	PREVIEW_ONLY = 'PREVIEW_ONLY',
+}
 
 export type DiscordAccessToken = {
 	access_token: string;

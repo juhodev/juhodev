@@ -5,10 +5,11 @@ import { ERROR, UserBasicData, UserRouteResponse } from './types';
 import { JWTData, JWTDiscordAuth } from '../auth/types';
 import { fetchUserIdentity, userOnServer } from '../../discord';
 import { getUserSubmissionsWithSnowflake } from '../../user';
+import { verifyIdentity } from '../middleware/middleware';
 
 const router = expressPromiseRouter();
 
-router.get('/', async (req, res) => {
+router.get('/', [verifyIdentity], async (req, res) => {
 	const bearer: string = req.headers.authorization;
 	const userJWT: string = bearer.split('Bearer ')[1];
 
@@ -16,16 +17,6 @@ router.get('/', async (req, res) => {
 		userJWT,
 		process.env.JWT_SECRET,
 	) as JWTData;
-
-	if (!decoded.discordAuthenticated) {
-		const response: UserRouteResponse = {
-			error: true,
-			errorCode: ERROR.DISCORD_NOT_AUTHENTICATED,
-		};
-
-		res.json(response);
-		return;
-	}
 
 	const authenticatedJwt: JWTDiscordAuth = decoded as JWTDiscordAuth;
 	const identity: DBDiscordData = await fetchUserIdentity(authenticatedJwt);

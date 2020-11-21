@@ -1,7 +1,7 @@
 import * as jwt from 'jsonwebtoken';
 import { DBDiscordData } from '../../../db/types';
 import { fetchUserIdentity, userOnServer } from '../../discord';
-import { JWTData, JWTDiscordAuth } from '../auth/types';
+import { JWTData, JWTDiscordAuth, UserType } from '../auth/types';
 import { ERROR, UserRouteResponse } from '../user/types';
 
 export const verifyIdentity = async (req, res, next) => {
@@ -18,7 +18,7 @@ export const verifyIdentity = async (req, res, next) => {
 		process.env.JWT_SECRET,
 	) as JWTData;
 
-	if (!decoded.discordAuthenticated) {
+	if (decoded.userType !== UserType.DISCORD_LOGIN) {
 		const response: UserRouteResponse = {
 			error: true,
 			errorCode: ERROR.DISCORD_NOT_AUTHENTICATED,

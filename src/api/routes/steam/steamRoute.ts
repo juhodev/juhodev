@@ -25,7 +25,7 @@ import { getUserDataWithBearer } from '../../user';
 
 const router = expressPromiseRouter();
 
-router.get('/search', [verifyIdentity], async (req, res) => {
+router.get('/search', [], async (req, res) => {
 	const { q } = req.query;
 
 	const csgoUsers: CsgoUser[] = await steam.search(q);
@@ -37,7 +37,7 @@ router.get('/search', [verifyIdentity], async (req, res) => {
 	res.json(response);
 });
 
-router.get('/match', [verifyIdentity], async (req, res) => {
+router.get('/match', [], async (req, res) => {
 	const { id } = req.query;
 
 	const bearer: string = req.headers.authorization;
@@ -78,7 +78,7 @@ router.get('/uploadCode', [verifyIdentity], async (req, res) => {
 	res.json(response);
 });
 
-router.get('/games', [verifyIdentity], async (req, res) => {
+router.get('/games', [], async (req, res) => {
 	const { id, page } = req.query;
 
 	const games: GameWithStats[] = await steam.getPlayerMatches(id, page);
@@ -97,7 +97,7 @@ router.get('/games', [verifyIdentity], async (req, res) => {
 	res.json(response);
 });
 
-router.get('/user', [verifyIdentity], async (req, res) => {
+router.get('/user', [], async (req, res) => {
 	const { id } = req.query;
 
 	const user: SteamUser = await steam.getUser(id);
@@ -109,7 +109,7 @@ router.get('/user', [verifyIdentity], async (req, res) => {
 	res.json(response);
 });
 
-router.get('/:id', [verifyIdentity], async (req, res) => {
+router.get('/:id', [], async (req, res) => {
 	const { id } = req.params;
 	const profile: CsgoProfile = await steam.getProfile(id);
 

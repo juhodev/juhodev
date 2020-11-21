@@ -3,13 +3,14 @@ import * as jwt from 'jsonwebtoken';
 import {
 	CodeResponse,
 	DiscordAccessToken,
+	JWTAuth,
 	JWTBasicAuth,
 	JWTData,
+	UserType,
 } from './types';
 import fetch from 'node-fetch';
 import { knex } from '../../../db/utils';
 import { DBDiscordData, DBDiscordToken } from '../../../db/types';
-import { JWTDiscordAuth } from './types';
 import { uuid } from 'uuidv4';
 
 const router = expressPromiseRouter();
@@ -19,9 +20,8 @@ router.post('/', (req, res) => {
 
 	const { WEBSITE_PASSWORD, JWT_SECRET } = process.env;
 	if (password === WEBSITE_PASSWORD) {
-		const jwtData: JWTBasicAuth = {
-			authStatus: true,
-			discordAuthenticated: false,
+		const jwtData: JWTAuth = {
+			userType: UserType.WEBSITE_LOGIN,
 		};
 		const token: string = jwt.sign(jwtData, JWT_SECRET);
 		res.json({ token });
@@ -92,9 +92,8 @@ router.post('/code', async (req, res) => {
 		uuid: userUuid,
 	});
 
-	const discordAuthData: JWTDiscordAuth = {
-		authStatus: true,
-		discordAuthenticated: true,
+	const discordAuthData: JWTAuth = {
+		userType: UserType.DISCORD_LOGIN,
 		uuid: userUuid,
 	};
 
