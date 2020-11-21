@@ -1,5 +1,6 @@
 import {
 	CsgoMatch,
+	CsgoPlayer,
 	CsgoProfile,
 	CsgoUser,
 	DateMatches,
@@ -48,4 +49,10 @@ export type SteamUserResponse = {
 	error: boolean;
 	errorCode?: number;
 	user?: SteamUser;
+};
+
+export type SteamLeaderboardResponse = {
+	error: boolean;
+	errorCode?: number;
+	leaderboard?: CsgoPlayer[];
 };

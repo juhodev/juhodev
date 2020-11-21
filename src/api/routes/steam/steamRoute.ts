@@ -14,6 +14,7 @@ import {
 } from '../../../steam/types';
 import {
 	SteamGamesResponse,
+	SteamLeaderboardResponse,
 	SteamMatchResponse,
 	SteamRouteResponse,
 	SteamSearchResponse,
@@ -99,6 +100,15 @@ router.get('/user', [], async (req, res) => {
 	const response: SteamUserResponse = {
 		user,
 		error: false,
+	};
+
+	res.json(response);
+});
+
+router.get('/leaderboard', [], async (req, res) => {
+	const response: SteamLeaderboardResponse = {
+		error: false,
+		leaderboard: await steam.getLeaderboards(),
 	};
 
 	res.json(response);

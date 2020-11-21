@@ -44,6 +44,7 @@ class Steam {
 	private csgoMatchCache: Map<number, CsgoMatch>;
 	private csgoMapStatisticsCache: Map<string, MapStatistics>;
 	private csgoMatchFrequency: Map<string, DateMatches[]>;
+	private csgoLeaderboardCache: DBPlayerStatsWithPlayerInfo[];
 
 	private uploadCodes: UploadCode[];
 
@@ -54,6 +55,7 @@ class Steam {
 		this.uploadCodes = [];
 		this.csgoMapStatisticsCache = new Map();
 		this.csgoMatchFrequency = new Map();
+		this.csgoLeaderboardCache = [];
 	}
 
 	async getProfile(id: string): Promise<CsgoProfile> {
@@ -587,6 +589,51 @@ class Steam {
 			date,
 			uploaded_by: uploadCode.createdFor,
 		};
+	}
+
+	async getLeaderboards(): Promise<CsgoPlayer[]> {
+		if (this.csgoLeaderboardCache.length !== 0) {
+			return this.csgoLeaderboardCache.map((dbPlayer) => {
+				return {
+					assists: dbPlayer.assists,
+					avatar: dbPlayer.avatar_link,
+					deaths: dbPlayer.deaths,
+					hsp: dbPlayer.hsp,
+					kills: dbPlayer.kills,
+					mvps: dbPlayer.mvps,
+					name: dbPlayer.name,
+					ping: dbPlayer.ping,
+					playerId: dbPlayer.player_id,
+					score: dbPlayer.score,
+					side: dbPlayer.side,
+					steamLink: dbPlayer.steam_link,
+				};
+			});
+		}
+
+		const csgoPlayersWithStats: DBPlayerStatsWithPlayerInfo[] = await db.getCsgoPlayersWithStats();
+		const leaderboard: DBPlayerStatsWithPlayerInfo[] = csgoPlayersWithStats
+			.sort((a, b) => a.score - b.score)
+			.reverse()
+			.splice(0, 100);
+
+		this.csgoLeaderboardCache = leaderboard;
+		return leaderboard.map((dbPlayer) => {
+			return {
+				assists: dbPlayer.assists,
+				avatar: dbPlayer.avatar_link,
+				deaths: dbPlayer.deaths,
+				hsp: dbPlayer.hsp,
+				kills: dbPlayer.kills,
+				mvps: dbPlayer.mvps,
+				name: dbPlayer.name,
+				ping: dbPlayer.ping,
+				playerId: dbPlayer.player_id,
+				score: dbPlayer.score,
+				side: dbPlayer.side,
+				steamLink: dbPlayer.steam_link,
+			};
+		});
 	}
 
 	private getGameData(dbGames: DBPlayerStatsWithMatch[]): GameData {
