@@ -14,15 +14,60 @@ export type CsgoProfile = {
 };
 
 export type CsgoGameStats = {
-	ping: { value: number; matchId?: number };
-	kills: { value: number; matchId?: number };
-	assists: { value: number; matchId?: number };
-	deaths: { value: number; matchId?: number };
-	mvps: { value: number; matchId?: number };
-	hsp: { value: number; matchId?: number };
-	score: { value: number; matchId?: number };
-	matchDuration: { value: number; matchId?: number };
-	waitTime: { value: number; matchId?: number };
+	ping: {
+		value: number;
+		matchId?: number;
+		standardDeviation?: number;
+		standardError?: number;
+	};
+	kills: {
+		value: number;
+		matchId?: number;
+		standardDeviation?: number;
+		standardError?: number;
+	};
+	assists: {
+		value: number;
+		matchId?: number;
+		standardDeviation?: number;
+		standardError?: number;
+	};
+	deaths: {
+		value: number;
+		matchId?: number;
+		standardDeviation?: number;
+		standardError?: number;
+	};
+	mvps: {
+		value: number;
+		matchId?: number;
+		standardDeviation?: number;
+		standardError?: number;
+	};
+	hsp: {
+		value: number;
+		matchId?: number;
+		standardDeviation?: number;
+		standardError?: number;
+	};
+	score: {
+		value: number;
+		matchId?: number;
+		standardDeviation?: number;
+		standardError?: number;
+	};
+	matchDuration: {
+		value: number;
+		matchId?: number;
+		standardDeviation?: number;
+		standardError?: number;
+	};
+	waitTime: {
+		value: number;
+		matchId?: number;
+		standardDeviation?: number;
+		standardError?: number;
+	};
 };
 
 export type CsgoMapStats = {

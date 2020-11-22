@@ -637,6 +637,34 @@ class Steam {
 	}
 
 	private getGameData(dbGames: DBPlayerStatsWithMatch[]): GameData {
+		const killStandards = this.getStandardDeviationAndError(
+			dbGames.map((game) => game.kills),
+		);
+		const deathStandards = this.getStandardDeviationAndError(
+			dbGames.map((game) => game.deaths),
+		);
+		const assistStandards = this.getStandardDeviationAndError(
+			dbGames.map((game) => game.assists),
+		);
+		const hspStandards = this.getStandardDeviationAndError(
+			dbGames.map((game) => game.hsp),
+		);
+		const mvpStandards = this.getStandardDeviationAndError(
+			dbGames.map((game) => game.mvps),
+		);
+		const scoreStandards = this.getStandardDeviationAndError(
+			dbGames.map((game) => game.score),
+		);
+		const pingStandards = this.getStandardDeviationAndError(
+			dbGames.map((game) => game.ping),
+		);
+		const waitStandards = this.getStandardDeviationAndError(
+			dbGames.map((game) => game.wait_time),
+		);
+		const lengthStandards = this.getStandardDeviationAndError(
+			dbGames.map((game) => game.match_duration),
+		);
+
 		const totalData: CsgoGameStats = {
 			assists: { value: 0 },
 			deaths: { value: 0 },
@@ -719,17 +747,51 @@ class Steam {
 		return {
 			highest: highestData,
 			averages: {
-				assists: { value: totalData.assists.value / dbGames.length },
-				deaths: { value: totalData.deaths.value / dbGames.length },
-				hsp: { value: totalData.hsp.value / dbGames.length },
-				kills: { value: totalData.kills.value / dbGames.length },
+				assists: {
+					value: totalData.assists.value / dbGames.length,
+					standardDeviation: assistStandards.standardDeviation,
+					standardError: assistStandards.standardError,
+				},
+				deaths: {
+					value: totalData.deaths.value / dbGames.length,
+					standardDeviation: deathStandards.standardDeviation,
+					standardError: deathStandards.standardError,
+				},
+				hsp: {
+					value: totalData.hsp.value / dbGames.length,
+					standardDeviation: hspStandards.standardDeviation,
+					standardError: hspStandards.standardError,
+				},
+				kills: {
+					value: totalData.kills.value / dbGames.length,
+					standardDeviation: killStandards.standardDeviation,
+					standardError: killStandards.standardError,
+				},
 				matchDuration: {
 					value: totalData.matchDuration.value / dbGames.length,
+					standardDeviation: lengthStandards.standardDeviation,
+					standardError: lengthStandards.standardError,
 				},
-				waitTime: { value: totalData.waitTime.value / dbGames.length },
-				mvps: { value: totalData.mvps.value / dbGames.length },
-				ping: { value: totalData.ping.value / dbGames.length },
-				score: { value: totalData.score.value / dbGames.length },
+				waitTime: {
+					value: totalData.waitTime.value / dbGames.length,
+					standardDeviation: waitStandards.standardDeviation,
+					standardError: waitStandards.standardError,
+				},
+				mvps: {
+					value: totalData.mvps.value / dbGames.length,
+					standardDeviation: mvpStandards.standardDeviation,
+					standardError: mvpStandards.standardError,
+				},
+				ping: {
+					value: totalData.ping.value / dbGames.length,
+					standardDeviation: pingStandards.standardDeviation,
+					standardError: pingStandards.standardError,
+				},
+				score: {
+					value: totalData.score.value / dbGames.length,
+					standardDeviation: scoreStandards.standardDeviation,
+					standardError: scoreStandards.standardError,
+				},
 			},
 			mapStats: mapStats.map(
 				(map): CsgoMapStats => {
@@ -781,6 +843,24 @@ class Steam {
 		return bestGames;
 	}
 
+	private getStandardDeviationAndError(
+		nums: number[],
+	): { standardDeviation: number; standardError: number } {
+		const mean: number =
+			nums.reduce((prev, curr) => (prev += curr)) / nums.length;
+		const calc: number[] = nums.map((x) => Math.pow(x - mean, 2));
+		const meanDifference: number =
+			(1 / nums.length) * calc.reduce((prev, curr) => (prev += curr));
+		const standardDeviation: number = Math.sqrt(meanDifference);
+		const standardError: number =
+			standardDeviation / Math.sqrt(nums.length);
+
+		return {
+			standardDeviation: standardDeviation,
+			standardError: standardError,
+		};
+	}
+
 	/**
 	 * This invalidates all caches when new data is received from the extension. In reality I shouldn't need to
 	 * clear all the caches but this will happen so infrequently that building new data isn't going to be a
@@ -791,6 +871,7 @@ class Steam {
 		this.profiles = [];
 		this.csgoMapStatisticsCache.clear();
 		this.csgoMatchFrequency.clear();
+		this.csgoLeaderboardCache = [];
 	}
 }
 
