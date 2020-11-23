@@ -4,7 +4,7 @@ import * as cors from 'cors';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as https from 'https';
-import * as responseTime from 'response-time';
+import * as morgan from 'morgan';
 
 import UserRouter from './routes/user/userRoute';
 import AuthRouter from './routes/auth/authRoute';
@@ -21,15 +21,21 @@ export const steam: Steam = new Steam();
 
 export function startApi() {
 	const app = express();
-	app.use(
-		responseTime((req, res, time) => {
-			console.log(`Request ${req.url}, ${Math.round(time)}ms`);
-		}),
-	);
 	app.use(bodyParser.json());
 	if (process.env.ENVIRONMENT === 'dev') {
 		app.use(cors());
 	}
+
+	// I use morgan for logging http requests. This will first log the requests to file and
+	// then print it to stdout.
+	const accessLogStream = fs.createWriteStream(
+		path.resolve('data/access.log'),
+		{ flags: 'a' },
+	);
+	// 'combined' will log requests in standard apache format (:remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent")
+	app.use(morgan('combined', { stream: accessLogStream }));
+	// I don't want extensive logs in stdout. The 'dev' format is :method :url :status :response-time ms - :res[content-length]
+	app.use(morgan('dev'));
 
 	let corsOptions;
 	if (ENVIRONMENT === 'dev') {
