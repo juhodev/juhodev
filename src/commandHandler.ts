@@ -1,7 +1,7 @@
 import { DMChannel, Message, NewsChannel, TextChannel, User } from 'discord.js';
 import { Command } from './commands/types';
 import DB from './database/db';
-import { DBCommandLog } from './db/types';
+import { DBCommandLog, DBUser } from './db/types';
 import { knex } from './db/utils';
 
 class CommandHandler {
@@ -15,6 +15,7 @@ class CommandHandler {
 
 	handle(message: Message) {
 		const { content, channel, author } = message;
+		this.logUser(author);
 
 		if (author.bot) {
 			return;
@@ -27,7 +28,7 @@ class CommandHandler {
 		const args = content.split(' ');
 		const command = args.shift();
 
-		if(command === '!poll') {
+		if (command === '!poll') {
 			return;
 		}
 
@@ -50,6 +51,22 @@ class CommandHandler {
 		}
 	}
 
+	private async logUser(user: User) {
+		const userCreated: boolean = await this.hasUser(user);
+
+		if (!userCreated) {
+			await knex<DBUser>('users').insert({
+				snowflake: user.id,
+				avatar: user.avatar,
+				discord_created: user.createdAt.getTime(),
+				discord_name_uppercase: user.username.toUpperCase(),
+				discord_name_original: user.username,
+				discord_tag: user.discriminator,
+				first_seen: new Date().getTime(),
+			});
+		}
+	}
+
 	private async logCommand(
 		channel: TextChannel | DMChannel | NewsChannel,
 		command: string,
@@ -66,6 +83,18 @@ class CommandHandler {
 			channel: channelName,
 			command,
 		});
+	}
+
+	private async hasUser(user: User): Promise<boolean> {
+		const result = await knex<DBUser>('users').where({
+			snowflake: user.id,
+		});
+
+		if (result.length === 0) {
+			return false;
+		}
+
+		return true;
 	}
 }
 

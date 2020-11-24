@@ -125,40 +125,6 @@ export type GameWithStats = {
 	player: CsgoPlayer;
 };
 
-export type ExtensionMatch = {
-	game: ExtensionMapData;
-	players: ExtensionPlayerData[];
-};
-
-export type ExtensionMapData = {
-	map: string;
-	matchDuration: string;
-	date: string;
-	score: string;
-	waitTime: string;
-};
-
-export type ExtensionPlayerData = {
-	avatarSrc: string;
-	miniprofile: string;
-	name: string;
-	steamLink: string;
-	assists: number;
-	deaths: number;
-	hsp: number;
-	kills: number;
-	mvps: number;
-	ping: number;
-	side: string;
-	score: number;
-};
-
-export type UploadCode = {
-	createdAt: number;
-	code: string;
-	createdFor: string;
-};
-
 export type AddResponse = {
 	alreadyExists: boolean;
 };

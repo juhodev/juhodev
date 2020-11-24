@@ -49,9 +49,7 @@ const db = new DB();
 		client.user.setStatus('idle');
 		client.user.setActivity({ name: 'with viinirypälerasia' });
 
-		db.updateGuild(client);
-		userMetrics.start();
-		logUsers(db);
+		updateGuild(db, client, userMetrics);
 	});
 
 	client.on('message', (message) => {
@@ -62,5 +60,15 @@ const db = new DB();
 
 	startApi();
 })();
+
+const updateGuild = async (
+	db: DB,
+	client: Discord.Client,
+	userMetrics: UserMetrics,
+) => {
+	await db.updateGuild(client);
+	userMetrics.start();
+	logUsers(db);
+};
 
 export { db };

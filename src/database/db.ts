@@ -7,6 +7,7 @@ import {
 	DBCsgoStats,
 	DBPlayerStatsWithMatch,
 	DBPlayerStatsWithPlayerInfo,
+	DBUploadedCsgoMatch,
 } from '../db/types';
 import { knex } from '../db/utils';
 import RRSG from '../randomReadableStringGenerator';
@@ -208,6 +209,19 @@ class DB {
 		return dbPlayers;
 	}
 
+	async getMatchUploadedByUser(
+		matchId: number,
+		playerId: string,
+	): Promise<DBUploadedCsgoMatch> {
+		const game: DBUploadedCsgoMatch = await knex<DBUploadedCsgoMatch>(
+			'csgo_games_uploads',
+		)
+			.where({ match_id: matchId, player_id: playerId })
+			.first();
+
+		return game;
+	}
+
 	/**
 	 * First checks if the match is cached, if it isn't then retrieves it from the database.
 	 *
@@ -281,6 +295,33 @@ class DB {
 		this.csgoPlayersWithMatchesCache = dbGames;
 
 		return dbGames;
+	}
+
+	/**
+	 * Returns either a cached version of the stats or retrieves them from the database.
+	 *
+	 * @param playerId The id of the player whos stats you want to get
+	 * @param matchId Id of a match the player was in
+	 */
+	async getPlayerStatsInAMatch(
+		playerId: string,
+		matchId: number,
+	): Promise<DBCsgoStats> {
+		if (this.csgoStatsCache.length !== 0) {
+			return this.csgoStatsCache.find(
+				(stats) =>
+					stats.player_id === playerId && stats.match_id === matchId,
+			);
+		}
+
+		const stats: DBCsgoStats = await knex<DBCsgoStats>('csgo_stats')
+			.where({
+				player_id: playerId,
+				match_id: matchId,
+			})
+			.first();
+
+		return stats;
 	}
 
 	/**

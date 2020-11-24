@@ -10,7 +10,6 @@ import {
 	GameWithStats,
 	MapStatistics,
 	SteamUser,
-	UploadCode,
 } from '../../../steam/types';
 import {
 	SteamGamesResponse,
@@ -23,6 +22,7 @@ import {
 } from './types';
 import { UserData } from '../../types';
 import { getUserDataWithBearer } from '../../user';
+import { ExtensionSaveResponse, UploadCode } from '../../../steam/extension/types';
 
 const router = expressPromiseRouter();
 
@@ -52,18 +52,20 @@ router.get('/match', [], async (req, res) => {
 router.post('/stats', [], async (req, res) => {
 	const { games, uploadCode } = req.body;
 
-	const addResponse: AddResponse = await steam.addDataFromExtension(
+	const response: ExtensionSaveResponse = await steam.addDataFromExtension(
 		games,
 		uploadCode,
 	);
 
-	res.json(addResponse);
+	res.json(response);
 });
 
 router.get('/uploadCode', [verifyIdentity], async (req, res) => {
 	const bearer: string = req.headers.authorization;
 	const userData: UserData = await getUserDataWithBearer(bearer);
-	const uploadCode: UploadCode = steam.getUploadCode(userData.snowflake);
+	const uploadCode: UploadCode = steam
+		.getExtension()
+		.getUploadCode(userData.snowflake);
 
 	const response: SteamUploadCodeResponse = {
 		error: false,
