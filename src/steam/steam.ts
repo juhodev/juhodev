@@ -421,7 +421,7 @@ class Steam {
 		const leaderboard: DBPlayerStatsWithPlayerInfo[] = csgoPlayersWithStats
 			.sort((a, b) => a.score - b.score)
 			.reverse()
-			.splice(0, 100);
+			.slice(0, 100);
 
 		this.csgoLeaderboardCache = leaderboard;
 		return leaderboard.map((dbPlayer) => {
