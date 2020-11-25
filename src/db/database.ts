@@ -402,6 +402,25 @@ export async function initDatabase() {
 				},
 			],
 		},
+		{
+			name: 'csgo_games_uploads',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.INTEGER,
+					primary: true,
+					autoIncrement: true,
+				},
+				{
+					name: 'match_id',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'player_id',
+					type: ColumnType.STRING,
+				},
+			],
+		},
 	];
 
 	for (const table of tables) {

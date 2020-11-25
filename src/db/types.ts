@@ -210,3 +210,9 @@ export type DBPlayerStatsWithPlayerInfo = {
 	score: number;
 	side: string;
 };
+
+export type DBUploadedCsgoMatch = {
+	id?: number;
+	match_id: number;
+	player_id: string;
+};

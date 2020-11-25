@@ -13,11 +13,6 @@ import {
 	CsgoPlayer,
 	CsgoProfile,
 	CsgoUser,
-	ExtensionMatch,
-	ExtensionMapData,
-	ExtensionPlayerData,
-	UploadCode,
-	AddResponse,
 	GameWithStats,
 	SteamUser,
 	MapStatistics,
@@ -26,16 +21,13 @@ import {
 } from './types';
 import { getAllDatesBetweenTwoDates, makeId } from '../utils';
 import { db } from '..';
+import { ExtensionMatch, ExtensionSaveResponse } from './extension/types';
+import Extension from './extension/extension';
 
 type GameData = {
 	averages: CsgoGameStats;
 	highest: CsgoGameStats;
 	mapStats: CsgoMapStats[];
-};
-
-type StatsBatch = {
-	dbPlayers: DBCsgoPlayer[];
-	dbStats: DBCsgoStats[];
 };
 
 class Steam {
@@ -46,16 +38,16 @@ class Steam {
 	private csgoMatchFrequency: Map<string, DateMatches[]>;
 	private csgoLeaderboardCache: DBPlayerStatsWithPlayerInfo[];
 
-	private uploadCodes: UploadCode[];
+	private extension: Extension;
 
 	constructor() {
 		this.profiles = [];
 		this.csgoUsers = [];
 		this.csgoMatchCache = new Map();
-		this.uploadCodes = [];
 		this.csgoMapStatisticsCache = new Map();
 		this.csgoMatchFrequency = new Map();
 		this.csgoLeaderboardCache = [];
+		this.extension = new Extension();
 	}
 
 	async getProfile(id: string): Promise<CsgoProfile> {
@@ -302,154 +294,18 @@ class Steam {
 	async addDataFromExtension(
 		matches: ExtensionMatch[],
 		code: string,
-	): Promise<AddResponse> {
-		const uploadCode: UploadCode = this.uploadCodes.find(
-			(x) => x.code === code,
-		);
-
-		if (uploadCode === undefined) {
-			return;
-		}
-
-		const addResponse: AddResponse = {
-			alreadyExists: true,
-		};
-
-		const players: DBCsgoPlayer[] = [];
-		const stats: DBCsgoStats[] = [];
-
-		const oldPlayers: DBCsgoPlayer[] = await db.getCsgoPlayers();
-		const oldStats: DBCsgoStats[] = await db.getCsgoStats();
-
-		for (const match of matches) {
-			const response: {
-				addResponse: AddResponse;
-				stats: StatsBatch;
-			} = await this.addMatchFromExtension(
-				match,
-				uploadCode,
-				oldPlayers,
-				oldStats,
-			);
-
-			if (!response.addResponse.alreadyExists) {
-				addResponse.alreadyExists = false;
-			}
-
-			players.push(...response.stats.dbPlayers);
-			stats.push(...response.stats.dbStats);
-			oldPlayers.push(...response.stats.dbPlayers);
-			oldStats.push(...response.stats.dbStats);
-		}
-
-		await knex<DBCsgoPlayer>('csgo_players').insert(players);
-		await knex<DBCsgoStats>('csgo_stats').insert(stats);
-
-		db.clearCsgoCaches();
-		this.invalidateCaches();
-		return addResponse;
-	}
-
-	async addMatchFromExtension(
-		extensionMatch: ExtensionMatch,
-		uploadCode: UploadCode,
-		oldPlayers: DBCsgoPlayer[],
-		oldStats: DBCsgoStats[],
-	): Promise<{ addResponse: AddResponse; stats: StatsBatch }> {
-		const mapData: ExtensionMapData = extensionMatch.game;
-		const dbGame: DBCsgoMatch = this.dbCsgoGameFromExtensionGame(
-			mapData,
-			uploadCode,
-		);
-
-		const oldMatch: DBCsgoMatch = await db.findOldCsgoMatch(
-			dbGame.map,
-			dbGame.date,
-			dbGame.match_duration,
-		);
-
-		const alreadyExists: boolean = oldMatch !== undefined;
-
-		let matchId: number;
-		if (oldMatch === undefined) {
-			matchId = await knex<DBCsgoMatch>('csgo_games')
-				.insert(dbGame)
-				.returning('id');
-		} else {
-			matchId = oldMatch.id;
-		}
-
-		const dbPlayersArray: DBCsgoPlayer[] = [];
-		const dbStatsArray: DBCsgoStats[] = [];
-
-		const players: ExtensionPlayerData[] = extensionMatch.players;
-		for (const player of players) {
-			const dbPlayer: DBCsgoPlayer = {
-				avatar_link: player.avatarSrc,
-				id: player.miniprofile,
-				name: player.name,
-				steam_link: player.steamLink,
-				uploaded_by: uploadCode.createdFor,
-			};
-
-			const dbStats: DBCsgoStats = {
-				assists: player.assists,
-				deaths: player.deaths,
-				hsp: player.hsp,
-				player_id: player.miniprofile,
-				kills: player.kills,
-				mvps: player.mvps,
-				ping: player.ping,
-				score: player.score,
-				side: player.side,
-				match_id: matchId,
-				uploaded_by: uploadCode.createdFor,
-			};
-
-			const oldPlayer: DBCsgoPlayer = oldPlayers.find(
-				(p) => p.id === dbPlayer.id,
-			);
-			if (oldPlayer === undefined) {
-				dbPlayersArray.push(dbPlayer);
-			}
-
-			const oldStat: DBCsgoStats = oldStats.find(
-				(s) =>
-					s.match_id === dbStats.match_id &&
-					s.player_id === dbStats.player_id,
-			);
-
-			if (oldStat === undefined) {
-				dbStatsArray.push(dbStats);
-			}
-		}
-
-		const statsBatch: StatsBatch = {
-			dbPlayers: dbPlayersArray,
-			dbStats: dbStatsArray,
-		};
-
-		return { addResponse: { alreadyExists: false }, stats: statsBatch };
-	}
-
-	getUploadCode(snowflake: string): UploadCode {
-		const oldCode: UploadCode = this.uploadCodes.find(
-			(x) => x.createdFor === snowflake,
-		);
-		if (oldCode !== undefined) {
-			return oldCode;
-		}
-
-		const code = makeId(8).toUpperCase();
-
-		const uploadCode: UploadCode = {
-			createdAt: new Date().getTime(),
-			createdFor: snowflake,
+	): Promise<ExtensionSaveResponse> {
+		const response: ExtensionSaveResponse = await this.extension.saveMatches(
+			matches,
 			code,
-		};
+		);
 
-		this.uploadCodes.push(uploadCode);
-		return uploadCode;
+		this.invalidateCaches();
+		return response;
+	}
+
+	getExtension() {
+		return this.extension;
 	}
 
 	async getPlayerMatches(
@@ -541,56 +397,6 @@ class Steam {
 		return dbGames;
 	}
 
-	private dbCsgoGameFromExtensionGame(
-		mapData: ExtensionMapData,
-		uploadCode: UploadCode,
-	): DBCsgoMatch {
-		const date: number = new Date(mapData.date).getTime();
-
-		const timeAsString: string = mapData.matchDuration.split(': ')[1];
-		const timeSplit: string[] = timeAsString.split(':');
-
-		const durationMinutes: number = parseInt(timeSplit[0]);
-		const durationSeconds: number = parseInt(timeSplit[1]);
-		const matchDuration: number = durationMinutes * 60 + durationSeconds;
-
-		const waitAsString: string = mapData.waitTime.split(': ')[1];
-		const waitSplit: string[] = waitAsString.split(':');
-
-		const waitMinutes: number = parseInt(waitSplit[0]);
-		const waitSeconds: number = parseInt(waitSplit[1]);
-		const waitTime: number = waitMinutes * 60 + waitSeconds;
-
-		const mapFirstSpaceIndex: number = mapData.map.indexOf(' ');
-		const map: string = mapData.map.substr(
-			mapFirstSpaceIndex + 1,
-			mapData.map.length,
-		);
-
-		const scoreSplit: string[] = mapData.score.split(':');
-		const ctRounds: number = parseInt(scoreSplit[0]);
-		const tRounds: number = parseInt(scoreSplit[1]);
-		let winner: string;
-		if (ctRounds > tRounds) {
-			winner = 'CT';
-		} else if (tRounds > ctRounds) {
-			winner = 'T';
-		} else {
-			winner = 'TIE';
-		}
-
-		return {
-			match_duration: matchDuration,
-			wait_time: waitTime,
-			map,
-			ct_rounds: ctRounds,
-			t_rounds: tRounds,
-			winner,
-			date,
-			uploaded_by: uploadCode.createdFor,
-		};
-	}
-
 	async getLeaderboards(): Promise<CsgoPlayer[]> {
 		if (this.csgoLeaderboardCache.length !== 0) {
 			return this.csgoLeaderboardCache.map((dbPlayer) => {
@@ -615,7 +421,7 @@ class Steam {
 		const leaderboard: DBPlayerStatsWithPlayerInfo[] = csgoPlayersWithStats
 			.sort((a, b) => a.score - b.score)
 			.reverse()
-			.splice(0, 100);
+			.slice(0, 100);
 
 		this.csgoLeaderboardCache = leaderboard;
 		return leaderboard.map((dbPlayer) => {
