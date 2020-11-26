@@ -18,6 +18,7 @@ import {
 	MapStatistics,
 	CsgoMap,
 	DateMatches,
+	BuiltProfile,
 } from './types';
 import { getAllDatesBetweenTwoDates, makeId } from '../utils';
 import { db } from '..';
@@ -89,6 +90,34 @@ class Steam {
 				user.name.toLowerCase().startsWith(name.toLowerCase()),
 			)
 			.sort((a, b) => a.name.localeCompare(b.name));
+	}
+
+	/**
+	 * This will return 9 profiles that've been built. These are the 9 profiles with the most
+	 * matches saved.
+	 */
+	getBuiltProfiles(): BuiltProfile[] {
+		const sortedProfiles: CsgoProfile[] = this.profiles
+			.sort((a, b) => a.matchesPlayed - b.matchesPlayed)
+			.reverse();
+
+		const profilesWithMostMatches: CsgoProfile[] = sortedProfiles.slice(
+			0,
+			8,
+		);
+		const builtProfiles: BuiltProfile[] = profilesWithMostMatches.map(
+			(profile): BuiltProfile => {
+				return {
+					id: profile.id,
+					avatarLink: profile.avatarLink,
+					matchesCount: profile.matchesPlayed,
+					name: profile.name,
+					steamLink: profile.steamLink,
+				};
+			},
+		);
+
+		return builtProfiles;
 	}
 
 	private async buildProfile(id: string): Promise<CsgoProfile> {

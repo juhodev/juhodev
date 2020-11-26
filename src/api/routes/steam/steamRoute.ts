@@ -15,6 +15,7 @@ import {
 	SteamGamesResponse,
 	SteamLeaderboardResponse,
 	SteamMatchResponse,
+	SteamProfilesResponse,
 	SteamRouteResponse,
 	SteamSearchResponse,
 	SteamUploadCodeResponse,
@@ -22,7 +23,10 @@ import {
 } from './types';
 import { UserData } from '../../types';
 import { getUserDataWithBearer } from '../../user';
-import { ExtensionSaveResponse, UploadCode } from '../../../steam/extension/types';
+import {
+	ExtensionSaveResponse,
+	UploadCode,
+} from '../../../steam/extension/types';
 
 const router = expressPromiseRouter();
 
@@ -111,6 +115,15 @@ router.get('/leaderboard', [], async (req, res) => {
 	const response: SteamLeaderboardResponse = {
 		error: false,
 		leaderboard: await steam.getLeaderboards(),
+	};
+
+	res.json(response);
+});
+
+router.get('/profiles', [], async (req, res) => {
+	const response: SteamProfilesResponse = {
+		error: false,
+		profiles: steam.getBuiltProfiles(),
 	};
 
 	res.json(response);

@@ -142,3 +142,11 @@ export type DateMatches = {
 	date: number;
 	matches: number;
 };
+
+export type BuiltProfile = {
+	name: string;
+	id: string;
+	steamLink: string;
+	avatarLink: string;
+	matchesCount: number;
+};

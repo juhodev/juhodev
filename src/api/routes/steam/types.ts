@@ -1,4 +1,5 @@
 import {
+	BuiltProfile,
 	CsgoMatch,
 	CsgoPlayer,
 	CsgoProfile,
@@ -55,4 +56,10 @@ export type SteamLeaderboardResponse = {
 	error: boolean;
 	errorCode?: number;
 	leaderboard?: CsgoPlayer[];
+};
+
+export type SteamProfilesResponse = {
+	error: boolean;
+	errorCode?: number;
+	profiles?: BuiltProfile[];
 };
