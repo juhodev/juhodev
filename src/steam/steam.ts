@@ -24,6 +24,7 @@ import { getAllDatesBetweenTwoDates, makeId } from '../utils';
 import { db } from '..';
 import { ExtensionMatch, ExtensionSaveResponse } from './extension/types';
 import Extension from './extension/extension';
+import { stat } from 'fs';
 
 type GameData = {
 	averages: CsgoGameStats;
@@ -118,6 +119,44 @@ class Steam {
 		);
 
 		return builtProfiles;
+	}
+
+	async getPlayerStatistics(
+		playerId: string,
+		type: string,
+	): Promise<number[]> {
+		const stats: DBPlayerStatsWithMatch[] = await db.getCsgoPlayerStatsWithMatches(
+			playerId,
+		);
+		const sortedDates: DBPlayerStatsWithMatch[] = stats.sort(
+			(a, b) => a.date - b.date,
+		);
+
+		switch (type) {
+			case 'kills':
+				return sortedDates.map((stat) => stat.kills);
+
+			case 'deaths':
+				return sortedDates.map((stat) => stat.deaths);
+
+			case 'hsp':
+				return sortedDates.map((stat) => stat.hsp);
+
+			case 'mvps':
+				return sortedDates.map((stat) => stat.mvps);
+
+			case 'score':
+				return sortedDates.map((stat) => stat.score);
+
+			case 'ping':
+				return sortedDates.map((stat) => stat.ping);
+
+			case 'assists':
+				return sortedDates.map((stat) => stat.assists);
+
+			default:
+				return [];
+		}
 	}
 
 	private async buildProfile(id: string): Promise<CsgoProfile> {

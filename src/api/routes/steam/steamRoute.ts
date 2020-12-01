@@ -18,6 +18,7 @@ import {
 	SteamProfilesResponse,
 	SteamRouteResponse,
 	SteamSearchResponse,
+	SteamStatisticsResponse,
 	SteamUploadCodeResponse,
 	SteamUserResponse,
 } from './types';
@@ -124,6 +125,22 @@ router.get('/profiles', [], async (req, res) => {
 	const response: SteamProfilesResponse = {
 		error: false,
 		profiles: steam.getBuiltProfiles(),
+	};
+
+	res.json(response);
+});
+
+router.get('/statistics', [], async (req, res) => {
+	const { playerId, type } = req.query;
+
+	const statistics: number[] = await steam.getPlayerStatistics(
+		playerId,
+		type,
+	);
+
+	const response: SteamStatisticsResponse = {
+		error: false,
+		data: statistics.reverse(),
 	};
 
 	res.json(response);

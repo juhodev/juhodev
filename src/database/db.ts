@@ -154,6 +154,20 @@ class DB {
 		return csgoStats;
 	}
 
+	async getPlayerCsgoStats(playerId: string): Promise<DBCsgoStats[]> {
+		if (this.csgoStatsCache.length !== 0) {
+			return this.csgoStatsCache.filter(
+				(stat) => stat.player_id === playerId,
+			);
+		}
+
+		const dbStats: DBCsgoStats[] = await knex<DBCsgoStats>(
+			'csgo_stats',
+		).where({ player_id: playerId });
+
+		return dbStats;
+	}
+
 	async getCsgoPlayersInAMatch(
 		matchId: number,
 	): Promise<DBPlayerStatsWithPlayerInfo[]> {

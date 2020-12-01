@@ -63,3 +63,9 @@ export type SteamProfilesResponse = {
 	errorCode?: number;
 	profiles?: BuiltProfile[];
 };
+
+export type SteamStatisticsResponse = {
+	error: boolean;
+	errorCode?: number;
+	data: number[];
+};
