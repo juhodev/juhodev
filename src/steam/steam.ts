@@ -128,9 +128,9 @@ class Steam {
 		const stats: DBPlayerStatsWithMatch[] = await db.getCsgoPlayerStatsWithMatches(
 			playerId,
 		);
-		const sortedDates: DBPlayerStatsWithMatch[] = stats.sort(
-			(a, b) => a.date - b.date,
-		);
+		const sortedDates: DBPlayerStatsWithMatch[] = stats
+			.sort((a, b) => a.date - b.date)
+			.reverse();
 
 		switch (type) {
 			case 'kills':
