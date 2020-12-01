@@ -185,6 +185,13 @@ class Steam {
 			}
 		}
 
+		const mapStatistics: MapStatistics = await this.getPlayerMapStatistics(
+			id,
+		);
+		const matchFrequency: DateMatches[] = await this.getPlayerMatchFrequency(
+			id,
+		);
+
 		const profile: CsgoProfile = {
 			name,
 			id,
@@ -194,10 +201,12 @@ class Steam {
 			won,
 			lost,
 			tied,
+			mapStatistics,
 			gameAverages: gameData.averages,
 			gameHighest: gameData.highest,
 			mapStats: gameData.mapStats,
 			tenBestGames: tenBestCsgoGames,
+			dateMatches: matchFrequency,
 		};
 
 		this.profiles.push(profile);
