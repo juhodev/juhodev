@@ -35,6 +35,7 @@ class DB {
 		number,
 		DBPlayerStatsWithPlayerInfo[]
 	>;
+	private csgoPlayerMatchIds: Map<string, number[]>;
 
 	constructor() {
 		this.quoteDB = new QuoteDB();
@@ -52,6 +53,7 @@ class DB {
 		this.csgoStatsCache = [];
 
 		this.csgoMatchWithPlayersCache = new Map();
+		this.csgoPlayerMatchIds = new Map();
 	}
 
 	setup(channel: TextChannel) {
@@ -139,6 +141,23 @@ class DB {
 			.first();
 
 		return oldMatch;
+	}
+
+	async getCsgoPlayerMatchIds(steamId: string): Promise<number[]> {
+		if (this.csgoPlayerMatchIds.has(steamId)) {
+			return this.csgoPlayerMatchIds.get(steamId);
+		}
+
+		if (this.csgoPlayersWithStatsCache.length === 0) {
+			await this.getCsgoPlayersWithStats();
+		}
+
+		const ids: number[] = this.csgoPlayersWithStatsCache
+			.filter((stats) => stats.player_id === steamId)
+			.map((stats) => stats.match_id);
+
+		this.csgoPlayerMatchIds.set(steamId, ids);
+		return ids;
 	}
 
 	async getCsgoStats(): Promise<DBCsgoStats[]> {
@@ -387,6 +406,7 @@ class DB {
 		this.csgoPlayersWithMatchesCache = [];
 		this.csgoPlayersWithStatsCache = [];
 		this.csgoStatsCache = [];
+		this.csgoPlayerMatchIds.clear();
 	}
 
 	private writeToDisk() {

@@ -39,6 +39,7 @@ class Steam {
 	private csgoMapStatisticsCache: Map<string, MapStatistics>;
 	private csgoMatchFrequency: Map<string, DateMatches[]>;
 	private csgoLeaderboardCache: DBPlayerStatsWithPlayerInfo[];
+	private csgoPlayerSoloQueueCache: Map<string, number[]>;
 
 	private extension: Extension;
 
@@ -49,6 +50,8 @@ class Steam {
 		this.csgoMapStatisticsCache = new Map();
 		this.csgoMatchFrequency = new Map();
 		this.csgoLeaderboardCache = [];
+		this.csgoPlayerSoloQueueCache = new Map();
+
 		this.extension = new Extension();
 	}
 
@@ -124,10 +127,21 @@ class Steam {
 	async getPlayerStatistics(
 		playerId: string,
 		type: string,
+		soloQueue: boolean,
 	): Promise<number[]> {
-		const stats: DBPlayerStatsWithMatch[] = await db.getCsgoPlayerStatsWithMatches(
+		let stats: DBPlayerStatsWithMatch[] = await db.getCsgoPlayerStatsWithMatches(
 			playerId,
 		);
+
+		if (soloQueue) {
+			const soloQueueMatches: number[] = await this.getSoloQueueMatches(
+				playerId,
+			);
+			stats = stats.filter((stat) =>
+				soloQueueMatches.includes(stat.match_id),
+			);
+		}
+
 		const sortedDates: DBPlayerStatsWithMatch[] = stats
 			.sort((a, b) => a.date - b.date)
 			.reverse();
@@ -726,6 +740,43 @@ class Steam {
 		return bestGames;
 	}
 
+	private async getSoloQueueMatches(steamId: string): Promise<number[]> {
+		if (this.csgoPlayerSoloQueueCache.has(steamId)) {
+			return this.csgoPlayerSoloQueueCache.get(steamId);
+		}
+
+		const userGamesIds: number[] = await db.getCsgoPlayerMatchIds(steamId);
+
+		const players: Map<string, number> = new Map();
+		const soloQueueMatches: number[] = [];
+
+		for (const matchId of userGamesIds) {
+			const match: CsgoMatch = await this.getMatch(matchId);
+
+			let soloQueue: boolean = true;
+
+			for (const player of match.players) {
+				if (player.playerId === steamId) {
+					continue;
+				}
+
+				if (players.has(player.playerId)) {
+					soloQueue = false;
+					break;
+				}
+
+				players.set(player.playerId, 1);
+			}
+
+			if (soloQueue) {
+				soloQueueMatches.push(matchId);
+			}
+		}
+
+		this.csgoPlayerSoloQueueCache.set(steamId, soloQueueMatches);
+		return soloQueueMatches;
+	}
+
 	private getStandardDeviationAndError(
 		nums: number[],
 	): { standardDeviation: number; standardError: number } {
@@ -754,6 +805,7 @@ class Steam {
 		this.profiles = [];
 		this.csgoMapStatisticsCache.clear();
 		this.csgoMatchFrequency.clear();
+		this.csgoPlayerSoloQueueCache.clear();
 		this.csgoLeaderboardCache = [];
 	}
 }

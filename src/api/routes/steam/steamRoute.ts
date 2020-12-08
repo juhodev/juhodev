@@ -131,11 +131,12 @@ router.get('/profiles', [], async (req, res) => {
 });
 
 router.get('/statistics', [], async (req, res) => {
-	const { playerId, type } = req.query;
+	const { playerId, type, soloQueue } = req.query;
 
 	const statistics: number[] = await steam.getPlayerStatistics(
 		playerId,
 		type,
+		soloQueue == 'true', // oh man
 	);
 
 	const response: SteamStatisticsResponse = {
