@@ -15,6 +15,8 @@ import SteamRouter from './routes/steam/steamRoute';
 
 import Steam from '../steam/steam';
 
+import { startUpdatingUserCodes } from '../steam/matchsharing/matchSharing';
+
 const { ENVIRONMENT } = process.env;
 
 export const steam: Steam = new Steam();

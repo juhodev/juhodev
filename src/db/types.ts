@@ -216,3 +216,19 @@ export type DBUploadedCsgoMatch = {
 	match_id: number;
 	player_id: string;
 };
+
+export type DBMatchSharingCode = {
+	id?: number;
+	player_id: string;
+	sharing_code: string;
+	saved_at: number;
+	downloaded: boolean;
+};
+
+export type DBMatchSharingAccount = {
+	id: string;
+	link: string;
+	authentication_code: string;
+	steamid64: string;
+	registered_at: number;
+};

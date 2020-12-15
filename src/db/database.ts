@@ -421,6 +421,59 @@ export async function initDatabase() {
 				},
 			],
 		},
+		{
+			name: 'match_sharing_accounts',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.STRING,
+					primary: true,
+				},
+				{
+					name: 'link',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'authentication_code',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'steamid64',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'registered_at',
+					type: ColumnType.BIG_INTEGER,
+				},
+			],
+		},
+		{
+			name: 'match_sharing_codes',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.INTEGER,
+					primary: true,
+					autoIncrement: true,
+				},
+				{
+					name: 'player_id',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'sharing_code',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'saved_at',
+					type: ColumnType.BIG_INTEGER,
+				},
+				{
+					name: 'downloaded',
+					type: ColumnType.BOOLEAN,
+				},
+			],
+		},
 	];
 
 	for (const table of tables) {

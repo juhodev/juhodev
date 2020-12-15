@@ -14,6 +14,7 @@ import {
 import {
 	SteamGamesResponse,
 	SteamLeaderboardResponse,
+	SteamLinkResponse,
 	SteamMatchResponse,
 	SteamProfilesResponse,
 	SteamRouteResponse,
@@ -144,6 +145,17 @@ router.get('/statistics', [], async (req, res) => {
 		data: statistics.reverse(),
 	};
 
+	res.json(response);
+});
+
+router.post('/link', [], async (req, res) => {
+	const { profile, authenticationCode, knownCode } = req.body;
+
+	const response: SteamLinkResponse = await steam.addMatchSharingCode(
+		profile,
+		authenticationCode,
+		knownCode,
+	);
 	res.json(response);
 });
 

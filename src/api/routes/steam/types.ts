@@ -69,3 +69,14 @@ export type SteamStatisticsResponse = {
 	errorCode?: number;
 	data: number[];
 };
+
+export type SteamLinkResponse = {
+	error: boolean;
+	errorCode?: number;
+};
+
+export const SteamError = {
+	DISCORD_NOT_AUTHENTICATED: 0,
+	USER_NOT_ON_SERVER: 1,
+	COULD_NOT_FETCH_MATCH_CODE: 2,
+};

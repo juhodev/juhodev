@@ -24,7 +24,13 @@ import { getAllDatesBetweenTwoDates, makeId } from '../utils';
 import { db } from '..';
 import { ExtensionMatch, ExtensionSaveResponse } from './extension/types';
 import Extension from './extension/extension';
-import { stat } from 'fs';
+import { SteamLinkResponse } from '../api/routes/steam/types';
+import {
+	fetchSharingCodesWithSteamId3,
+	linkAccount,
+	startUpdatingUserCodes,
+} from './matchsharing/matchSharing';
+import GameDownloader from './matchsharing/gameDownloader';
 
 type GameData = {
 	averages: CsgoGameStats;
@@ -34,7 +40,6 @@ type GameData = {
 
 class Steam {
 	private profiles: CsgoProfile[];
-	private csgoUsers: CsgoUser[];
 	private csgoMatchCache: Map<number, CsgoMatch>;
 	private csgoMapStatisticsCache: Map<string, MapStatistics>;
 	private csgoMatchFrequency: Map<string, DateMatches[]>;
@@ -42,10 +47,10 @@ class Steam {
 	private csgoPlayerSoloQueueCache: Map<string, number[]>;
 
 	private extension: Extension;
+	private gameDownloader: GameDownloader;
 
 	constructor() {
 		this.profiles = [];
-		this.csgoUsers = [];
 		this.csgoMatchCache = new Map();
 		this.csgoMapStatisticsCache = new Map();
 		this.csgoMatchFrequency = new Map();
@@ -53,6 +58,12 @@ class Steam {
 		this.csgoPlayerSoloQueueCache = new Map();
 
 		this.extension = new Extension();
+		this.gameDownloader = new GameDownloader();
+		startUpdatingUserCodes(this.gameDownloader);
+		// this.gameDownloader.download('CSGO-uJKUw-WGEYa-EFeF8-Fcd75-ddbhQ');
+		// getFinalScoreboard(
+		// 	`I:\\node\\baavo\\data\\csgo\\demos\\003448463468552782531_0932096889.dem`,
+		// );
 	}
 
 	async getProfile(id: string): Promise<CsgoProfile> {
@@ -60,10 +71,12 @@ class Steam {
 			(prof) => prof.id === id,
 		);
 		if (oldProfile !== undefined) {
+			fetchSharingCodesWithSteamId3(oldProfile.id, this.gameDownloader);
 			return oldProfile;
 		}
 
 		const profile: CsgoProfile = await this.buildProfile(id);
+		fetchSharingCodesWithSteamId3(profile.id, this.gameDownloader);
 		return profile;
 	}
 
@@ -171,6 +184,19 @@ class Steam {
 			default:
 				return [];
 		}
+	}
+
+	async addMatchSharingCode(
+		profileLink: string,
+		authenticationCode: string,
+		knownCode: string,
+	): Promise<SteamLinkResponse> {
+		return linkAccount(
+			profileLink,
+			authenticationCode,
+			knownCode,
+			this.gameDownloader,
+		);
 	}
 
 	private async buildProfile(id: string): Promise<CsgoProfile> {
@@ -801,7 +827,6 @@ class Steam {
 	 * problem.
 	 */
 	private invalidateCaches() {
-		this.csgoUsers = [];
 		this.profiles = [];
 		this.csgoMapStatisticsCache.clear();
 		this.csgoMatchFrequency.clear();
