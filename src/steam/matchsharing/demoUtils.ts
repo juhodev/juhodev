@@ -63,7 +63,7 @@ export async function saveFinalScoreboard(
 				match_duration: Math.round(demoFile.header.playbackTime),
 				uploaded_by: 'csgo',
 				wait_time: -1,
-				date: date * 100, // Change to javascript timestamp
+				date: date * 1000, // Change to javascript timestamp
 				winner,
 			};
 

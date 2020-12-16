@@ -73,10 +73,13 @@ export async function fetchNewCode(
 		return 'AUTH_ERROR';
 	}
 
-	const { result }: GetNextMatchSharingCodeResponse = await response.json();
-	// If nextcode equals to "n/a" the player hasn't played any more matches after the last sharing code.
-	if (result.nextcode !== 'n/a') {
-		return result.nextcode;
+	const data: GetNextMatchSharingCodeResponse = await response.json();
+	if (data.result !== undefined) {
+		const { result } = data;
+		// If nextcode equals to "n/a" the player hasn't played any more matches after the last sharing code.
+		if (result.nextcode && result.nextcode !== 'n/a') {
+			return result.nextcode;
+		}
 	}
 
 	return undefined;
@@ -221,7 +224,7 @@ async function saveSharingCode(
 		downloaded: false,
 	});
 
-	gameDownloader.download(code);
+	gameDownloader.add(code);
 }
 
 async function saveMatchSharingAccount(

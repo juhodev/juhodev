@@ -11,11 +11,14 @@ class GameDownloader {
 	private csgoClient: csgo.CSGOClient;
 	private ready: boolean;
 	private demoHandler: DemoHandler;
-	private initialDownloadQueue: string[];
+	private downloadQueue: string[];
+
+	private working: boolean;
 
 	constructor() {
 		this.ready = false;
-		this.initialDownloadQueue = [];
+		this.working = false;
+		this.downloadQueue = [];
 		const steamClient: Steam.SteamClient = new Steam.SteamClient();
 		const steamUser: Steam.SteamUser = new Steam.SteamUser(steamClient);
 		const steamGC: Steam.SteamGameCoordinator = new Steam.SteamGameCoordinator(
@@ -66,10 +69,7 @@ class GameDownloader {
 			console.log('CSGO client ready!');
 			this.ready = true;
 
-			while (this.initialDownloadQueue.length !== 0) {
-				const code: string = this.initialDownloadQueue.shift();
-				this.download(code);
-			}
+			this.download();
 		});
 
 		this.csgoClient.on('matchList', (list) => {
@@ -77,28 +77,38 @@ class GameDownloader {
 			const match: MatchSharingCsgoMatch = list.matches[0];
 			fs.writeFileSync('data/test4.json', JSON.stringify(match));
 			this.saveMatch(match);
+
+			this.working = false;
+			this.download();
 		});
 
 		this.createDirs();
 		this.demoHandler = new DemoHandler();
 	}
 
-	async download(sharingCode: string) {
-		if (!this.ready) {
-			console.error(
-				"Couldn't download csgo game. The client isn't ready!",
-			);
-			this.initialDownloadQueue.push(sharingCode);
+	async add(sharingCode: string) {
+		this.downloadQueue.push(sharingCode);
+		this.download();
+	}
+
+	private async download() {
+		if (!this.ready || this.working || this.downloadQueue.length === 0) {
 			return;
 		}
+
+		this.working = true;
+		const sharingCode: string = this.downloadQueue.shift();
+		console.log(`Working on sharing code ${sharingCode}`);
 
 		const dbSharingCode: DBMatchSharingCode = await knex<DBMatchSharingCode>(
 			'match_sharing_codes',
 		)
-			.where({ sharing_code: sharingCode })
+			.where({ sharing_code: sharingCode, downloaded: true })
 			.first();
 
 		if (dbSharingCode !== undefined) {
+			this.working = false;
+			this.download();
 			return;
 		}
 
