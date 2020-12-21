@@ -21,7 +21,11 @@ router.post('/worker', [workerPasswordCheck], (req, res) => {
 router.post('/demo', [workerPasswordCheck], async (req, res) => {
 	const { match, address } = req.body;
 
-	await saveMatch(match);
+	// The match will be undefined if the worker couldn't download it
+	if (match !== undefined) {
+		await saveMatch(match);
+	}
+
 	demoMaster.jobFinished(address);
 	res.sendStatus(200);
 });
