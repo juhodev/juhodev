@@ -177,7 +177,9 @@ async function fetchUserCodes(
 	}
 
 	await saveSharingCode(playerId, code);
-	fetchUserCodes(playerId, steamId64, authenticationCode, code);
+	setTimeout(() => {
+		fetchUserCodes(playerId, steamId64, authenticationCode, code);
+	}, 1000);
 }
 
 function convertSteamId64ToSteamId3(steamId64: string) {
