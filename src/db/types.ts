@@ -232,3 +232,15 @@ export type DBMatchSharingAccount = {
 	steamid64: string;
 	registered_at: number;
 };
+
+export type DBMetric = {
+	id?: number;
+	metric: string;
+	value: number;
+	logged_at: number;
+};
+
+export type DBMetricsKey = {
+	key: string;
+	count: number;
+};

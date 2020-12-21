@@ -75,26 +75,34 @@ class DemoMaster {
 		const workerStatusArray: WorkerStatus[] = [];
 
 		for (const worker of this.workers) {
-			const response = await fetch(`${worker.address}/metrics`);
-			const json = await response.json();
-
-			if (json['error']) {
-				workerStatusArray.push({
-					alive: false,
-					working: false,
-					processing: undefined,
+			try {
+				const response = await fetch(`${worker.address}/metrics`, {
+					timeout: 5000,
 				});
-				continue;
+
+				const json = await response.json();
+
+				if (json['error']) {
+					workerStatusArray.push({
+						alive: false,
+						working: false,
+						processing: undefined,
+					});
+					continue;
+				}
+
+				const metrics: ProcessingMetrics =
+					json['data']['processingMetrics'];
+
+				workerStatusArray.push({
+					alive: true,
+					working: worker.working,
+					processing: metrics,
+				});
+			} catch (e) {
+				console.error(e);
+				this.doHealthCheck(worker);
 			}
-
-			const metrics: ProcessingMetrics =
-				json['data']['processingMetrics'];
-
-			workerStatusArray.push({
-				alive: true,
-				working: worker.working,
-				processing: metrics,
-			});
 		}
 
 		return workerStatusArray;

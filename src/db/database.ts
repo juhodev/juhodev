@@ -1,5 +1,4 @@
 import Knex = require('knex');
-import { idText } from 'typescript';
 import { ColumnType, Table } from './types';
 import { knex } from './utils';
 
@@ -471,6 +470,43 @@ export async function initDatabase() {
 				{
 					name: 'downloaded',
 					type: ColumnType.BOOLEAN,
+				},
+			],
+		},
+		{
+			name: 'metrics',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.INTEGER,
+					primary: true,
+					autoIncrement: true,
+				},
+				{
+					name: 'metric',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'value',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'logged_at',
+					type: ColumnType.BIG_INTEGER,
+				},
+			],
+		},
+		{
+			name: 'metrics_keys',
+			columns: [
+				{
+					name: 'key',
+					type: ColumnType.STRING,
+					primary: true,
+				},
+				{
+					name: 'count',
+					type: ColumnType.INTEGER,
 				},
 			],
 		},

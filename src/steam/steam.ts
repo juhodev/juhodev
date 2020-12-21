@@ -21,7 +21,7 @@ import {
 	BuiltProfile,
 } from './types';
 import { getAllDatesBetweenTwoDates, makeId } from '../utils';
-import { db } from '..';
+import { db, siteMetrics } from '..';
 import { ExtensionMatch, ExtensionSaveResponse } from './extension/types';
 import Extension from './extension/extension';
 import { SteamLinkResponse } from '../api/routes/steam/types';
@@ -188,6 +188,7 @@ class Steam {
 	}
 
 	private async buildProfile(id: string): Promise<CsgoProfile> {
+		siteMetrics.time('build_profile');
 		const player: DBCsgoPlayer = await db.getCsgoPlayer(id);
 		if (player === undefined) {
 			return undefined;
@@ -277,6 +278,7 @@ class Steam {
 		};
 
 		this.profiles.push(profile);
+		siteMetrics.timeEnd('build_profile');
 		return profile;
 	}
 
@@ -292,7 +294,9 @@ class Steam {
 	}
 
 	async getPlayerMatchFrequency(playerId: string): Promise<DateMatches[]> {
+		siteMetrics.time('get_player_match_frequency');
 		if (this.csgoMatchFrequency.has(playerId)) {
+			siteMetrics.timeEnd('get_player_match_frequency');
 			return this.csgoMatchFrequency.get(playerId);
 		}
 
@@ -341,6 +345,7 @@ class Steam {
 		}
 
 		this.csgoMatchFrequency.set(playerId, dateMatches);
+		siteMetrics.timeEnd('get_player_match_frequency');
 		return dateMatches;
 	}
 
@@ -417,6 +422,7 @@ class Steam {
 		playerId: string,
 		page: number,
 	): Promise<GameWithStats[]> {
+		siteMetrics.time('get_player_matches');
 		const games: DBPlayerStatsWithMatch[] = await this.getPlayerStatsWithGames(
 			playerId,
 			page,
@@ -449,11 +455,14 @@ class Steam {
 			},
 		);
 
+		siteMetrics.timeEnd('get_player_matches');
 		return gamesWithStats;
 	}
 
 	async getPlayerMapStatistics(playerId: string): Promise<MapStatistics> {
+		siteMetrics.time('get_player_map_statistics');
 		if (this.csgoMapStatisticsCache.has(playerId)) {
+			siteMetrics.timeEnd('get_player_map_statistics');
 			return this.csgoMapStatisticsCache.get(playerId);
 		}
 
@@ -475,6 +484,7 @@ class Steam {
 
 		const statistics: MapStatistics = { maps };
 		this.csgoMapStatisticsCache.set(playerId, statistics);
+		siteMetrics.timeEnd('get_player_map_statistics');
 
 		return statistics;
 	}

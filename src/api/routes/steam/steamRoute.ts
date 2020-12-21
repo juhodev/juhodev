@@ -29,28 +29,33 @@ import {
 	ExtensionSaveResponse,
 	UploadCode,
 } from '../../../steam/extension/types';
+import { siteMetrics } from '../../..';
 
 const router = expressPromiseRouter();
 
 router.get('/search', [], async (req, res) => {
 	const { q } = req.query;
 
+	siteMetrics.time('search');
 	const csgoUsers: CsgoUser[] = await steam.search(q);
 	const response: SteamSearchResponse = {
 		error: false,
 		searchResult: csgoUsers,
 	};
+	siteMetrics.timeEnd('search');
 
 	res.json(response);
 });
 
 router.get('/match', [], async (req, res) => {
 	const { id } = req.query;
+	siteMetrics.time('match');
 	const csgoMatch: CsgoMatch = await steam.getMatchFromDB(id);
 	const response: SteamMatchResponse = {
 		error: false,
 		csgoMatch,
 	};
+	siteMetrics.timeEnd('match');
 
 	res.json(response);
 });
@@ -85,11 +90,13 @@ router.get('/uploadCode', [verifyIdentity], async (req, res) => {
 router.get('/games', [], async (req, res) => {
 	const { id, page } = req.query;
 
+	siteMetrics.time('games');
 	const games: GameWithStats[] = await steam.getPlayerMatches(id, page);
 	const mapStatistics: MapStatistics = await steam.getPlayerMapStatistics(id);
 	const matchFrequency: DateMatches[] = await steam.getPlayerMatchFrequency(
 		id,
 	);
+	siteMetrics.timeEnd('games');
 
 	const response: SteamGamesResponse = {
 		games,
@@ -134,11 +141,13 @@ router.get('/profiles', [], async (req, res) => {
 router.get('/statistics', [], async (req, res) => {
 	const { playerId, type, soloQueue } = req.query;
 
+	siteMetrics.time('get_player_statistics');
 	const statistics: number[] = await steam.getPlayerStatistics(
 		playerId,
 		type,
 		soloQueue == 'true', // oh man
 	);
+	siteMetrics.timeEnd('get_player_statistics');
 
 	const response: SteamStatisticsResponse = {
 		error: false,

@@ -13,10 +13,10 @@ import ClipsRouter from './routes/clips/clipsRoute';
 import ProfileRouter from './routes/profile/profileRoute';
 import SteamRouter from './routes/steam/steamRoute';
 import DemoRouter from './routes/demoworker/demoWorkerRoute';
+import MetricsRouter from './routes/metrics/metricsRoute';
 
 import Steam from '../steam/steam';
 
-import { startUpdatingUserCodes } from '../steam/matchsharing/matchSharing';
 import DemoMaster from '../steam/matchsharing/demos/demoMaster';
 
 const { ENVIRONMENT } = process.env;
@@ -63,6 +63,7 @@ export function startApi() {
 	app.use('/api/profile', ProfileRouter);
 	app.use('/api/steam', cors(corsOptions), SteamRouter);
 	app.use('/api/demoworker', DemoRouter);
+	app.use('/api/metrics', MetricsRouter);
 
 	app.use('/baavo', express.static('data/baavo'));
 	app.use('/img', express.static('data/imgs'));

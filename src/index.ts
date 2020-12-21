@@ -21,8 +21,10 @@ import CsgoCommand from './commands/csgoCommand';
 
 import { logUsers } from './userLogger';
 import { startApi } from './api/server';
+import SiteMetrics from './metrics/siteMetrics';
 
 const db = new DB();
+const siteMetrics: SiteMetrics = new SiteMetrics();
 
 (async () => {
 	await initDatabase();
@@ -71,4 +73,4 @@ const updateGuild = async (
 	logUsers(db);
 };
 
-export { db };
+export { db, siteMetrics };
