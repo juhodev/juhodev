@@ -33,6 +33,16 @@ class DemoMaster {
 	 * @param address Address of the worker API
 	 */
 	register(address: string) {
+		// If the worker is re-registed then remove the old one
+		// This would happen if the worker is restarted
+		const oldWorkerIndex: number = this.workers.findIndex(
+			(w) => w.address === address,
+		);
+
+		if (oldWorkerIndex !== -1) {
+			this.workers.splice(oldWorkerIndex, 1);
+		}
+
 		this.workers.push({ working: false, address });
 		console.log(`Worker ${address} registered`);
 		this.doJob();
