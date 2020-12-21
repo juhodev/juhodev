@@ -7,7 +7,8 @@ import { fetchUserIdentity, userOnServer } from '../../discord';
 import { getUserSubmissionsWithSnowflake } from '../../user';
 import { verifyIdentity } from '../middleware/middleware';
 
-const router = expressPromiseRouter();
+const 
+router = expressPromiseRouter();
 
 router.get('/', [verifyIdentity], async (req, res) => {
 	const bearer: string = req.headers.authorization;

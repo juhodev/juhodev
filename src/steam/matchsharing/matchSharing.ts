@@ -1,17 +1,24 @@
 import fetch from 'node-fetch';
-import { DBMatchSharingAccount, DBMatchSharingCode } from '../../db/types';
+import {
+	DBCsgoMatch,
+	DBCsgoPlayer,
+	DBCsgoStats,
+	DBMatchSharingAccount,
+	DBMatchSharingCode,
+} from '../../db/types';
 import { knex } from '../../db/utils';
 import * as SteamID from 'steamid';
 import * as xml2js from 'xml2js';
 import { SteamLinkResponse, SteamError } from '../../api/routes/steam/types';
 import { GetNextMatchSharingCodeResponse } from './types';
-import GameDownloader from './gameDownloader';
+import { Match, Player } from '../../api/routes/demoworker/types';
+import { db } from '../..';
+import { demoMaster } from '../../api/server';
 
 export async function linkAccount(
 	profileLink: string,
 	authenticationCode: string,
 	knownCode: string,
-	gameDownloader: GameDownloader,
 ): Promise<SteamLinkResponse> {
 	const steamId64: string = await getSteamId64(profileLink);
 	const steamId3: string = convertSteamId64ToSteamId3(steamId64);
@@ -34,16 +41,10 @@ export async function linkAccount(
 		authenticationCode,
 		steamId64,
 	);
-	await saveSharingCode(steamId3, knownCode, gameDownloader);
-	await saveSharingCode(steamId3, newCode, gameDownloader);
+	await saveSharingCode(steamId3, knownCode);
+	await saveSharingCode(steamId3, newCode);
 
-	fetchUserCodes(
-		steamId3,
-		steamId64,
-		authenticationCode,
-		newCode,
-		gameDownloader,
-	);
+	fetchUserCodes(steamId3, steamId64, authenticationCode, newCode);
 
 	return {
 		error: false,
@@ -113,22 +114,19 @@ export async function getSteamId64(profileLink: string): Promise<string> {
 /**
  * Tries to fetch new codes for every user registered once a day.
  */
-export function startUpdatingUserCodes(gameDownloader: GameDownloader) {
+export function startUpdatingUserCodes() {
 	setInterval(async () => {
 		const users: DBMatchSharingAccount[] = await knex<DBMatchSharingAccount>(
 			'match_sharing_accounts',
 		).where({});
 
 		for (const user of users) {
-			await fetchCodesForUser(user, gameDownloader);
+			await fetchCodesForUser(user);
 		}
 	}, 1000 * 60 * 60 * 24);
 }
 
-export async function fetchSharingCodesWithSteamId3(
-	steamId3: string,
-	gameDownloader: GameDownloader,
-) {
+export async function fetchSharingCodesWithSteamId3(steamId3: string) {
 	// Look for an acocunt with the steamId3. This function is most likely called when someone gets a profile
 	// the steamId3 is the same that I save from the steam page when scraping.
 	const registeredSteamAccount: DBMatchSharingAccount = await knex<DBMatchSharingAccount>(
@@ -143,13 +141,10 @@ export async function fetchSharingCodesWithSteamId3(
 		return;
 	}
 
-	await fetchCodesForUser(registeredSteamAccount, gameDownloader);
+	await fetchCodesForUser(registeredSteamAccount);
 }
 
-async function fetchCodesForUser(
-	user: DBMatchSharingAccount,
-	gameDownloader: GameDownloader,
-) {
+async function fetchCodesForUser(user: DBMatchSharingAccount) {
 	const lastUserMatchSharingCode: DBMatchSharingCode = await knex<DBMatchSharingCode>(
 		'match_sharing_codes',
 	)
@@ -162,7 +157,6 @@ async function fetchCodesForUser(
 		user.steamid64,
 		user.authentication_code,
 		lastUserMatchSharingCode.sharing_code,
-		gameDownloader,
 	);
 }
 
@@ -171,7 +165,6 @@ async function fetchUserCodes(
 	steamId64: string,
 	authenticationCode: string,
 	knownCode: string,
-	gameDownloader: GameDownloader,
 ) {
 	let code: string = await fetchNewCode(
 		steamId64,
@@ -183,25 +176,15 @@ async function fetchUserCodes(
 		return;
 	}
 
-	await saveSharingCode(playerId, code, gameDownloader);
-	fetchUserCodes(
-		playerId,
-		steamId64,
-		authenticationCode,
-		code,
-		gameDownloader,
-	);
+	await saveSharingCode(playerId, code);
+	fetchUserCodes(playerId, steamId64, authenticationCode, code);
 }
 
 function convertSteamId64ToSteamId3(steamId64: string) {
 	return new SteamID(steamId64).steam3().substr(5, 9);
 }
 
-async function saveSharingCode(
-	playerId: string,
-	code: string,
-	gameDownloader: GameDownloader,
-) {
+async function saveSharingCode(playerId: string, code: string) {
 	const dbCode: DBMatchSharingCode = await knex<DBMatchSharingCode>(
 		'match_sharing_codes',
 	)
@@ -224,7 +207,7 @@ async function saveSharingCode(
 		downloaded: false,
 	});
 
-	gameDownloader.add(code);
+	demoMaster.process(code);
 }
 
 async function saveMatchSharingAccount(
@@ -240,4 +223,117 @@ async function saveMatchSharingAccount(
 		steamid64,
 		link,
 	});
+}
+
+/**
+ * Saves a match that was received from a demo worker
+ *
+ * @param match Match received from a demo worker
+ */
+export async function saveMatch(match: Match) {
+	// First insert the match in the database
+	// This first looks up if the match already exists in the database. If it does I don't want to
+	// insert it again.
+	const oldMatch: DBCsgoMatch = await db.findOldCsgoMatch(
+		match.map,
+		match.date,
+		match.duration,
+	);
+
+	if (oldMatch !== undefined) {
+		return;
+	}
+
+	const matchId: number = await knex<DBCsgoMatch>('csgo_games')
+		.insert({
+			map: match.map,
+			ct_rounds: match.counterTerroristTeam.score,
+			t_rounds: match.terroristTeam.score,
+			match_duration: match.duration,
+			uploaded_by: 'csgo',
+			wait_time: -1,
+			winner: match.winner,
+			date: match.date,
+		})
+		.returning('id');
+
+	const players: Player[] = [
+		...match.counterTerroristTeam.players,
+		...match.terroristTeam.players,
+	];
+
+	// Insert the new players as a batch later
+	const newPlayers: DBCsgoPlayer[] = [];
+	const newStats: DBCsgoStats[] = [];
+
+	for (const player of players) {
+		let dbPlayer: DBCsgoPlayer;
+
+		// First check if the player is already in the database. I don't want any duplicate players (and it would give an error because
+		// the steamId3 is the player's primary key).
+		const oldPlayer: DBCsgoPlayer = await db.getCsgoPlayer(player.steamId3);
+		if (oldPlayer !== undefined) {
+			dbPlayer = oldPlayer;
+		} else {
+			dbPlayer = {
+				id: player.steamId3,
+				name: player.name,
+				steam_link: `https://steamcommunity.com/profiles/${player.steamId64}`,
+				avatar_link: await getUserAvatar(player.steamId64),
+				uploaded_by: 'csgo',
+			};
+
+			// For whatever reason sometimes the player is twice in the final scoreboard.
+			const alreadyInNewPlayers: DBCsgoPlayer = newPlayers.find(
+				(p) => p.id === dbPlayer.id,
+			);
+
+			if (alreadyInNewPlayers !== undefined) {
+				continue;
+			}
+
+			newPlayers.push(dbPlayer);
+		}
+
+		const stats: DBCsgoStats = {
+			assists: player.assists,
+			deaths: player.deaths,
+			hsp: player.hsp,
+			kills: player.kills,
+			match_id: matchId,
+			mvps: player.mvps,
+			ping: player.ping,
+			player_id: player.steamId3,
+			score: player.score,
+			side: player.side,
+			uploaded_by: 'csgo',
+		};
+
+		newStats.push(stats);
+	}
+
+	await knex<DBCsgoPlayer>('csgo_players').insert(newPlayers);
+	await knex<DBCsgoStats>('csgo_stats').insert(newStats);
+
+	// I really need to write a better cache system because
+	// right now I need to clear the cache every time I save new data
+	db.clearCsgoCaches();
+}
+
+async function getUserAvatar(id: string): Promise<string> {
+	const profileXMLLink: string = `https://steamcommunity.com/profiles/${id}?xml=1`;
+	const response = await fetch(profileXMLLink);
+
+	if (response.status < 200 && response.status >= 300) {
+		return undefined;
+	}
+
+	let obj: object = { profile: { avatarMedium: [] } };
+	const page: string = await response.text();
+	try {
+		obj = await xml2js.parseStringPromise(page);
+	} catch (e) {
+		console.error(e);
+	}
+	return obj['profile']['avatarMedium'][0];
 }

@@ -30,7 +30,6 @@ import {
 	linkAccount,
 	startUpdatingUserCodes,
 } from './matchsharing/matchSharing';
-import GameDownloader from './matchsharing/gameDownloader';
 
 type GameData = {
 	averages: CsgoGameStats;
@@ -47,7 +46,6 @@ class Steam {
 	private csgoPlayerSoloQueueCache: Map<string, number[]>;
 
 	private extension: Extension;
-	private gameDownloader: GameDownloader;
 
 	constructor() {
 		this.profiles = [];
@@ -58,12 +56,7 @@ class Steam {
 		this.csgoPlayerSoloQueueCache = new Map();
 
 		this.extension = new Extension();
-		this.gameDownloader = new GameDownloader();
-		startUpdatingUserCodes(this.gameDownloader);
-		// this.gameDownloader.download('CSGO-uJKUw-WGEYa-EFeF8-Fcd75-ddbhQ');
-		// getFinalScoreboard(
-		// 	`I:\\node\\baavo\\data\\csgo\\demos\\003448463468552782531_0932096889.dem`,
-		// );
+		startUpdatingUserCodes();
 	}
 
 	async getProfile(id: string): Promise<CsgoProfile> {
@@ -71,12 +64,12 @@ class Steam {
 			(prof) => prof.id === id,
 		);
 		if (oldProfile !== undefined) {
-			fetchSharingCodesWithSteamId3(oldProfile.id, this.gameDownloader);
+			fetchSharingCodesWithSteamId3(oldProfile.id);
 			return oldProfile;
 		}
 
 		const profile: CsgoProfile = await this.buildProfile(id);
-		fetchSharingCodesWithSteamId3(profile.id, this.gameDownloader);
+		fetchSharingCodesWithSteamId3(profile.id);
 		return profile;
 	}
 
@@ -191,12 +184,7 @@ class Steam {
 		authenticationCode: string,
 		knownCode: string,
 	): Promise<SteamLinkResponse> {
-		return linkAccount(
-			profileLink,
-			authenticationCode,
-			knownCode,
-			this.gameDownloader,
-		);
+		return linkAccount(profileLink, authenticationCode, knownCode);
 	}
 
 	private async buildProfile(id: string): Promise<CsgoProfile> {
@@ -632,11 +620,13 @@ class Steam {
 			}
 
 			const { wait_time, match_duration, map } = dbGame;
-			totalData.waitTime.value += wait_time;
+			const realWaitTime: number = wait_time === -1 ? 0 : wait_time;
+
+			totalData.waitTime.value += realWaitTime;
 			totalData.matchDuration.value += match_duration;
 
-			if (highestData.waitTime.value < wait_time) {
-				highestData.waitTime.value = wait_time;
+			if (highestData.waitTime.value < realWaitTime) {
+				highestData.waitTime.value = realWaitTime;
 				highestData.waitTime.matchId = dbGame['match_id'];
 			}
 
@@ -659,7 +649,7 @@ class Steam {
 			}
 
 			mapData.averageMatchDuration += match_duration;
-			mapData.averageWaitTime += wait_time;
+			mapData.averageWaitTime += realWaitTime;
 			mapData.timesPlayed++;
 
 			if (mapData.timesPlayed === 1) {
