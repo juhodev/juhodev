@@ -90,13 +90,11 @@ router.get('/uploadCode', [verifyIdentity], async (req, res) => {
 router.get('/games', [], async (req, res) => {
 	const { id, page } = req.query;
 
-	siteMetrics.time('games');
 	const games: GameWithStats[] = await steam.getPlayerMatches(id, page);
 	const mapStatistics: MapStatistics = await steam.getPlayerMapStatistics(id);
 	const matchFrequency: DateMatches[] = await steam.getPlayerMatchFrequency(
 		id,
 	);
-	siteMetrics.timeEnd('games');
 
 	const response: SteamGamesResponse = {
 		games,
@@ -121,10 +119,12 @@ router.get('/user', [], async (req, res) => {
 });
 
 router.get('/leaderboard', [], async (req, res) => {
+	siteMetrics.time('get_leaderboard');
 	const response: SteamLeaderboardResponse = {
 		error: false,
 		leaderboard: await steam.getLeaderboards(),
 	};
+	siteMetrics.timeEnd('get_leaderboard');
 
 	res.json(response);
 });
