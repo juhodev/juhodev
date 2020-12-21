@@ -1,8 +1,15 @@
 import expressPromiseRouter from 'express-promise-router';
 import { demoMaster } from '../../server';
 import { saveMatch } from '../../../steam/matchsharing/matchSharing';
+import { WorkerStatus } from '../../../steam/matchsharing/demos/types';
 
 const router = expressPromiseRouter();
+
+router.get('/status', [], async (req, res) => {
+	const status: WorkerStatus[] = await demoMaster.getStatus();
+
+	res.json({ error: false, status });
+});
 
 router.post('/worker', [workerPasswordCheck], (req, res) => {
 	const { address } = req.body;

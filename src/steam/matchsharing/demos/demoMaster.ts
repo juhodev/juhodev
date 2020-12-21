@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 import { DBMatchSharingCode } from '../../../db/types';
 import { knex } from '../../../db/utils';
-import { DemoWorker } from './types';
+import { DemoWorker, ProcessingMetrics, WorkerStatus } from './types';
 
 class DemoMaster {
 	private workers: DemoWorker[];
@@ -59,6 +59,35 @@ class DemoMaster {
 		}
 
 		this.doJob();
+	}
+
+	async getStatus(): Promise<WorkerStatus[]> {
+		const workerStatusArray: WorkerStatus[] = [];
+
+		for (const worker of this.workers) {
+			const response = await fetch(`${worker.address}/metrics`);
+			const json = await response.json();
+
+			if (json['error']) {
+				workerStatusArray.push({
+					alive: false,
+					working: false,
+					processing: undefined,
+				});
+				continue;
+			}
+
+			const metrics: ProcessingMetrics =
+				json['data']['processingMetrics'];
+
+			workerStatusArray.push({
+				alive: true,
+				working: worker.working,
+				processing: metrics,
+			});
+		}
+
+		return workerStatusArray;
 	}
 
 	/**
