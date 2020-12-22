@@ -300,53 +300,56 @@ class Steam {
 			return this.csgoMatchFrequency.get(playerId);
 		}
 
+		// This will most likely be cached so I don't really need to think about this
 		const matches: DBPlayerStatsWithMatch[] = await db.getCsgoPlayerStatsWithMatches(
 			playerId,
 		);
 
-		const sortedDates = matches
+		// Find the player's earliest game. This'll be used for creating all dates between the first match
+		// and the last match the player has played (that I know of).
+		const earliestDate: number = matches
 			.map((match) => match.date)
-			.sort((a, b) => a - b);
+			.reduce((prev, curr) => (curr < prev ? (prev = curr) : prev));
 
 		const allDates: Date[] = getAllDatesBetweenTwoDates(
-			new Date(sortedDates[0]),
+			new Date(earliestDate),
 			new Date(new Date()),
 		);
 
-		const dateMatches: DateMatches[] = allDates.map((date) => {
-			return {
-				date: date.getTime(),
-				matches: 0,
-			};
-		});
-
+		const matchesPerDate: Map<number, DateMatches> = new Map();
 		for (const date of allDates) {
-			const gamesThisDate: DBPlayerStatsWithMatch[] = matches.filter(
-				(match) => {
-					const matchDate: Date = new Date(match.date);
-					const thisDate: Date = new Date(date);
-
-					return (
-						matchDate.getFullYear() === thisDate.getFullYear() &&
-						matchDate.getMonth() === thisDate.getMonth() &&
-						matchDate.getDate() === thisDate.getDate()
-					);
-				},
-			);
-
-			const oldDate: DateMatches = dateMatches.find(
-				(dateMatch) => dateMatch.date === date.getTime(),
-			);
-
-			if (oldDate !== undefined) {
-				oldDate.matches = gamesThisDate.length;
-				continue;
-			}
+			matchesPerDate.set(date.getTime(), {
+				matches: 0,
+				date: date.getTime(),
+			});
 		}
+
+		for (const match of matches) {
+			const matchRealDate: Date = new Date(match.date);
+
+			const roundedDate: Date = new Date(0);
+			roundedDate.setFullYear(matchRealDate.getFullYear());
+			roundedDate.setMonth(matchRealDate.getMonth());
+			roundedDate.setDate(matchRealDate.getDate());
+
+			const oldMatchCount: DateMatches = matchesPerDate.get(
+				roundedDate.getTime(),
+			);
+			oldMatchCount.matches += 1;
+			matchesPerDate.set(roundedDate.getTime(), oldMatchCount);
+		}
+
+		const dateMatches: DateMatches[] = [];
+		for (const dateMatch of matchesPerDate.values()) {
+			dateMatches.push(dateMatch);
+		}
+		const sortedDates: DateMatches[] = dateMatches.sort(
+			(a, b) => a.date - b.date,
+		);
 
 		this.csgoMatchFrequency.set(playerId, dateMatches);
 		siteMetrics.timeEnd('get_player_match_frequency');
-		return dateMatches;
+		return sortedDates;
 	}
 
 	async getMatchFromDB(matchId: number): Promise<CsgoMatch> {

@@ -76,7 +76,12 @@ export function getAllDatesBetweenTwoDates(
 
 	let currentDate: Date = firstDate;
 	while (currentDate.getTime() < lastDate.getTime()) {
-		array.push(new Date(currentDate.getTime()));
+		const newDate: Date = new Date(0);
+		newDate.setFullYear(currentDate.getFullYear());
+		newDate.setMonth(currentDate.getMonth());
+		newDate.setDate(currentDate.getDate());
+		array.push(newDate);
+
 		currentDate = new Date(currentDate.getTime() + dayInMilliseconds);
 	}
 
