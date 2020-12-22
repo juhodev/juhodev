@@ -91,15 +91,8 @@ router.get('/games', [], async (req, res) => {
 	const { id, page } = req.query;
 
 	const games: GameWithStats[] = await steam.getPlayerMatches(id, page);
-	const mapStatistics: MapStatistics = await steam.getPlayerMapStatistics(id);
-	const matchFrequency: DateMatches[] = await steam.getPlayerMatchFrequency(
-		id,
-	);
-
 	const response: SteamGamesResponse = {
 		games,
-		mapStatistics,
-		matchFrequency,
 		error: false,
 	};
 

@@ -510,7 +510,7 @@ class Steam {
 			})
 			.limit(10)
 			.offset(firstResult)
-			.orderBy('csgo_games.date');
+			.orderBy('csgo_games.date', 'desc');
 
 		return dbGames;
 	}
