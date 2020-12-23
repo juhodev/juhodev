@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as https from 'https';
 import * as morgan from 'morgan';
+import * as fileUpload from 'express-fileupload';
 
 import UserRouter from './routes/user/userRoute';
 import AuthRouter from './routes/auth/authRoute';
@@ -14,6 +15,7 @@ import ProfileRouter from './routes/profile/profileRoute';
 import SteamRouter from './routes/steam/steamRoute';
 import DemoRouter from './routes/demoworker/demoWorkerRoute';
 import MetricsRouter from './routes/metrics/metricsRoute';
+import Hoi4Router from './routes/hoi4/hoi4Route';
 
 import Steam from '../steam/steam';
 
@@ -43,6 +45,15 @@ export function startApi() {
 	// I don't want extensive logs in stdout. The 'dev' format is :method :url :status :response-time ms - :res[content-length]
 	app.use(morgan('dev'));
 
+	// Used for uploading hoi4 game files
+	app.use(
+		fileUpload({
+			limits: { fileSize: 1024 * 1024 * 100 },
+			useTempFiles: true,
+			tempFileDir: 'data/temp',
+		}),
+	);
+
 	let corsOptions;
 	if (ENVIRONMENT === 'dev') {
 		corsOptions = {
@@ -64,6 +75,7 @@ export function startApi() {
 	app.use('/api/steam', cors(corsOptions), SteamRouter);
 	app.use('/api/demoworker', DemoRouter);
 	app.use('/api/metrics', MetricsRouter);
+	app.use('/api/hoi4', Hoi4Router);
 
 	app.use('/baavo', express.static('data/baavo'));
 	app.use('/img', express.static('data/imgs'));
