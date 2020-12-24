@@ -3,6 +3,6 @@ data
 node_modules
 .env
 dist
-hoi4
+hoi4_lib
 chrome_format.json
 node_modules
