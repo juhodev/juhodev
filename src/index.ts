@@ -22,11 +22,14 @@ import CsgoCommand from './commands/csgoCommand';
 import { logUsers } from './userLogger';
 import { startApi } from './api/server';
 import SiteMetrics from './metrics/siteMetrics';
+import Config from './config/config';
 
 const db = new DB();
 const siteMetrics: SiteMetrics = new SiteMetrics();
+const config: Config = new Config();
 
 (async () => {
+	config.load();
 	await initDatabase();
 
 	const client = new Discord.Client();
@@ -35,15 +38,33 @@ const siteMetrics: SiteMetrics = new SiteMetrics();
 	const userMetrics = new UserMetrics(db);
 	const commandHandler = new CommandHandler(db);
 
-	commandHandler.registerCommand(QuoteCommand);
+	if (config.quoteModule) {
+		commandHandler.registerCommand(QuoteCommand);
+	}
+
+	if (config.baavoModule) {
+		commandHandler.registerCommand(BaavoCommand);
+	}
+
+	if (config.gifsModule) {
+		commandHandler.registerCommand(GifCommand);
+	}
+
+	if (config.imageModule) {
+		commandHandler.registerCommand(ImgCommand);
+	}
+
+	if (config.clipsModule) {
+		commandHandler.registerCommand(ClipsCommand);
+	}
+
+	if (config.steamModule) {
+		commandHandler.registerCommand(CsgoCommand);
+	}
+
 	commandHandler.registerCommand(SetupCommand);
 	commandHandler.registerCommand(MetricsCommand);
-	commandHandler.registerCommand(BaavoCommand);
-	commandHandler.registerCommand(GifCommand);
-	commandHandler.registerCommand(ImgCommand);
-	commandHandler.registerCommand(ClipsCommand);
 	commandHandler.registerCommand(MigrateCommand);
-	commandHandler.registerCommand(CsgoCommand);
 
 	client.on('ready', () => {
 		console.log('Connected');
@@ -73,4 +94,4 @@ const updateGuild = async (
 	logUsers(db);
 };
 
-export { db, siteMetrics };
+export { db, siteMetrics, config };

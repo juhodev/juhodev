@@ -20,6 +20,7 @@ import Hoi4Router from './routes/hoi4/hoi4Route';
 import Steam from '../steam/steam';
 
 import DemoMaster from '../steam/matchsharing/demos/demoMaster';
+import { config } from '..';
 
 const { ENVIRONMENT } = process.env;
 
@@ -28,6 +29,10 @@ export const demoMaster: DemoMaster = new DemoMaster();
 demoMaster.init();
 
 export function startApi() {
+	if (!config.websiteModule) {
+		return;
+	}
+
 	const app = express();
 	app.use(bodyParser.json());
 	if (process.env.ENVIRONMENT === 'dev') {
