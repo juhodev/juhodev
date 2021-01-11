@@ -244,3 +244,9 @@ export type DBMetricsKey = {
 	key: string;
 	count: number;
 };
+
+export type DBHoi4Game = {
+	id?: number;
+	path: string;
+	name: string;
+};

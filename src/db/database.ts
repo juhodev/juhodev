@@ -510,6 +510,25 @@ export async function initDatabase() {
 				},
 			],
 		},
+		{
+			name: 'hoi4_games',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.INTEGER,
+					primary: true,
+					autoIncrement: true,
+				},
+				{
+					name: 'path',
+					type: ColumnType.TEXT,
+				},
+				{
+					name: 'name',
+					type: ColumnType.STRING,
+				},
+			],
+		},
 	];
 
 	for (const table of tables) {
