@@ -75,7 +75,8 @@ export function getAllDatesBetweenTwoDates(
 	const dayInMilliseconds: number = 1000 * 60 * 60 * 24;
 
 	let currentDate: Date = firstDate;
-	while (currentDate.getTime() < lastDate.getTime()) {
+	// 86400000 is one day in milliseconds. Added this to make sure that all dates are created
+	while (currentDate.getTime() < lastDate.getTime() * 86400000) {
 		const newDate: Date = new Date(0);
 		newDate.setFullYear(currentDate.getFullYear());
 		newDate.setMonth(currentDate.getMonth());
