@@ -13,7 +13,7 @@ import { SteamLinkResponse, SteamError } from '../../api/routes/steam/types';
 import { GetNextMatchSharingCodeResponse } from './types';
 import { Match, Player } from '../../api/routes/demoworker/types';
 import { db } from '../..';
-import { demoMaster } from '../../api/server';
+import { demoMaster, steam } from '../../api/server';
 
 export async function linkAccount(
 	profileLink: string,
@@ -320,6 +320,7 @@ export async function saveMatch(match: Match) {
 	// I really need to write a better cache system because
 	// right now I need to clear the cache every time I save new data
 	db.clearCsgoCaches();
+	steam.invalidateCaches();
 }
 
 async function getUserAvatar(id: string): Promise<string> {
