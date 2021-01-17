@@ -187,6 +187,25 @@ class Steam {
 		return linkAccount(profileLink, authenticationCode, knownCode);
 	}
 
+	private async rebuildProfilesWithMostMatches(): Promise<CsgoProfile[]> {
+		const sortedProfiles: CsgoProfile[] = this.profiles
+			.sort((a, b) => a.matchesPlayed - b.matchesPlayed)
+			.reverse();
+
+		const profilesWithMostMatches: CsgoProfile[] = sortedProfiles.slice(
+			0,
+			8,
+		);
+
+		const refreshedProfiles: CsgoProfile[] = [];
+		for (const profile of profilesWithMostMatches) {
+			const newProfile: CsgoProfile = await this.buildProfile(profile.id);
+			refreshedProfiles.push(newProfile);
+		}
+
+		return refreshedProfiles;
+	}
+
 	private async buildProfile(id: string): Promise<CsgoProfile> {
 		siteMetrics.time('build_profile');
 		const player: DBCsgoPlayer = await db.getCsgoPlayer(id);
@@ -833,12 +852,19 @@ class Steam {
 	 * clear all the caches but this will happen so infrequently that building new data isn't going to be a
 	 * problem.
 	 */
-	private invalidateCaches() {
-		this.profiles = [];
+	invalidateCaches() {
 		this.csgoMapStatisticsCache.clear();
 		this.csgoMatchFrequency.clear();
 		this.csgoPlayerSoloQueueCache.clear();
 		this.csgoLeaderboardCache = [];
+
+		this.clearProfiles();
+	}
+
+	private async clearProfiles() {
+		const newProfiles: CsgoProfile[] = await this.rebuildProfilesWithMostMatches();
+		this.profiles = [];
+		this.profiles = newProfiles;
 	}
 }
 
