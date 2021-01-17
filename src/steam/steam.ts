@@ -373,6 +373,10 @@ class Steam {
 					score: dbPlayer.score,
 					steamLink: dbPlayer.steam_link,
 					side: dbPlayer.side,
+					unnecessaryStats:
+						dbPlayer.unnecessary_stats !== undefined
+							? JSON.parse(dbPlayer.unnecessary_stats)
+							: undefined,
 				};
 			},
 		);

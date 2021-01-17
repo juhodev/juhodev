@@ -10,6 +10,7 @@ export type Player = {
 	ping: number;
 	side: string;
 	score: number;
+	unnecessaryStats: UnnecessaryStats;
 };
 
 export type Team = {
@@ -27,4 +28,38 @@ export type Match = {
 	terroristTeam: Team;
 	counterTerroristTeam: Team;
 	duration: number;
+};
+
+export type UnnecessaryStats = {
+	jumps: number;
+	fallDamage: number;
+	weaponFire: WeaponFire[];
+	weaponZooms: number;
+	damageTaken: DamageTaken[];
+	blind: Blind;
+	itemPickup: ItemPickup[];
+	reloads: number;
+	footsteps: number;
+	bombPlants: number;
+};
+
+export type WeaponFire = {
+	weapon: string;
+	count: number;
+};
+
+export type DamageTaken = {
+	weapon: string;
+	amount: number;
+};
+
+export type Blind = {
+	times: number;
+	duration: number;
+};
+
+export type ItemPickup = {
+	item: string;
+	count: number;
+	silent: number;
 };

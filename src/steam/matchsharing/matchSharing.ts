@@ -309,6 +309,7 @@ export async function saveMatch(match: Match) {
 			score: player.score,
 			side: player.side,
 			uploaded_by: 'csgo',
+			unnecessary_stats: JSON.stringify(player.unnecessaryStats),
 		};
 
 		newStats.push(stats);

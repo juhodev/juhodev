@@ -171,6 +171,7 @@ export type DBCsgoStats = {
 	score: number;
 	side: string;
 	uploaded_by: string;
+	unnecessary_stats?: string;
 };
 
 export type DBPlayerStatsWithMatch = {
@@ -192,6 +193,7 @@ export type DBPlayerStatsWithMatch = {
 	ct_rounds: number;
 	t_rounds: number;
 	winner: string;
+	unnecessary_stats?: string;
 };
 
 export type DBPlayerStatsWithPlayerInfo = {
@@ -209,6 +211,7 @@ export type DBPlayerStatsWithPlayerInfo = {
 	hsp: number;
 	score: number;
 	side: string;
+	unnecessary_stats?: string;
 };
 
 export type DBUploadedCsgoMatch = {

@@ -1,3 +1,5 @@
+import { UnnecessaryStats } from '../api/routes/demoworker/types';
+
 export type CsgoProfile = {
 	name: string;
 	id: string;
@@ -97,6 +99,7 @@ export type CsgoPlayer = {
 	hsp: number;
 	score: number;
 	side: string;
+	unnecessaryStats?: UnnecessaryStats;
 };
 
 export type SteamUser = {

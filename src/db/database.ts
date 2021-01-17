@@ -399,6 +399,10 @@ export async function initDatabase() {
 					name: 'uploaded_by',
 					type: ColumnType.STRING,
 				},
+				{
+					name: 'unnecessary_stats',
+					type: ColumnType.TEXT, // I think I'm going to be changing these a lot so I'll just store them as JSON
+				},
 			],
 		},
 		{
