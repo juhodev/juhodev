@@ -393,7 +393,8 @@ class Steam {
 					steamLink: dbPlayer.steam_link,
 					side: dbPlayer.side,
 					unnecessaryStats:
-						dbPlayer.unnecessary_stats !== undefined
+						dbPlayer.unnecessary_stats !== undefined &&
+						dbPlayer.unnecessary_stats !== null
 							? JSON.parse(dbPlayer.unnecessary_stats)
 							: undefined,
 				};
