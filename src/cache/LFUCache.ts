@@ -16,6 +16,15 @@ class LFUCache {
 		this.size = 0;
 	}
 
+	/**
+	 * Removes all the items in the cache
+	 */
+	clear() {
+		this.size = 0;
+		this.frequencyList = new LinkedList();
+		this.lookup.clear();
+	}
+
 	getSize() {
 		return this.size;
 	}
@@ -64,6 +73,7 @@ class LFUCache {
 			return undefined;
 		}
 
+		console.log(cacheNode);
 		this.increment(cacheNode);
 		return cacheNode.value;
 	}
@@ -120,8 +130,8 @@ class LFUCache {
 		(currentParent.value as LinkedList).remove(node);
 
 		// The frequency is kept in the key of the list node
-		const nextNodeFrequency: number = (nextNode.key as number) + 1;
-		const nextFrequency: number = (currentParent.key as number) + 1;
+		const nextNodeFrequency: number = (nextNode?.key as number) + 1;
+		const nextFrequency: number = (currentParent?.key as number) + 1;
 
 		// If there isn't a node with the current frequency + 1 then create a new node otherwise insert
 		// the cache node to the next node

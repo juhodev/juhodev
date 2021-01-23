@@ -25,10 +25,7 @@ import {
 } from './types';
 import { UserData } from '../../types';
 import { getUserDataWithBearer } from '../../user';
-import {
-	ExtensionSaveResponse,
-	UploadCode,
-} from '../../../steam/extension/types';
+import { ExtensionSaveResponse, UploadCode } from '../../../steam/extension/types';
 import { siteMetrics } from '../../..';
 
 const router = expressPromiseRouter();
@@ -50,7 +47,7 @@ router.get('/search', [], async (req, res) => {
 router.get('/match', [], async (req, res) => {
 	const { id } = req.query;
 	siteMetrics.time('match');
-	const csgoMatch: CsgoMatch = await steam.getMatchFromDB(id);
+	const csgoMatch: CsgoMatch = await steam.getMatch(id);
 	const response: SteamMatchResponse = {
 		error: false,
 		csgoMatch,
@@ -63,10 +60,7 @@ router.get('/match', [], async (req, res) => {
 router.post('/stats', [], async (req, res) => {
 	const { games, uploadCode } = req.body;
 
-	const response: ExtensionSaveResponse = await steam.addDataFromExtension(
-		games,
-		uploadCode,
-	);
+	const response: ExtensionSaveResponse = await steam.addDataFromExtension(games, uploadCode);
 
 	res.json(response);
 });
@@ -74,9 +68,7 @@ router.post('/stats', [], async (req, res) => {
 router.get('/uploadCode', [verifyIdentity], async (req, res) => {
 	const bearer: string = req.headers.authorization;
 	const userData: UserData = await getUserDataWithBearer(bearer);
-	const uploadCode: UploadCode = steam
-		.getExtension()
-		.getUploadCode(userData.snowflake);
+	const uploadCode: UploadCode = steam.getExtension().getUploadCode(userData.snowflake);
 
 	const response: SteamUploadCodeResponse = {
 		error: false,
@@ -153,11 +145,7 @@ router.get('/statistics', [], async (req, res) => {
 router.post('/link', [], async (req, res) => {
 	const { profile, authenticationCode, knownCode } = req.body;
 
-	const response: SteamLinkResponse = await steam.addMatchSharingCode(
-		profile,
-		authenticationCode,
-		knownCode,
-	);
+	const response: SteamLinkResponse = await steam.addMatchSharingCode(profile, authenticationCode, knownCode);
 	res.json(response);
 });
 

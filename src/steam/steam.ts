@@ -1,10 +1,4 @@
-import {
-	DBCsgoMatch,
-	DBCsgoPlayer,
-	DBCsgoStats,
-	DBPlayerStatsWithMatch,
-	DBPlayerStatsWithPlayerInfo,
-} from '../db/types';
+import { DBCsgoMatch, DBCsgoPlayer, DBPlayerStatsWithMatch, DBPlayerStatsWithPlayerInfo } from '../db/types';
 import { knex } from '../db/utils';
 import {
 	CsgoMatch,
@@ -25,11 +19,8 @@ import { db, siteMetrics } from '..';
 import { ExtensionMatch, ExtensionSaveResponse } from './extension/types';
 import Extension from './extension/extension';
 import { SteamLinkResponse } from '../api/routes/steam/types';
-import {
-	fetchSharingCodesWithSteamId3,
-	linkAccount,
-	startUpdatingUserCodes,
-} from './matchsharing/matchSharing';
+import { fetchSharingCodesWithSteamId3, linkAccount, startUpdatingUserCodes } from './matchsharing/matchSharing';
+import LFUCache from '../cache/LFUCache';
 
 type GameData = {
 	averages: CsgoGameStats;
@@ -39,9 +30,9 @@ type GameData = {
 
 class Steam {
 	private profiles: CsgoProfile[];
-	private csgoMatchCache: Map<number, CsgoMatch>;
-	private csgoMapStatisticsCache: Map<string, MapStatistics>;
-	private csgoMatchFrequency: Map<string, DateMatches[]>;
+	private csgoMatchCache: LFUCache;
+	private csgoMapStatisticsCache: LFUCache;
+	private csgoMatchFrequency: LFUCache;
 	private csgoLeaderboardCache: DBPlayerStatsWithPlayerInfo[];
 	private csgoPlayerSoloQueueCache: Map<string, number[]>;
 
@@ -49,9 +40,9 @@ class Steam {
 
 	constructor() {
 		this.profiles = [];
-		this.csgoMatchCache = new Map();
-		this.csgoMapStatisticsCache = new Map();
-		this.csgoMatchFrequency = new Map();
+		this.csgoMatchCache = new LFUCache(512);
+		this.csgoMapStatisticsCache = new LFUCache(512);
+		this.csgoMatchFrequency = new LFUCache(512);
 		this.csgoLeaderboardCache = [];
 		this.csgoPlayerSoloQueueCache = new Map();
 
@@ -60,9 +51,7 @@ class Steam {
 	}
 
 	async getProfile(id: string): Promise<CsgoProfile> {
-		const oldProfile: CsgoProfile = this.profiles.find(
-			(prof) => prof.id === id,
-		);
+		const oldProfile: CsgoProfile = this.profiles.find((prof) => prof.id === id);
 		if (oldProfile !== undefined) {
 			fetchSharingCodesWithSteamId3(oldProfile.id);
 			return oldProfile;
@@ -78,9 +67,7 @@ class Steam {
 			link = link.substr(0, link.length - 1);
 		}
 
-		const player: DBCsgoPlayer = await knex<DBCsgoPlayer>('csgo_players')
-			.where({ steam_link: link })
-			.first();
+		const player: DBCsgoPlayer = await knex<DBCsgoPlayer>('csgo_players').where({ steam_link: link }).first();
 
 		if (player === undefined) {
 			return undefined;
@@ -96,9 +83,7 @@ class Steam {
 
 		const players: DBCsgoPlayer[] = await db.getCsgoPlayers();
 		return players
-			.filter((user) =>
-				user.name.toLowerCase().startsWith(name.toLowerCase()),
-			)
+			.filter((user) => user.name.toLowerCase().startsWith(name.toLowerCase()))
 			.sort((a, b) => a.name.localeCompare(b.name));
 	}
 
@@ -107,14 +92,8 @@ class Steam {
 	 * matches saved.
 	 */
 	getBuiltProfiles(): BuiltProfile[] {
-		const sortedProfiles: CsgoProfile[] = this.profiles
-			.sort((a, b) => a.matchesPlayed - b.matchesPlayed)
-			.reverse();
-
-		const profilesWithMostMatches: CsgoProfile[] = sortedProfiles.slice(
-			0,
-			8,
-		);
+		const sortedProfiles: CsgoProfile[] = this.profiles.sort((a, b) => a.matchesPlayed - b.matchesPlayed).reverse();
+		const profilesWithMostMatches: CsgoProfile[] = sortedProfiles.slice(0, 8);
 		const builtProfiles: BuiltProfile[] = profilesWithMostMatches.map(
 			(profile): BuiltProfile => {
 				return {
@@ -130,27 +109,15 @@ class Steam {
 		return builtProfiles;
 	}
 
-	async getPlayerStatistics(
-		playerId: string,
-		type: string,
-		soloQueue: boolean,
-	): Promise<number[]> {
-		let stats: DBPlayerStatsWithMatch[] = await db.getCsgoPlayerStatsWithMatches(
-			playerId,
-		);
+	async getPlayerStatistics(playerId: string, type: string, soloQueue: boolean): Promise<number[]> {
+		let stats: DBPlayerStatsWithMatch[] = await db.getCsgoPlayerStatsWithMatches(playerId);
 
 		if (soloQueue) {
-			const soloQueueMatches: number[] = await this.getSoloQueueMatches(
-				playerId,
-			);
-			stats = stats.filter((stat) =>
-				soloQueueMatches.includes(stat.match_id),
-			);
+			const soloQueueMatches: number[] = await this.getSoloQueueMatches(playerId);
+			stats = stats.filter((stat) => soloQueueMatches.includes(stat.match_id));
 		}
 
-		const sortedDates: DBPlayerStatsWithMatch[] = stats
-			.sort((a, b) => a.date - b.date)
-			.reverse();
+		const sortedDates: DBPlayerStatsWithMatch[] = stats.sort((a, b) => a.date - b.date).reverse();
 
 		switch (type) {
 			case 'kills':
@@ -188,14 +155,8 @@ class Steam {
 	}
 
 	private async rebuildProfilesWithMostMatches(): Promise<CsgoProfile[]> {
-		const sortedProfiles: CsgoProfile[] = this.profiles
-			.sort((a, b) => a.matchesPlayed - b.matchesPlayed)
-			.reverse();
-
-		const profilesWithMostMatches: CsgoProfile[] = sortedProfiles.slice(
-			0,
-			8,
-		);
+		const sortedProfiles: CsgoProfile[] = this.profiles.sort((a, b) => a.matchesPlayed - b.matchesPlayed).reverse();
+		const profilesWithMostMatches: CsgoProfile[] = sortedProfiles.slice(0, 8);
 
 		const refreshedProfiles: CsgoProfile[] = [];
 		for (const profile of profilesWithMostMatches) {
@@ -214,13 +175,9 @@ class Steam {
 		}
 
 		const dbMatches: DBPlayerStatsWithMatch[] = await db.getCsgoPlayersWithMatches();
-		const userGames: DBPlayerStatsWithMatch[] = dbMatches.filter(
-			(match) => match.player_id === id,
-		);
+		const userGames: DBPlayerStatsWithMatch[] = dbMatches.filter((match) => match.player_id === id);
 
-		const tenBestDbMatches: DBPlayerStatsWithMatch[] = this.bestTenGamesInARow(
-			userGames,
-		);
+		const tenBestDbMatches: DBPlayerStatsWithMatch[] = this.bestTenGamesInARow(userGames);
 		const tenBestCsgoGames: GameWithStats[] = tenBestDbMatches.map(
 			(game): GameWithStats => {
 				return {
@@ -272,12 +229,8 @@ class Steam {
 			}
 		}
 
-		const mapStatistics: MapStatistics = await this.getPlayerMapStatistics(
-			id,
-		);
-		const matchFrequency: DateMatches[] = await this.getPlayerMatchFrequency(
-			id,
-		);
+		const mapStatistics: MapStatistics = await this.getPlayerMapStatistics(id);
+		const matchFrequency: DateMatches[] = await this.getPlayerMatchFrequency(id);
 
 		const profile: CsgoProfile = {
 			name,
@@ -302,27 +255,35 @@ class Steam {
 	}
 
 	async getMatch(matchId: number): Promise<CsgoMatch> {
-		if (this.csgoMatchCache.has(matchId)) {
-			return this.csgoMatchCache.get(matchId);
+		const cachedMatch: CsgoMatch = this.csgoMatchCache.get(matchId.toString());
+		if (cachedMatch !== undefined) {
+			// If the value was in the cache then log 1
+			siteMetrics.log('cache_get_match', 1);
+			return cachedMatch;
 		}
+		// If the value was not in the cache then log 0
+		siteMetrics.log('cache_get_match', 0);
 
 		const game: CsgoMatch = await this.getMatchFromDB(matchId);
-		this.csgoMatchCache.set(matchId, game);
+		this.csgoMatchCache.insert(matchId.toString(), game);
 
 		return game;
 	}
 
 	async getPlayerMatchFrequency(playerId: string): Promise<DateMatches[]> {
 		siteMetrics.time('get_player_match_frequency');
-		if (this.csgoMatchFrequency.has(playerId)) {
+		const cachedMatchFrequency: DateMatches[] = this.csgoMatchFrequency.get(playerId);
+		if (cachedMatchFrequency !== undefined) {
+			// If the value was in the cache then log 1
+			siteMetrics.log('cache_player_match_frequency', 1);
 			siteMetrics.timeEnd('get_player_match_frequency');
-			return this.csgoMatchFrequency.get(playerId);
+			return cachedMatchFrequency;
 		}
+		// If the value was not in the cache then log 0
+		siteMetrics.log('cache_player_match_frequency', 0);
 
 		// This will most likely be cached so I don't really need to think about this
-		const matches: DBPlayerStatsWithMatch[] = await db.getCsgoPlayerStatsWithMatches(
-			playerId,
-		);
+		const matches: DBPlayerStatsWithMatch[] = await db.getCsgoPlayerStatsWithMatches(playerId);
 
 		// Find the player's earliest game. This'll be used for creating all dates between the first match
 		// and the last match the player has played (that I know of).
@@ -330,10 +291,7 @@ class Steam {
 			.map((match) => match.date)
 			.reduce((prev, curr) => (curr < prev ? (prev = curr) : prev));
 
-		const allDates: Date[] = getAllDatesBetweenTwoDates(
-			new Date(earliestDate),
-			new Date(new Date()),
-		);
+		const allDates: Date[] = getAllDatesBetweenTwoDates(new Date(earliestDate), new Date(new Date()));
 
 		const matchesPerDate: Map<number, DateMatches> = new Map();
 		for (const date of allDates) {
@@ -351,9 +309,7 @@ class Steam {
 			roundedDate.setMonth(matchRealDate.getMonth());
 			roundedDate.setDate(matchRealDate.getDate());
 
-			const oldMatchCount: DateMatches = matchesPerDate.get(
-				roundedDate.getTime(),
-			);
+			const oldMatchCount: DateMatches = matchesPerDate.get(roundedDate.getTime());
 			oldMatchCount.matches += 1;
 			matchesPerDate.set(roundedDate.getTime(), oldMatchCount);
 		}
@@ -362,20 +318,16 @@ class Steam {
 		for (const dateMatch of matchesPerDate.values()) {
 			dateMatches.push(dateMatch);
 		}
-		const sortedDates: DateMatches[] = dateMatches.sort(
-			(a, b) => a.date - b.date,
-		);
+		const sortedDates: DateMatches[] = dateMatches.sort((a, b) => a.date - b.date);
 
-		this.csgoMatchFrequency.set(playerId, dateMatches);
+		this.csgoMatchFrequency.insert(playerId, dateMatches);
 		siteMetrics.timeEnd('get_player_match_frequency');
 		return sortedDates;
 	}
 
 	async getMatchFromDB(matchId: number): Promise<CsgoMatch> {
 		const dbMatch: DBCsgoMatch = await db.getCsgoMatch(matchId);
-		const dbPlayers: DBPlayerStatsWithPlayerInfo[] = await db.getCsgoPlayersInAMatch(
-			dbMatch.id,
-		);
+		const dbPlayers: DBPlayerStatsWithPlayerInfo[] = await db.getCsgoPlayersInAMatch(dbMatch.id);
 
 		const players: CsgoPlayer[] = dbPlayers.map(
 			(dbPlayer): CsgoPlayer => {
@@ -393,8 +345,7 @@ class Steam {
 					steamLink: dbPlayer.steam_link,
 					side: dbPlayer.side,
 					unnecessaryStats:
-						dbPlayer.unnecessary_stats !== undefined &&
-						dbPlayer.unnecessary_stats !== null
+						dbPlayer.unnecessary_stats !== undefined && dbPlayer.unnecessary_stats !== null
 							? JSON.parse(dbPlayer.unnecessary_stats)
 							: undefined,
 				};
@@ -428,14 +379,8 @@ class Steam {
 		return user;
 	}
 
-	async addDataFromExtension(
-		matches: ExtensionMatch[],
-		code: string,
-	): Promise<ExtensionSaveResponse> {
-		const response: ExtensionSaveResponse = await this.extension.saveMatches(
-			matches,
-			code,
-		);
+	async addDataFromExtension(matches: ExtensionMatch[], code: string): Promise<ExtensionSaveResponse> {
+		const response: ExtensionSaveResponse = await this.extension.saveMatches(matches, code);
 
 		this.invalidateCaches();
 		return response;
@@ -445,15 +390,9 @@ class Steam {
 		return this.extension;
 	}
 
-	async getPlayerMatches(
-		playerId: string,
-		page: number,
-	): Promise<GameWithStats[]> {
+	async getPlayerMatches(playerId: string, page: number): Promise<GameWithStats[]> {
 		siteMetrics.time('get_player_matches');
-		const games: DBPlayerStatsWithMatch[] = await this.getPlayerStatsWithGames(
-			playerId,
-			page,
-		);
+		const games: DBPlayerStatsWithMatch[] = await this.getPlayerStatsWithGames(playerId, page);
 
 		const gamesWithStats: GameWithStats[] = games.map(
 			(game): GameWithStats => {
@@ -488,14 +427,17 @@ class Steam {
 
 	async getPlayerMapStatistics(playerId: string): Promise<MapStatistics> {
 		siteMetrics.time('get_player_map_statistics');
-		if (this.csgoMapStatisticsCache.has(playerId)) {
+		const cachedMapStatistics: MapStatistics = this.csgoMapStatisticsCache.get(playerId);
+		if (cachedMapStatistics !== undefined) {
+			// If the value was in the cache then log 1
+			siteMetrics.log('cache_map_statistics_lookup', 1);
 			siteMetrics.timeEnd('get_player_map_statistics');
-			return this.csgoMapStatisticsCache.get(playerId);
+			return cachedMapStatistics;
 		}
+		// If the value was not in the cache then log 0
+		siteMetrics.log('cache_map_statistics_lookup', 0);
 
-		const dbGames: DBPlayerStatsWithMatch[] = await db.getCsgoPlayerStatsWithMatches(
-			playerId,
-		);
+		const dbGames: DBPlayerStatsWithMatch[] = await db.getCsgoPlayerStatsWithMatches(playerId);
 		const maps: CsgoMap[] = [];
 
 		for (const game of dbGames) {
@@ -510,16 +452,13 @@ class Steam {
 		}
 
 		const statistics: MapStatistics = { maps };
-		this.csgoMapStatisticsCache.set(playerId, statistics);
+		this.csgoMapStatisticsCache.insert(playerId, statistics);
 		siteMetrics.timeEnd('get_player_map_statistics');
 
 		return statistics;
 	}
 
-	private async getPlayerStatsWithGames(
-		playerId: string,
-		page: number,
-	): Promise<DBPlayerStatsWithMatch[]> {
+	private async getPlayerStatsWithGames(playerId: string, page: number): Promise<DBPlayerStatsWithMatch[]> {
 		const resultsInPage: number = 10;
 		const firstResult: number = page * resultsInPage;
 
@@ -585,33 +524,15 @@ class Steam {
 	}
 
 	private getGameData(dbGames: DBPlayerStatsWithMatch[]): GameData {
-		const killStandards = this.getStandardDeviationAndError(
-			dbGames.map((game) => game.kills),
-		);
-		const deathStandards = this.getStandardDeviationAndError(
-			dbGames.map((game) => game.deaths),
-		);
-		const assistStandards = this.getStandardDeviationAndError(
-			dbGames.map((game) => game.assists),
-		);
-		const hspStandards = this.getStandardDeviationAndError(
-			dbGames.map((game) => game.hsp),
-		);
-		const mvpStandards = this.getStandardDeviationAndError(
-			dbGames.map((game) => game.mvps),
-		);
-		const scoreStandards = this.getStandardDeviationAndError(
-			dbGames.map((game) => game.score),
-		);
-		const pingStandards = this.getStandardDeviationAndError(
-			dbGames.map((game) => game.ping),
-		);
-		const waitStandards = this.getStandardDeviationAndError(
-			dbGames.map((game) => game.wait_time),
-		);
-		const lengthStandards = this.getStandardDeviationAndError(
-			dbGames.map((game) => game.match_duration),
-		);
+		const killStandards = this.getStandardDeviationAndError(dbGames.map((game) => game.kills));
+		const deathStandards = this.getStandardDeviationAndError(dbGames.map((game) => game.deaths));
+		const assistStandards = this.getStandardDeviationAndError(dbGames.map((game) => game.assists));
+		const hspStandards = this.getStandardDeviationAndError(dbGames.map((game) => game.hsp));
+		const mvpStandards = this.getStandardDeviationAndError(dbGames.map((game) => game.mvps));
+		const scoreStandards = this.getStandardDeviationAndError(dbGames.map((game) => game.score));
+		const pingStandards = this.getStandardDeviationAndError(dbGames.map((game) => game.ping));
+		const waitStandards = this.getStandardDeviationAndError(dbGames.map((game) => game.wait_time));
+		const lengthStandards = this.getStandardDeviationAndError(dbGames.map((game) => game.match_duration));
 
 		const totalData: CsgoGameStats = {
 			assists: { value: 0 },
@@ -636,15 +557,7 @@ class Steam {
 			score: { value: 0, matchId: 0 },
 		};
 		const mapStats: CsgoMapStats[] = [];
-		const fields = [
-			'assists',
-			'deaths',
-			'hsp',
-			'kills',
-			'mvps',
-			'ping',
-			'score',
-		];
+		const fields = ['assists', 'deaths', 'hsp', 'kills', 'mvps', 'ping', 'score'];
 
 		for (const dbGame of dbGames) {
 			for (const field of fields) {
@@ -672,9 +585,7 @@ class Steam {
 				highestData.matchDuration.matchId = dbGame['match_id'];
 			}
 
-			let mapData: CsgoMapStats = mapStats.find(
-				(oldMap) => oldMap.name === map,
-			);
+			let mapData: CsgoMapStats = mapStats.find((oldMap) => oldMap.name === map);
 
 			if (mapData === undefined) {
 				mapData = {
@@ -746,8 +657,7 @@ class Steam {
 			mapStats: mapStats.map(
 				(map): CsgoMapStats => {
 					return {
-						averageMatchDuration:
-							map.averageMatchDuration / map.timesPlayed,
+						averageMatchDuration: map.averageMatchDuration / map.timesPlayed,
 						averageWaitTime: map.averageWaitTime / map.timesPlayed,
 						name: map.name,
 						timesPlayed: map.timesPlayed,
@@ -757,9 +667,7 @@ class Steam {
 		};
 	}
 
-	private bestTenGamesInARow(
-		games: DBPlayerStatsWithMatch[],
-	): DBPlayerStatsWithMatch[] {
+	private bestTenGamesInARow(games: DBPlayerStatsWithMatch[]): DBPlayerStatsWithMatch[] {
 		const currentGames: DBPlayerStatsWithMatch[] = [];
 		let total: number = 0;
 
@@ -830,17 +738,12 @@ class Steam {
 		return soloQueueMatches;
 	}
 
-	private getStandardDeviationAndError(
-		nums: number[],
-	): { standardDeviation: number; standardError: number } {
-		const mean: number =
-			nums.reduce((prev, curr) => (prev += curr)) / nums.length;
+	private getStandardDeviationAndError(nums: number[]): { standardDeviation: number; standardError: number } {
+		const mean: number = nums.reduce((prev, curr) => (prev += curr)) / nums.length;
 		const calc: number[] = nums.map((x) => Math.pow(x - mean, 2));
-		const meanDifference: number =
-			(1 / nums.length) * calc.reduce((prev, curr) => (prev += curr));
+		const meanDifference: number = (1 / nums.length) * calc.reduce((prev, curr) => (prev += curr));
 		const standardDeviation: number = Math.sqrt(meanDifference);
-		const standardError: number =
-			standardDeviation / Math.sqrt(nums.length);
+		const standardError: number = standardDeviation / Math.sqrt(nums.length);
 
 		return {
 			standardDeviation: standardDeviation,
