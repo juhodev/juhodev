@@ -73,7 +73,6 @@ class LFUCache {
 			return undefined;
 		}
 
-		console.log(cacheNode);
 		this.increment(cacheNode);
 		return cacheNode.value;
 	}
