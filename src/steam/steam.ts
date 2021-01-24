@@ -54,9 +54,13 @@ class Steam {
 		const oldProfile: CsgoProfile = this.profiles.find((prof) => prof.id === id);
 		if (oldProfile !== undefined) {
 			fetchSharingCodesWithSteamId3(oldProfile.id);
+			// If the value was in the cache then log 1
+			siteMetrics.log('cache_get_profile', 1);
 			return oldProfile;
 		}
 
+		// If the value was not in the cache then log 0
+		siteMetrics.log('cache_get_profile', 0);
 		const profile: CsgoProfile = await this.buildProfile(id);
 		fetchSharingCodesWithSteamId3(profile.id);
 		return profile;

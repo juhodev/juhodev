@@ -11,6 +11,7 @@ import {
 } from '../db/types';
 import { knex } from '../db/utils';
 import RRSG from '../randomReadableStringGenerator';
+import { logCacheHit } from '../utils';
 import ClipsDB from './clipsDB';
 import ImgDB from './imgDB';
 import QuoteDB from './quoteDB';
@@ -31,10 +32,7 @@ class DB {
 	private csgoPlayersWithStatsCache: DBPlayerStatsWithPlayerInfo[];
 	private csgoStatsCache: DBCsgoStats[];
 
-	private csgoMatchWithPlayersCache: Map<
-		number,
-		DBPlayerStatsWithPlayerInfo[]
-	>;
+	private csgoMatchWithPlayersCache: Map<number, DBPlayerStatsWithPlayerInfo[]>;
 	private csgoPlayerMatchIds: Map<string, number[]>;
 
 	constructor() {
@@ -104,10 +102,7 @@ class DB {
 		if (!fs.existsSync(`${DB_DATA_DIR}/${DB_CONFIG_FILE}`)) {
 			this.writeToDisk();
 		} else {
-			const configString: string = fs.readFileSync(
-				`${DB_DATA_DIR}/${DB_CONFIG_FILE}`,
-				'utf-8',
-			);
+			const configString: string = fs.readFileSync(`${DB_DATA_DIR}/${DB_CONFIG_FILE}`, 'utf-8');
 			this.config = JSON.parse(configString);
 		}
 
@@ -116,17 +111,10 @@ class DB {
 		this.clips.setup();
 	}
 
-	async findOldCsgoMatch(
-		map: string,
-		date: number,
-		matchDuration: number,
-	): Promise<DBCsgoMatch> {
+	async findOldCsgoMatch(map: string, date: number, matchDuration: number): Promise<DBCsgoMatch> {
 		if (this.csgoMatchCache.length !== 0) {
 			const oldMatch: DBCsgoMatch = this.csgoMatchCache.find(
-				(match) =>
-					match.map === map &&
-					match.date === date &&
-					match.match_duration === matchDuration,
+				(match) => match.map === map && match.date === date && match.match_duration === matchDuration,
 			);
 
 			return oldMatch;
@@ -165,9 +153,7 @@ class DB {
 			return this.csgoStatsCache;
 		}
 
-		const csgoStats: DBCsgoStats[] = await knex<DBCsgoStats>(
-			'csgo_stats',
-		).where({});
+		const csgoStats: DBCsgoStats[] = await knex<DBCsgoStats>('csgo_stats').where({});
 
 		this.csgoStatsCache = csgoStats;
 		return csgoStats;
@@ -175,21 +161,15 @@ class DB {
 
 	async getPlayerCsgoStats(playerId: string): Promise<DBCsgoStats[]> {
 		if (this.csgoStatsCache.length !== 0) {
-			return this.csgoStatsCache.filter(
-				(stat) => stat.player_id === playerId,
-			);
+			return this.csgoStatsCache.filter((stat) => stat.player_id === playerId);
 		}
 
-		const dbStats: DBCsgoStats[] = await knex<DBCsgoStats>(
-			'csgo_stats',
-		).where({ player_id: playerId });
+		const dbStats: DBCsgoStats[] = await knex<DBCsgoStats>('csgo_stats').where({ player_id: playerId });
 
 		return dbStats;
 	}
 
-	async getCsgoPlayersInAMatch(
-		matchId: number,
-	): Promise<DBPlayerStatsWithPlayerInfo[]> {
+	async getCsgoPlayersInAMatch(matchId: number): Promise<DBPlayerStatsWithPlayerInfo[]> {
 		// First check if the match key/value cache contains the matchId, if it does we can
 		// return from it
 		if (this.csgoMatchWithPlayersCache.has(matchId)) {
@@ -209,9 +189,7 @@ class DB {
 		}
 
 		// Finally if we didn't hit any caches retrieve the data from the database and cache it
-		const dbPlayers: DBPlayerStatsWithPlayerInfo[] = await knex<DBPlayerStatsWithPlayerInfo>(
-			'csgo_players',
-		)
+		const dbPlayers: DBPlayerStatsWithPlayerInfo[] = await knex<DBPlayerStatsWithPlayerInfo>('csgo_players')
 			.select('*')
 			.innerJoin('csgo_stats', function () {
 				this.on('csgo_stats.player_id', '=', 'csgo_players.id').andOn(
@@ -230,9 +208,7 @@ class DB {
 			return this.csgoPlayersWithStatsCache;
 		}
 
-		const dbPlayers: DBPlayerStatsWithPlayerInfo[] = await knex<DBPlayerStatsWithPlayerInfo>(
-			'csgo_players',
-		)
+		const dbPlayers: DBPlayerStatsWithPlayerInfo[] = await knex<DBPlayerStatsWithPlayerInfo>('csgo_players')
 			.select('*')
 			.innerJoin('csgo_stats', function () {
 				this.on('csgo_stats.player_id', '=', 'csgo_players.id');
@@ -242,13 +218,8 @@ class DB {
 		return dbPlayers;
 	}
 
-	async getMatchUploadedByUser(
-		matchId: number,
-		playerId: string,
-	): Promise<DBUploadedCsgoMatch> {
-		const game: DBUploadedCsgoMatch = await knex<DBUploadedCsgoMatch>(
-			'csgo_games_uploads',
-		)
+	async getMatchUploadedByUser(matchId: number, playerId: string): Promise<DBUploadedCsgoMatch> {
+		const game: DBUploadedCsgoMatch = await knex<DBUploadedCsgoMatch>('csgo_games_uploads')
 			.where({ match_id: matchId, player_id: playerId })
 			.first();
 
@@ -266,9 +237,7 @@ class DB {
 		}
 
 		// If there aren't any matches cached we need to look for it in the database.
-		const dbMatch: DBCsgoMatch = await knex<DBCsgoMatch>('csgo_games')
-			.where({ id: matchId })
-			.first();
+		const dbMatch: DBCsgoMatch = await knex<DBCsgoMatch>('csgo_games').where({ id: matchId }).first();
 		return dbMatch;
 	}
 
@@ -280,31 +249,19 @@ class DB {
 			return this.csgoMatchCache;
 		}
 
-		const dbMatches: DBCsgoMatch[] = await knex<DBCsgoMatch>(
-			'csgo_games',
-		).where({});
+		const dbMatches: DBCsgoMatch[] = await knex<DBCsgoMatch>('csgo_games').where({});
 
 		this.csgoMatchCache = dbMatches;
 		return dbMatches;
 	}
 
-	async getCsgoPlayerStatsWithMatches(
-		playerId: string,
-	): Promise<DBPlayerStatsWithMatch[]> {
+	async getCsgoPlayerStatsWithMatches(playerId: string): Promise<DBPlayerStatsWithMatch[]> {
 		if (this.csgoPlayersWithMatchesCache.length !== 0) {
-			return this.csgoPlayersWithMatchesCache.filter(
-				(player) => player.player_id === playerId,
-			);
+			return this.csgoPlayersWithMatchesCache.filter((player) => player.player_id === playerId);
 		}
 
-		const dbGames: DBPlayerStatsWithMatch[] = await knex(
-			'csgo_stats',
-		).innerJoin('csgo_games', function () {
-			this.on('csgo_games.id', '=', 'csgo_stats.match_id').andOn(
-				'csgo_stats.player_id',
-				'=',
-				knex.raw(playerId),
-			);
+		const dbGames: DBPlayerStatsWithMatch[] = await knex('csgo_stats').innerJoin('csgo_games', function () {
+			this.on('csgo_games.id', '=', 'csgo_stats.match_id').andOn('csgo_stats.player_id', '=', knex.raw(playerId));
 		});
 
 		return dbGames;
@@ -336,15 +293,9 @@ class DB {
 	 * @param playerId The id of the player whos stats you want to get
 	 * @param matchId Id of a match the player was in
 	 */
-	async getPlayerStatsInAMatch(
-		playerId: string,
-		matchId: number,
-	): Promise<DBCsgoStats> {
+	async getPlayerStatsInAMatch(playerId: string, matchId: number): Promise<DBCsgoStats> {
 		if (this.csgoStatsCache.length !== 0) {
-			return this.csgoStatsCache.find(
-				(stats) =>
-					stats.player_id === playerId && stats.match_id === matchId,
-			);
+			return this.csgoStatsCache.find((stats) => stats.player_id === playerId && stats.match_id === matchId);
 		}
 
 		const stats: DBCsgoStats = await knex<DBCsgoStats>('csgo_stats')
@@ -371,9 +322,7 @@ class DB {
 
 		// If there isn't any player data cached get the player from the database. Note this does not cache
 		// anything.
-		const player: DBCsgoPlayer = await knex<DBCsgoPlayer>('csgo_players')
-			.where({ id })
-			.first();
+		const player: DBCsgoPlayer = await knex<DBCsgoPlayer>('csgo_players').where({ id }).first();
 
 		return player;
 	}
@@ -387,9 +336,7 @@ class DB {
 			return this.csgoPlayerCache;
 		}
 
-		const players: DBCsgoPlayer[] = await knex<DBCsgoPlayer>(
-			'csgo_players',
-		).where({});
+		const players: DBCsgoPlayer[] = await knex<DBCsgoPlayer>('csgo_players').where({});
 		this.csgoPlayerCache = players;
 
 		return players;
@@ -410,10 +357,7 @@ class DB {
 	}
 
 	private writeToDisk() {
-		fs.writeFileSync(
-			`${DB_DATA_DIR}/${DB_CONFIG_FILE}`,
-			JSON.stringify(this.config),
-		);
+		fs.writeFileSync(`${DB_DATA_DIR}/${DB_CONFIG_FILE}`, JSON.stringify(this.config));
 	}
 }
 
