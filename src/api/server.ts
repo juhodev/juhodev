@@ -97,18 +97,7 @@ export function startApi() {
 
 	if (ENVIRONMENT === 'prod') {
 		const privKey: string = fs.readFileSync('/etc/letsencrypt/live/juho.dev/privkey.pem', 'utf-8');
-		const cert: string = fs.readFileSync('/etc/letsencrypt/live/juho.dev/cert.pem', 'utf-8');
-		const ca = fs.readFileSync('/etc/letsencrypt/live/juho.dev/cert.pem', 'utf-8');
-		// const creds = {
-		// 	key: privKey,
-		// 	cert,
-		// 	ca,
-		// };
-
-		// const httpsServer = https.createServer(creds, app);
-		// httpsServer.listen(443, () => {
-		// 	console.log('https listening on port 443');
-		// });
+		const cert: string = fs.readFileSync('/etc/letsencrypt/live/juho.dev/fullchain.pem', 'utf-8');
 
 		const spdyOptions: spdy.ServerOptions = {
 			key: privKey,
