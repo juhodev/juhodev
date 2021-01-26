@@ -23,7 +23,7 @@
 		"demofile": "^1.8.0",
 		"discord.js": "^12.3.1",
 		"express": "^4.17.1",
-		"express-fileupload": "^1.2.0",
+		"express-fileupload": "^1.2.1",
 		"express-promise-router": "^4.0.1",
 		"ffmpeg": "0.0.4",
 		"fluent-ffmpeg": "^2.1.2",
@@ -33,6 +33,7 @@
 		"mysql": "^2.18.1",
 		"passport": "^0.4.1",
 		"pq": "0.0.3",
+		"spdy": "^4.0.2",
 		"steam": "^1.4.1",
 		"steamid": "^1.1.3",
 		"typescript": "^4.0.3",
@@ -42,6 +43,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "^14.11.8",
+		"@types/spdy": "^3.4.4",
 		"dotenv": "^8.2.0"
 	}
 }

@@ -6,6 +6,7 @@ import * as fs from 'fs';
 import * as https from 'https';
 import * as morgan from 'morgan';
 import * as fileUpload from 'express-fileupload';
+import * as spdy from 'spdy';
 
 import UserRouter from './routes/user/userRoute';
 import AuthRouter from './routes/auth/authRoute';
@@ -41,10 +42,7 @@ export function startApi() {
 
 	// I use morgan for logging http requests. This will first log the requests to file and
 	// then print it to stdout.
-	const accessLogStream = fs.createWriteStream(
-		path.resolve('data/access.log'),
-		{ flags: 'a' },
-	);
+	const accessLogStream = fs.createWriteStream(path.resolve('data/access.log'), { flags: 'a' });
 	// 'combined' will log requests in standard apache format (:remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent")
 	app.use(morgan('combined', { stream: accessLogStream }));
 	// I don't want extensive logs in stdout. The 'dev' format is :method :url :status :response-time ms - :res[content-length]
@@ -90,33 +88,25 @@ export function startApi() {
 		res.sendFile(path.resolve('dist', 'index.html'));
 	});
 
-	const httpPort: number = parseInt(process.env.HTTP_PORT);
-	app.listen(httpPort, () => {
-		console.log(`Listening on port ${httpPort}`);
-	});
+	if (ENVIRONMENT === 'dev') {
+		const httpPort: number = parseInt(process.env.HTTP_PORT);
+		app.listen(httpPort, () => {
+			console.log(`Listening on port ${httpPort}`);
+		});
+	}
 
 	if (ENVIRONMENT === 'prod') {
-		const privKey: string = fs.readFileSync(
-			'/etc/letsencrypt/live/juho.dev/privkey.pem',
-			'utf-8',
-		);
-		const cert: string = fs.readFileSync(
-			'/etc/letsencrypt/live/juho.dev/cert.pem',
-			'utf-8',
-		);
-		const ca = fs.readFileSync(
-			'/etc/letsencrypt/live/juho.dev/cert.pem',
-			'utf-8',
-		);
-		const creds = {
+		const privKey: string = fs.readFileSync('/etc/letsencrypt/live/juho.dev/privkey.pem', 'utf-8');
+		const cert: string = fs.readFileSync('/etc/letsencrypt/live/juho.dev/fullchain.pem', 'utf-8');
+
+		const spdyOptions: spdy.ServerOptions = {
 			key: privKey,
 			cert,
-			ca,
 		};
 
-		const httpsServer = https.createServer(creds, app);
-		httpsServer.listen(443, () => {
-			console.log('https listening on port 443');
+		const spdyServer: spdy.Server = spdy.createServer(spdyOptions, app);
+		spdyServer.listen(443, () => {
+			console.log('spdy listening on port 443');
 		});
 	}
 }
