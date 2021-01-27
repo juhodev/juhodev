@@ -3,10 +3,10 @@ import * as bodyParser from 'body-parser';
 import * as cors from 'cors';
 import * as path from 'path';
 import * as fs from 'fs';
-import * as https from 'https';
 import * as morgan from 'morgan';
 import * as fileUpload from 'express-fileupload';
 import * as spdy from 'spdy';
+import * as compression from 'compression';
 
 import UserRouter from './routes/user/userRoute';
 import AuthRouter from './routes/auth/authRoute';
@@ -47,6 +47,9 @@ export function startApi() {
 	app.use(morgan('combined', { stream: accessLogStream }));
 	// I don't want extensive logs in stdout. The 'dev' format is :method :url :status :response-time ms - :res[content-length]
 	app.use(morgan('dev'));
+
+	// This enables gzip compression
+	app.use(compression());
 
 	// Used for uploading hoi4 game files
 	app.use(
