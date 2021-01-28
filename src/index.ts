@@ -23,10 +23,12 @@ import { logUsers } from './userLogger';
 import { startApi } from './api/server';
 import SiteMetrics from './metrics/siteMetrics';
 import Config from './config/config';
+import Csgo from './steam/csgo/csgo';
 
 const db = new DB();
 const siteMetrics: SiteMetrics = new SiteMetrics();
 const config: Config = new Config();
+export const csgo: Csgo = new Csgo();
 
 (async () => {
 	config.load();
@@ -34,6 +36,8 @@ const config: Config = new Config();
 
 	const client = new Discord.Client();
 	db.load();
+
+	await csgo.load();
 
 	const userMetrics = new UserMetrics(db);
 	const commandHandler = new CommandHandler(db);
@@ -84,11 +88,7 @@ const config: Config = new Config();
 	startApi();
 })();
 
-const updateGuild = async (
-	db: DB,
-	client: Discord.Client,
-	userMetrics: UserMetrics,
-) => {
+const updateGuild = async (db: DB, client: Discord.Client, userMetrics: UserMetrics) => {
 	await db.updateGuild(client);
 	userMetrics.start();
 	logUsers(db);
