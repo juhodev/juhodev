@@ -22,11 +22,10 @@ const CsgoCommand: Command = {
 	alias: ['!cs', '!csgo'],
 };
 
-async function sendProfile(
-	channel: TextChannel | DMChannel | NewsChannel,
-	link: string,
-) {
-	const csgoProfile: CsgoProfile = await steam.getProfileWithLink(link);
+async function sendProfile(channel: TextChannel | DMChannel | NewsChannel, link: string) {
+	// TODO: Fix this in the rewrite
+	// ...maybe
+	const csgoProfile: CsgoProfile = undefined;
 
 	if (csgoProfile === undefined) {
 		channel.send('A player with that steam link not found!');
@@ -62,9 +61,9 @@ async function sendProfile(
 			},
 			{
 				name: 'Assists',
-				value: `${Math.round(
-					csgoProfile.gameAverages.assists.value,
-				)} (${csgoProfile.gameHighest.assists.value} highest)`,
+				value: `${Math.round(csgoProfile.gameAverages.assists.value)} (${
+					csgoProfile.gameHighest.assists.value
+				} highest)`,
 				inline: true,
 			},
 		)

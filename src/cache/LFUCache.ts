@@ -1,7 +1,7 @@
 import LinkedList from './linkedlist/LinkedList';
 import { ListNode } from './linkedlist/types';
 
-class LFUCache {
+class LFUCache<T> {
 	readonly maxSize: number;
 
 	private frequencyList: LinkedList;
@@ -66,7 +66,7 @@ class LFUCache {
 	 * @returns The value for the `key` that is defined in the parameter. If a value isn't stored with that
 	 * 			`key` then this will return undefined.
 	 */
-	get(key: string): any {
+	get(key: string): T {
 		const cacheNode: ListNode = this.lookup.get(key);
 
 		if (cacheNode === undefined) {

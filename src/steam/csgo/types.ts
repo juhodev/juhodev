@@ -1,4 +1,4 @@
-import CsgoPlayer from './csgoPlayer';
+import { UnnecessaryStats } from '../../api/routes/demoworker/types';
 
 export type CsgoMatch = {
 	id: number;
@@ -8,11 +8,12 @@ export type CsgoMatch = {
 	matchDuration: number;
 	ctRounds: number;
 	tRounds: number;
-	winner: string;
+	winner: Side;
+	players: PlayerStatistics[];
 };
 
 export type PlayerStatistics = {
-	player: CsgoPlayer;
+	player: PlayerData;
 	ping: number;
 	kills: number;
 	assists: number;
@@ -21,6 +22,26 @@ export type PlayerStatistics = {
 	hsp: number;
 	score: number;
 	side: Side;
+	unnecessaryStats?: UnnecessaryStats;
 };
 
-export type Side = 'T' | 'CT';
+export type PlayerData = {
+	name: string;
+	id: string;
+	avatarLink: string;
+	steamLink: string;
+};
+
+export type Side = 'T' | 'CT' | 'TIE';
+export type StatisticsType = 'kills' | 'deaths' | 'hsp' | 'mvps' | 'score' | 'ping' | 'assists';
+export const RESULTS_IN_PAGE: number = 10;
+
+export type MatchWithPlayerStats = {
+	id: number;
+	date: number;
+	ctRounds: number;
+	tRounds: number;
+	map: string;
+	matchDuration: number;
+	player: PlayerStatistics;
+};

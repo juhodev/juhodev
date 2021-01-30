@@ -102,3 +102,16 @@ export function getAllDatesBetweenTwoDates(firstDate: Date, lastDate: Date): Dat
 
 	return array;
 }
+
+export function getStandardDeviationAndError(nums: number[]): { standardDeviation: number; standardError: number } {
+	const mean: number = nums.reduce((prev, curr) => (prev += curr)) / nums.length;
+	const calc: number[] = nums.map((x) => Math.pow(x - mean, 2));
+	const meanDifference: number = (1 / nums.length) * calc.reduce((prev, curr) => (prev += curr));
+	const standardDeviation: number = Math.sqrt(meanDifference);
+	const standardError: number = standardDeviation / Math.sqrt(nums.length);
+
+	return {
+		standardDeviation: standardDeviation,
+		standardError: standardError,
+	};
+}
