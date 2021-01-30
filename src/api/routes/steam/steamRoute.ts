@@ -3,7 +3,6 @@ import { steam } from '../../server';
 import { verifyIdentity } from '../middleware/middleware';
 import {
 	AddResponse,
-	CsgoMatch,
 	CsgoProfile,
 	CsgoUser,
 	DateMatches,
@@ -26,15 +25,16 @@ import {
 import { UserData } from '../../types';
 import { getUserDataWithBearer } from '../../user';
 import { ExtensionSaveResponse, UploadCode } from '../../../steam/extension/types';
-import { siteMetrics } from '../../..';
+import { csgo, siteMetrics } from '../../..';
+import { CsgoMatch, MatchWithPlayerStats } from '../../../steam/csgo/types';
 
 const router = expressPromiseRouter();
 
-router.get('/search', [], async (req, res) => {
+router.get('/search', [], (req, res) => {
 	const { q } = req.query;
 
 	siteMetrics.time('search');
-	const csgoUsers: CsgoUser[] = await steam.search(q);
+	const csgoUsers: CsgoUser[] = csgo.search(q);
 	const response: SteamSearchResponse = {
 		error: false,
 		searchResult: csgoUsers,
@@ -44,10 +44,11 @@ router.get('/search', [], async (req, res) => {
 	res.json(response);
 });
 
-router.get('/match', [], async (req, res) => {
+router.get('/match', [], (req, res) => {
 	const { id } = req.query;
 	siteMetrics.time('match');
-	const csgoMatch: CsgoMatch = await steam.getMatch(id);
+	const csgoMatch: CsgoMatch = csgo.getMatch(parseInt(id));
+	console.log('csgoMatch', csgoMatch);
 	const response: SteamMatchResponse = {
 		error: false,
 		csgoMatch,
@@ -79,22 +80,22 @@ router.get('/uploadCode', [verifyIdentity], async (req, res) => {
 	res.json(response);
 });
 
-router.get('/games', [], async (req, res) => {
+router.get('/games', [], (req, res) => {
 	const { id, page } = req.query;
 
-	const games: GameWithStats[] = await steam.getPlayerMatches(id, page);
+	const matches: MatchWithPlayerStats[] = csgo.getPlayer(id).getMatches(page);
 	const response: SteamGamesResponse = {
-		games,
+		matches,
 		error: false,
 	};
 
 	res.json(response);
 });
 
-router.get('/user', [], async (req, res) => {
+router.get('/user', [], (req, res) => {
 	const { id } = req.query;
 
-	const user: SteamUser = await steam.getUser(id);
+	const user: SteamUser = csgo.getUser(id);
 	const response: SteamUserResponse = {
 		user,
 		error: false,
@@ -103,40 +104,26 @@ router.get('/user', [], async (req, res) => {
 	res.json(response);
 });
 
-router.get('/leaderboard', [], async (req, res) => {
-	siteMetrics.time('get_leaderboard');
-	const response: SteamLeaderboardResponse = {
-		error: false,
-		leaderboard: await steam.getLeaderboards(),
-	};
-	siteMetrics.timeEnd('get_leaderboard');
-
-	res.json(response);
-});
-
 router.get('/profiles', [], async (req, res) => {
 	const response: SteamProfilesResponse = {
 		error: false,
-		profiles: steam.getBuiltProfiles(),
+		profiles: csgo.getTopProfilePreviews(),
 	};
 
 	res.json(response);
 });
 
 router.get('/statistics', [], async (req, res) => {
+	// TODO: Maybe one day fix returning only soloQueue matches
 	const { playerId, type, soloQueue } = req.query;
 
 	siteMetrics.time('get_player_statistics');
-	const statistics: number[] = await steam.getPlayerStatistics(
-		playerId,
-		type,
-		soloQueue == 'true', // oh man
-	);
+	const statistics: number[] = csgo.getPlayer(playerId).getStatistics(type);
 	siteMetrics.timeEnd('get_player_statistics');
 
 	const response: SteamStatisticsResponse = {
 		error: false,
-		data: statistics.reverse(),
+		data: statistics,
 	};
 
 	res.json(response);
@@ -149,9 +136,9 @@ router.post('/link', [], async (req, res) => {
 	res.json(response);
 });
 
-router.get('/:id', [], async (req, res) => {
+router.get('/:id', [], (req, res) => {
 	const { id } = req.params;
-	const profile: CsgoProfile = await steam.getProfile(id);
+	const profile: CsgoProfile = csgo.getProfile(id);
 
 	const response: SteamRouteResponse = {
 		error: false,

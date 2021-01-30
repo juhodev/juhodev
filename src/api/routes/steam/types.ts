@@ -1,6 +1,6 @@
+import { CsgoMatch, MatchWithPlayerStats } from '../../../steam/csgo/types';
 import {
 	BuiltProfile,
-	CsgoMatch,
 	CsgoPlayer,
 	CsgoProfile,
 	CsgoUser,
@@ -26,7 +26,6 @@ export type SteamSearchResponse = {
 
 export type SteamMatchResponse = {
 	error: boolean;
-	userData?: UserData;
 	errorCode?: number;
 	csgoMatch: CsgoMatch;
 };
@@ -41,7 +40,7 @@ export type SteamUploadCodeResponse = {
 export type SteamGamesResponse = {
 	error: boolean;
 	errorCode?: number;
-	games?: GameWithStats[];
+	matches?: MatchWithPlayerStats[];
 	mapStatistics?: MapStatistics;
 	matchFrequency?: DateMatches[];
 };
