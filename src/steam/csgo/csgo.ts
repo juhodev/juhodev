@@ -52,6 +52,10 @@ class Csgo {
 				match = this.matches.get(row.match_id);
 			} else {
 				const dbMatch: DBCsgoMatch = await db.getCsgoMatch(row.match_id);
+				if (dbMatch === undefined) {
+					continue;
+				}
+
 				match = {
 					ctRounds: dbMatch.ct_rounds,
 					date: dbMatch.date,
