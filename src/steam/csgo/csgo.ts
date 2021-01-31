@@ -136,8 +136,8 @@ class Csgo {
 
 	getProfile(id: string): CsgoProfile {
 		const profile: CsgoProfile = this.csgoProfiles.get(id);
-		fetchSharingCodesWithSteamId3(profile.id);
 		if (profile !== undefined) {
+			fetchSharingCodesWithSteamId3(profile.id);
 			return profile;
 		}
 
