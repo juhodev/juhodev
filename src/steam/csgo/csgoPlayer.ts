@@ -171,7 +171,7 @@ class CsgoPlayer {
 	 */
 	private filterMatches(map: string): CsgoMatch[] {
 		if (map === 'all') {
-			return this.matches;
+			return [...this.matches];
 		}
 
 		return this.matches.filter((match) => match.map === map);
