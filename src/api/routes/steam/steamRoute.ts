@@ -28,6 +28,7 @@ import { getUserDataWithBearer } from '../../user';
 import { ExtensionSaveResponse, UploadCode } from '../../../steam/extension/types';
 import { csgo, siteMetrics } from '../../..';
 import { CsgoMatch, MatchWithPlayerStats } from '../../../steam/csgo/types';
+import CsgoPlayer from '../../../steam/csgo/csgoPlayer';
 
 const router = expressPromiseRouter();
 
@@ -137,7 +138,7 @@ router.post('/link', [], async (req, res) => {
 });
 
 router.get('/uniquemaps', [], (req, res) => {
-	const { id } = req.param;
+	const { id } = req.query;
 
 	const response: SteamUniqueMapsResponse = {
 		error: false,
