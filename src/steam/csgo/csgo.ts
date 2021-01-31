@@ -2,6 +2,7 @@ import { db, siteMetrics } from '../..';
 import { Match, Player } from '../../api/routes/demoworker/types';
 import LFUCache from '../../cache/LFUCache';
 import { DBCsgoMatch, DBCsgoPlayer, DBPlayerStatsWithPlayerInfo } from '../../db/types';
+import { fetchSharingCodesWithSteamId3 } from '../matchsharing/matchSharing';
 import { BuiltProfile, CsgoProfile, CsgoUser, SteamUser } from '../types';
 import CsgoPlayer from './csgoPlayer';
 import { CsgoMatch, PlayerStatistics, Side } from './types';
@@ -135,6 +136,7 @@ class Csgo {
 
 	getProfile(id: string): CsgoProfile {
 		const profile: CsgoProfile = this.csgoProfiles.get(id);
+		fetchSharingCodesWithSteamId3(profile.id);
 		if (profile !== undefined) {
 			return profile;
 		}
