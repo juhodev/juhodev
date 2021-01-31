@@ -28,7 +28,9 @@ class Csgo {
 
 		const filteredPlayers: CsgoUser[] = [];
 		for (const player of this.players.entries()) {
-			filteredPlayers.push({ name: player[1].name, id: player[1].id });
+			if (player[1].name.toLowerCase().startsWith(query.toLowerCase())) {
+				filteredPlayers.push({ name: player[1].name, id: player[1].id });
+			}
 		}
 
 		return filteredPlayers;
