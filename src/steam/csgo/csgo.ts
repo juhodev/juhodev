@@ -99,7 +99,6 @@ class Csgo {
 	}
 
 	getMatch(id: number): CsgoMatch {
-		console.log('id', id);
 		return this.matches.get(id);
 	}
 

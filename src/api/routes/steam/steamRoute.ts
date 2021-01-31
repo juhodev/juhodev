@@ -48,7 +48,6 @@ router.get('/match', [], (req, res) => {
 	const { id } = req.query;
 	siteMetrics.time('match');
 	const csgoMatch: CsgoMatch = csgo.getMatch(parseInt(id));
-	console.log('csgoMatch', csgoMatch);
 	const response: SteamMatchResponse = {
 		error: false,
 		csgoMatch,
