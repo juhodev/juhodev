@@ -81,9 +81,9 @@ router.get('/uploadCode', [verifyIdentity], async (req, res) => {
 });
 
 router.get('/games', [], (req, res) => {
-	const { id, page } = req.query;
+	const { id, page, map } = req.query;
 
-	const matches: MatchWithPlayerStats[] = csgo.getPlayer(id).getMatches(page);
+	const matches: MatchWithPlayerStats[] = csgo.getPlayer(id).getMatches(page, map);
 	const response: SteamGamesResponse = {
 		matches,
 		error: false,

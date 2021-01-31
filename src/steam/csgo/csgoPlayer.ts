@@ -135,9 +135,11 @@ class CsgoPlayer {
 		return this.matches.map((match) => match.players.find((stats) => stats.player.id === this.id)[type]);
 	}
 
-	getMatches(page: number): MatchWithPlayerStats[] {
+	getMatches(page: number, map: string): MatchWithPlayerStats[] {
 		const first: number = page * RESULTS_IN_PAGE;
-		const matches: CsgoMatch[] = this.matches.reverse().slice(first, first + RESULTS_IN_PAGE);
+		const matches: CsgoMatch[] = this.filterMatches(map)
+			.reverse()
+			.slice(first, first + RESULTS_IN_PAGE);
 
 		return matches.map((match) => {
 			const { id, date, ctRounds, tRounds, map, matchDuration, players } = match;
@@ -159,6 +161,20 @@ class CsgoPlayer {
 	 */
 	getUniqueMaps(): string[] {
 		return this.mapStatistics.maps.map((map) => map.name);
+	}
+
+	/**
+	 * Filters through all matches plays and returns the once played on `map`
+	 *
+	 * @param map The map you want to filter all matches with. `all` will return all matches played
+	 * @returns A `CsgoMatch` array consisting of only matches played on that map
+	 */
+	private filterMatches(map: string): CsgoMatch[] {
+		if (map === 'all') {
+			return this.matches;
+		}
+
+		return this.matches.filter((match) => match.map === map);
 	}
 
 	private saveMatchWinLossStatistics(match: CsgoMatch) {
