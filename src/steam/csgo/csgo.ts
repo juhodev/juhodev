@@ -1,6 +1,7 @@
 import { db, siteMetrics } from '../..';
+import { Match, Player } from '../../api/routes/demoworker/types';
 import LFUCache from '../../cache/LFUCache';
-import { DBCsgoMatch, DBPlayerStatsWithPlayerInfo } from '../../db/types';
+import { DBCsgoMatch, DBCsgoPlayer, DBPlayerStatsWithPlayerInfo } from '../../db/types';
 import { BuiltProfile, CsgoProfile, CsgoUser, SteamUser } from '../types';
 import CsgoPlayer from './csgoPlayer';
 import { CsgoMatch, PlayerStatistics, Side } from './types';
@@ -158,6 +159,91 @@ class Csgo {
 
 		this.csgoProfiles.insert(id, createdProfile);
 		return createdProfile;
+	}
+
+	/**
+	 * This updates the in memory cache of all the stats when a new match is received from
+	 * a demo worker. The demo worker only updates the database so I need to do this
+	 * in order to keep everything up-to-date.
+	 *
+	 * @param match Match received from a demo worker
+	 * @param matchId The id of the match in the database. This is needed to later create links to the match
+	 * @param newPlayers An array of the new players that were inserted in to the database. I pass this in here so I don't need to
+	 * 					 duplicate all the logic for fetching the user avatar, etc etc
+	 */
+	updateWithNewMatch(match: Match, matchId: number, newPlayers: DBCsgoPlayer[]) {
+		const alreadyHasMatch: boolean = this.matches.has(matchId);
+		if (alreadyHasMatch) {
+			return;
+		}
+
+		const csgoMatch: CsgoMatch = {
+			id: matchId,
+			ctRounds: match.counterTerroristTeam.score,
+			tRounds: match.terroristTeam.score,
+			date: match.date,
+			matchDuration: match.duration,
+			waitTime: -1,
+			winner: match.winner as Side,
+			map: match.map,
+			players: [],
+		};
+
+		const playersInGame: Player[] = [...match.counterTerroristTeam.players, ...match.terroristTeam.players];
+		const playerStatistics: PlayerStatistics[] = playersInGame.map((player) => {
+			const { name, kills, deaths, assists, mvps, score, hsp, ping, side, unnecessaryStats, steamId3 } = player;
+
+			const csgoPlayer: CsgoPlayer = this.findOrCreateCsgoPlayer(steamId3, newPlayers);
+
+			return {
+				name,
+				kills,
+				deaths,
+				assists,
+				mvps,
+				score,
+				hsp,
+				ping,
+				side: side as Side,
+				unnecessaryStats,
+				player: {
+					avatarLink: csgoPlayer.avatarLink,
+					id: csgoPlayer.id,
+					name: csgoPlayer.name,
+					steamLink: csgoPlayer.steamLink,
+				},
+			};
+		});
+
+		csgoMatch.players.push(...playerStatistics);
+		for (const stats of playerStatistics) {
+			const player: CsgoPlayer = this.players.get(stats.player.id);
+			player.addMatch(csgoMatch);
+		}
+
+		this.matches.set(csgoMatch.id, csgoMatch);
+	}
+
+	/**
+	 * This either finds an old player with the `id` from memory or creates a new player
+	 * with the id and data from `newPlayers` and saves it to `players` map.
+	 *
+	 * @param id Id of the player
+	 * @param newPlayers An array of the new players inserted to the database from that match
+	 *
+	 * @returns The `CsgoPlayer` that was either found or created
+	 */
+	private findOrCreateCsgoPlayer(id: string, newPlayers: DBCsgoPlayer[]): CsgoPlayer {
+		let csgoPlayer: CsgoPlayer;
+		if (this.players.has(id)) {
+			csgoPlayer = this.players.get(id);
+		} else {
+			const dbPlayer: DBCsgoPlayer = newPlayers.find((x) => x.id === id);
+			csgoPlayer = new CsgoPlayer(dbPlayer.id, dbPlayer.steam_link, dbPlayer.avatar_link, dbPlayer.name, []);
+			this.players.set(csgoPlayer.id, csgoPlayer);
+		}
+
+		return csgoPlayer;
 	}
 }
 

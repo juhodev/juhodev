@@ -1,18 +1,12 @@
 import fetch from 'node-fetch';
-import {
-	DBCsgoMatch,
-	DBCsgoPlayer,
-	DBCsgoStats,
-	DBMatchSharingAccount,
-	DBMatchSharingCode,
-} from '../../db/types';
+import { DBCsgoMatch, DBCsgoPlayer, DBCsgoStats, DBMatchSharingAccount, DBMatchSharingCode } from '../../db/types';
 import { knex } from '../../db/utils';
 import * as SteamID from 'steamid';
 import * as xml2js from 'xml2js';
 import { SteamLinkResponse, SteamError } from '../../api/routes/steam/types';
 import { GetNextMatchSharingCodeResponse } from './types';
 import { Match, Player } from '../../api/routes/demoworker/types';
-import { db } from '../..';
+import { csgo, db } from '../..';
 import { demoMaster, steam } from '../../api/server';
 
 export async function linkAccount(
@@ -22,11 +16,7 @@ export async function linkAccount(
 ): Promise<SteamLinkResponse> {
 	const steamId64: string = await getSteamId64(profileLink);
 	const steamId3: string = convertSteamId64ToSteamId3(steamId64);
-	const newCode: string = await fetchNewCode(
-		steamId64,
-		authenticationCode,
-		knownCode,
-	);
+	const newCode: string = await fetchNewCode(steamId64, authenticationCode, knownCode);
 
 	if (newCode === 'AUTH_ERROR') {
 		return {
@@ -35,12 +25,7 @@ export async function linkAccount(
 		};
 	}
 
-	await saveMatchSharingAccount(
-		steamId3,
-		profileLink,
-		authenticationCode,
-		steamId64,
-	);
+	await saveMatchSharingAccount(steamId3, profileLink, authenticationCode, steamId64);
 	await saveSharingCode(steamId3, knownCode);
 	await saveSharingCode(steamId3, newCode);
 
@@ -60,11 +45,7 @@ export async function linkAccount(
  * @returns If there is a code available then this returns the next match sharing code. If there is an authentication error then this'll return 'AUTH_ERROR'. If there is no new code available this'll return
  * 			undefined.
  */
-export async function fetchNewCode(
-	steamId64: string,
-	authenticationCode: string,
-	knownCode: string,
-): Promise<string> {
+export async function fetchNewCode(steamId64: string, authenticationCode: string, knownCode: string): Promise<string> {
 	const { STEAM_API_KEY } = process.env;
 	const url: string = `https://api.steampowered.com/ICSGOPlayers_730/GetNextMatchSharingCode/v1?key=${STEAM_API_KEY}&steamid=${steamId64}&steamidkey=${authenticationCode}&knowncode=${knownCode}`;
 
@@ -116,9 +97,7 @@ export async function getSteamId64(profileLink: string): Promise<string> {
  */
 export function startUpdatingUserCodes() {
 	setInterval(async () => {
-		const users: DBMatchSharingAccount[] = await knex<DBMatchSharingAccount>(
-			'match_sharing_accounts',
-		).where({});
+		const users: DBMatchSharingAccount[] = await knex<DBMatchSharingAccount>('match_sharing_accounts').where({});
 
 		for (const user of users) {
 			await fetchCodesForUser(user);
@@ -129,9 +108,7 @@ export function startUpdatingUserCodes() {
 export async function fetchSharingCodesWithSteamId3(steamId3: string) {
 	// Look for an acocunt with the steamId3. This function is most likely called when someone gets a profile
 	// the steamId3 is the same that I save from the steam page when scraping.
-	const registeredSteamAccount: DBMatchSharingAccount = await knex<DBMatchSharingAccount>(
-		'match_sharing_accounts',
-	)
+	const registeredSteamAccount: DBMatchSharingAccount = await knex<DBMatchSharingAccount>('match_sharing_accounts')
 		.where({ id: steamId3 })
 		.first();
 
@@ -145,32 +122,16 @@ export async function fetchSharingCodesWithSteamId3(steamId3: string) {
 }
 
 async function fetchCodesForUser(user: DBMatchSharingAccount) {
-	const lastUserMatchSharingCode: DBMatchSharingCode = await knex<DBMatchSharingCode>(
-		'match_sharing_codes',
-	)
+	const lastUserMatchSharingCode: DBMatchSharingCode = await knex<DBMatchSharingCode>('match_sharing_codes')
 		.orderBy('saved_at')
 		.where({ player_id: user.id })
 		.first();
 
-	await fetchUserCodes(
-		user.id,
-		user.steamid64,
-		user.authentication_code,
-		lastUserMatchSharingCode.sharing_code,
-	);
+	await fetchUserCodes(user.id, user.steamid64, user.authentication_code, lastUserMatchSharingCode.sharing_code);
 }
 
-async function fetchUserCodes(
-	playerId: string,
-	steamId64: string,
-	authenticationCode: string,
-	knownCode: string,
-) {
-	let code: string = await fetchNewCode(
-		steamId64,
-		authenticationCode,
-		knownCode,
-	);
+async function fetchUserCodes(playerId: string, steamId64: string, authenticationCode: string, knownCode: string) {
+	let code: string = await fetchNewCode(steamId64, authenticationCode, knownCode);
 
 	if (code === undefined || code === 'AUTH_ERROR') {
 		return;
@@ -187,9 +148,7 @@ function convertSteamId64ToSteamId3(steamId64: string) {
 }
 
 async function saveSharingCode(playerId: string, code: string) {
-	const dbCode: DBMatchSharingCode = await knex<DBMatchSharingCode>(
-		'match_sharing_codes',
-	)
+	const dbCode: DBMatchSharingCode = await knex<DBMatchSharingCode>('match_sharing_codes')
 		.where({
 			player_id: playerId,
 			sharing_code: code,
@@ -212,12 +171,7 @@ async function saveSharingCode(playerId: string, code: string) {
 	demoMaster.process(code);
 }
 
-async function saveMatchSharingAccount(
-	playerId: string,
-	link: string,
-	authenticationCode: string,
-	steamid64: string,
-) {
+async function saveMatchSharingAccount(playerId: string, link: string, authenticationCode: string, steamid64: string) {
 	await knex<DBMatchSharingAccount>('match_sharing_accounts').insert({
 		id: playerId,
 		authentication_code: authenticationCode,
@@ -236,17 +190,13 @@ export async function saveMatch(match: Match) {
 	// First insert the match in the database
 	// This first looks up if the match already exists in the database. If it does I don't want to
 	// insert it again.
-	const oldMatch: DBCsgoMatch = await db.findOldCsgoMatch(
-		match.map,
-		match.date,
-		match.duration,
-	);
+	const oldMatch: DBCsgoMatch = await db.findOldCsgoMatch(match.map, match.date, match.duration);
 
 	if (oldMatch !== undefined) {
 		return;
 	}
 
-	const matchId: number = await knex<DBCsgoMatch>('csgo_games')
+	const matchId: number[] = await knex<DBCsgoMatch>('csgo_games')
 		.insert({
 			map: match.map,
 			ct_rounds: match.counterTerroristTeam.score,
@@ -259,10 +209,7 @@ export async function saveMatch(match: Match) {
 		})
 		.returning('id');
 
-	const players: Player[] = [
-		...match.counterTerroristTeam.players,
-		...match.terroristTeam.players,
-	];
+	const players: Player[] = [...match.counterTerroristTeam.players, ...match.terroristTeam.players];
 
 	// Insert the new players as a batch later
 	const newPlayers: DBCsgoPlayer[] = [];
@@ -286,9 +233,7 @@ export async function saveMatch(match: Match) {
 			};
 
 			// For whatever reason sometimes the player is twice in the final scoreboard.
-			const alreadyInNewPlayers: DBCsgoPlayer = newPlayers.find(
-				(p) => p.id === dbPlayer.id,
-			);
+			const alreadyInNewPlayers: DBCsgoPlayer = newPlayers.find((p) => p.id === dbPlayer.id);
 
 			if (alreadyInNewPlayers !== undefined) {
 				continue;
@@ -302,7 +247,7 @@ export async function saveMatch(match: Match) {
 			deaths: player.deaths,
 			hsp: player.hsp,
 			kills: player.kills,
-			match_id: matchId,
+			match_id: matchId[0],
 			mvps: player.mvps,
 			ping: player.ping,
 			player_id: player.steamId3,
@@ -317,6 +262,8 @@ export async function saveMatch(match: Match) {
 
 	await knex<DBCsgoPlayer>('csgo_players').insert(newPlayers);
 	await knex<DBCsgoStats>('csgo_stats').insert(newStats);
+
+	csgo.updateWithNewMatch(match, matchId[0], newPlayers);
 
 	// I really need to write a better cache system because
 	// right now I need to clear the cache every time I save new data
