@@ -19,6 +19,7 @@ import {
 	SteamRouteResponse,
 	SteamSearchResponse,
 	SteamStatisticsResponse,
+	SteamUniqueMapsResponse,
 	SteamUploadCodeResponse,
 	SteamUserResponse,
 } from './types';
@@ -132,6 +133,17 @@ router.post('/link', [], async (req, res) => {
 	const { profile, authenticationCode, knownCode } = req.body;
 
 	const response: SteamLinkResponse = await steam.addMatchSharingCode(profile, authenticationCode, knownCode);
+	res.json(response);
+});
+
+router.get('/uniquemaps', [], (req, res) => {
+	const { id } = req.param;
+
+	const response: SteamUniqueMapsResponse = {
+		error: false,
+		data: csgo.getPlayer(id).getUniqueMaps(),
+	};
+
 	res.json(response);
 });
 

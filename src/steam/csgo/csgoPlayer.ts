@@ -153,6 +153,14 @@ class CsgoPlayer {
 		});
 	}
 
+	/**
+	 * This is used for creating options for filtering matches per map in /matches
+	 * @returns an array of unique map names the player has played
+	 */
+	getUniqueMaps(): string[] {
+		return this.mapStatistics.maps.map((map) => map.name);
+	}
+
 	private saveMatchWinLossStatistics(match: CsgoMatch) {
 		if (match.winner === 'TIE') {
 			this.matchesTied++;

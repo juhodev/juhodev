@@ -74,6 +74,12 @@ export type SteamLinkResponse = {
 	errorCode?: number;
 };
 
+export type SteamUniqueMapsResponse = {
+	error: boolean;
+	errorCode?: number;
+	data: string[];
+};
+
 export const SteamError = {
 	DISCORD_NOT_AUTHENTICATED: 0,
 	USER_NOT_ON_SERVER: 1,
