@@ -112,6 +112,10 @@ class LFUCache<T> {
 			this.frequencyList.insertHead(frequencyNode);
 		} else {
 			oldParent.next = frequencyNode;
+			const oldLinkedList: LinkedList = oldParent.value;
+			if (oldLinkedList.getSize() === 0) {
+				this.frequencyList.remove(oldParent);
+			}
 		}
 	}
 
