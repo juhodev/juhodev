@@ -161,6 +161,7 @@ class Csgo {
 			dateMatches: player.getMatchFrequency(),
 		};
 
+		fetchSharingCodesWithSteamId3(createdProfile.id);
 		this.csgoProfiles.insert(id, createdProfile);
 		return createdProfile;
 	}
