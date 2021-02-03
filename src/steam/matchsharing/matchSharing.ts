@@ -115,6 +115,7 @@ export async function fetchSharingCodesWithSteamId3(steamId3: string) {
 	// If there is no user with this steamid3 then we can just return because we can't fetch matches
 	// without the user linking their steam account.
 	if (registeredSteamAccount === undefined) {
+		console.error(`Couldn't get a registered steam account (${steamId3})`);
 		return;
 	}
 

@@ -41,7 +41,13 @@ export type UnnecessaryStats = {
 	reloads: number;
 	footsteps: number;
 	bombPlants: number;
-	firingHeatmap?: Position[];
+	firingHeatmap?: HeatmapPosition[];
+};
+
+export type HeatmapPosition = {
+	x: number;
+	y: number;
+	value: number;
 };
 
 export type Position = {
