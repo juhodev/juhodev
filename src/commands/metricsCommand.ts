@@ -13,12 +13,19 @@ import { Command } from './types';
 const MetricsCommand: Command = {
 	execute: (channel, author, args, db) => {
 		if (args.length === 0) {
-			sendTotalTimes(channel);
+			channel.send('!times <page>');
 			return;
 		}
 
-		const userArgument = args.shift().toUpperCase();
-		sendUserTimes(channel, userArgument);
+		const page: string = args.shift();
+		const pageAsNumber: number = parseInt(page);
+
+		if (Number.isNaN(pageAsNumber)) {
+			channel.send(`There was an error with the page number ${page} (${pageAsNumber})`);
+			return;
+		}
+
+		sendTotalTimes(channel, pageAsNumber);
 	},
 	alias: ['!times'],
 };
@@ -65,7 +72,7 @@ async function sendUserTimes(
 	channel.send(embed);
 }
 
-async function sendTotalTimes(channel: TextChannel | DMChannel | NewsChannel) {
+async function sendTotalTimes(channel: TextChannel | DMChannel | NewsChannel, page: number) {
 	let message: string = '';
 
 	const userTimes: DBVoiceLog[] = await knex<DBVoiceLog>('voice_log').where(
@@ -94,7 +101,12 @@ async function sendTotalTimes(channel: TextChannel | DMChannel | NewsChannel) {
 
 	const sortedTimes = totalTimes.sort((a, b) => a.time - b.time).reverse();
 
-	for (const userTime of sortedTimes) {
+	const timesOnOnePage: number = 10;
+	const timesOnPage: Temp[] = totalTimes.splice(timesOnOnePage*(page-1), timesOnOnePage);
+
+	message += `Page ${page}\n`;
+
+	for (const userTime of timesOnPage) {
 		message += `<@${userTime.snowflake}>: ${msToTime(userTime.time)}`;
 		message += '\n';
 	}
