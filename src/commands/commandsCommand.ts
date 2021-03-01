@@ -10,13 +10,13 @@ const CommandsCommand: Command = {
 	alias: ['!commands'],
 };
 async function sendCommandStats(channel: TextChannel | DMChannel | NewsChannel, author: User) {
-	const userCommands: DBCommandLog[] = await knex<DBCommandLog>('voice_log').where({
+	const userCommands: DBCommandLog[] = await knex<DBCommandLog>('command_log').where({
 		snowflake: author.id,
 	});
 
 	const embed = new MessageEmbed({
 		title: `Number of commands sent`,
-	}).addField(`Command sent by ${author.username}`, userCommands.length);
+	}).addField(`Commands sent by ${author.username}`, userCommands.length);
 
 	channel.send(embed);
 }
