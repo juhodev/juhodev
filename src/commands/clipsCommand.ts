@@ -1,5 +1,6 @@
 import {
 	DMChannel,
+	MessageAttachment,
 	MessageEmbed,
 	NewsChannel,
 	TextChannel,
@@ -8,6 +9,7 @@ import {
 import { Clip } from '../clips/types';
 import DB from '../database/db';
 import { Command } from './types';
+import * as fs from 'fs';
 
 const ClipsCommand: Command = {
 	execute: (channel, author, args, db) => {
@@ -146,14 +148,9 @@ async function viewClip(
 		return;
 	}
 
-	channel.send({
-		files: [
-			{
-				attachment: clip.path,
-				nane: clip.name,
-			},
-		],
-	});
+	const clipBuffer: Buffer = fs.readFileSync(clip.path);
+	const attachment: MessageAttachment = new MessageAttachment(clipBuffer, clip.name);
+	channel.send(attachment);
 }
 
 export default ClipsCommand;
