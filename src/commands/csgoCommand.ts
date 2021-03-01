@@ -7,14 +7,14 @@ import { Command } from './types';
 const CsgoCommand: Command = {
 	execute: (channel, author, args, db) => {
 		if (args.length === 0) {
-			channel.send('!steam <steamID64>');
+			channel.send('!steam <steamID64/link>');
 			return;
 		}
 
 		const link: string = args.shift();
 
 		if (link === undefined) {
-			channel.send('!steam <steamID64>');
+			channel.send('!steam <steamID64/link>');
 			return;
 		}
 
@@ -24,7 +24,13 @@ const CsgoCommand: Command = {
 };
 
 async function sendProfile(channel: TextChannel | DMChannel | NewsChannel, steamId64: string) {
-	const csgoProfile: CsgoProfile = await csgo.getByUrl(`https://steamcommunity.com/profiles/${steamId64}`);
+	let url: string;
+	if (steamId64.toLowerCase().startsWith('http')) {
+		url = steamId64;
+	} else {
+		url = `https://steamcommunity.com/profiles/${steamId64}`;
+	}
+	const csgoProfile: CsgoProfile = await csgo.getByUrl(url);
 
 	if (csgoProfile === undefined) {
 		channel.send('A player with that steam id not found!');
