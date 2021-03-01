@@ -30,48 +30,6 @@ const MetricsCommand: Command = {
 	alias: ['!times'],
 };
 
-async function sendUserTimes(
-	channel: TextChannel | DMChannel | NewsChannel,
-	userWithTag: string,
-) {
-	const hashtagIndex: number = userWithTag.indexOf('#');
-	const username: string = userWithTag.substr(0, hashtagIndex).toUpperCase();
-	const tag: string = userWithTag.substr(
-		hashtagIndex + 1,
-		userWithTag.length,
-	);
-
-	const users: DBUser[] = await knex<DBUser>('users').where({
-		discord_name_uppercase: username,
-		discord_tag: tag,
-	});
-
-	if (users.length !== 1) {
-		console.error(`User not found! ${username}#${tag}`);
-		channel.send(
-			`User not found! Did you write the user tag like this: User#0000?`,
-		);
-		return;
-	}
-
-	const user: DBUser = users[0];
-	const userTimes: DBVoiceLog[] = await knex<DBVoiceLog>('voice_log').where({
-		snowflake: user.snowflake,
-	});
-
-	let message: string = '';
-
-	for (const userTime of userTimes) {
-		message += `${userTime.channel}: ${msToTime(userTime.time)}`;
-		message += '\n';
-	}
-
-	const embed = new MessageEmbed({
-		title: `Times for ${user.discord_name_original}`,
-	}).addField('Channels', message);
-	channel.send(embed);
-}
-
 async function sendTotalTimes(channel: TextChannel | DMChannel | NewsChannel, page: number) {
 	let message: string = '';
 

@@ -19,6 +19,7 @@ import ClipsCommand from './commands/clipsCommand';
 import MigrateCommand from './commands/migrateCommand';
 import CsgoCommand from './commands/csgoCommand';
 import HelpCommand from './commands/helpCommand';
+import CommandsCommand from './commands/commandsCommand';
 
 import { logUsers } from './userLogger';
 import { startApi } from './api/server';
@@ -71,6 +72,7 @@ export const csgo: Csgo = new Csgo();
 	commandHandler.registerCommand(MetricsCommand);
 	commandHandler.registerCommand(MigrateCommand);
 	commandHandler.registerCommand(HelpCommand);
+	commandHandler.registerCommand(CommandsCommand);
 
 	client.on('ready', () => {
 		console.log('Connected');
