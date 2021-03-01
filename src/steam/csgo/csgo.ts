@@ -2,6 +2,7 @@ import { db, siteMetrics } from '../..';
 import { Match, Player } from '../../api/routes/demoworker/types';
 import LFUCache from '../../cache/LFUCache';
 import { DBCsgoMatch, DBCsgoPlayer, DBPlayerStatsWithPlayerInfo } from '../../db/types';
+import { knex } from '../../db/utils';
 import { fetchSharingCodesWithSteamId3 } from '../matchsharing/matchSharing';
 import { BuiltProfile, CsgoProfile, CsgoUser, SteamUser } from '../types';
 import CsgoPlayer from './csgoPlayer';
@@ -164,6 +165,16 @@ class Csgo {
 		fetchSharingCodesWithSteamId3(createdProfile.id);
 		this.csgoProfiles.insert(id, createdProfile);
 		return createdProfile;
+	}
+
+	async getByUrl(url: string): Promise<CsgoProfile> {
+		const dbPlayer: DBCsgoPlayer = await knex<DBCsgoPlayer>('csgo_players').where({ steam_link: url }).first();
+
+		if (dbPlayer === undefined || dbPlayer === null) {
+			return undefined;
+		}
+
+		return this.getProfile(dbPlayer.id);
 	}
 
 	/**

@@ -1,4 +1,5 @@
 import { DMChannel, MessageEmbed, NewsChannel, TextChannel } from 'discord.js';
+import { csgo } from '..';
 import { steam } from '../api/server';
 import { CsgoProfile } from '../steam/types';
 import { Command } from './types';
@@ -6,14 +7,14 @@ import { Command } from './types';
 const CsgoCommand: Command = {
 	execute: (channel, author, args, db) => {
 		if (args.length === 0) {
-			channel.send('!steam <link>');
+			channel.send('!steam <steamID64>');
 			return;
 		}
 
 		const link: string = args.shift();
 
 		if (link === undefined) {
-			channel.send('!steam <link>');
+			channel.send('!steam <steamID64>');
 			return;
 		}
 
@@ -22,13 +23,11 @@ const CsgoCommand: Command = {
 	alias: ['!cs', '!csgo'],
 };
 
-async function sendProfile(channel: TextChannel | DMChannel | NewsChannel, link: string) {
-	// TODO: Fix this in the rewrite
-	// ...maybe
-	const csgoProfile: CsgoProfile = undefined;
+async function sendProfile(channel: TextChannel | DMChannel | NewsChannel, steamId64: string) {
+	const csgoProfile: CsgoProfile = await csgo.getByUrl(`https://steamcommunity.com/profiles/${steamId64}`);
 
 	if (csgoProfile === undefined) {
-		channel.send('A player with that steam link not found!');
+		channel.send('A player with that steam id not found!');
 		return;
 	}
 
