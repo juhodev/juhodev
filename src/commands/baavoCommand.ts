@@ -4,7 +4,7 @@ import * as path from 'path';
 import fetch from 'node-fetch';
 import * as util from 'util';
 import { uuid } from 'uuidv4';
-import { DMChannel, NewsChannel, TextChannel, User } from 'discord.js';
+import { DMChannel, MessageAttachment, NewsChannel, TextChannel, User } from 'discord.js';
 import RandomString from '../randomString';
 import { addView, saveBaavo } from '../database/baavoDB';
 
@@ -57,7 +57,10 @@ async function addBaavo(
 		const response = await fetch(url);
 
 		if (response.ok) {
-			const name: string = `BAAVO-${uuid()}.png`;
+			const lastDotIndex: number = url.lastIndexOf('.');
+			const fileEnding: string = url.substr(lastDotIndex, url.length);
+	
+			const name: string = `BAAVO-${uuid()}.${fileEnding}`;
 			await streamPipeline(
 				response.body,
 				fs.createWriteStream(`data/baavo/${name}`),
@@ -93,14 +96,9 @@ async function sendRandomBaavo(channel: TextChannel | DMChannel | NewsChannel) {
 	const baavoFiles: string[] = fs.readdirSync('data/baavo');
 	const randomBaavo: string = random.pseudoRandom(baavoFiles);
 
-	channel.send({
-		files: [
-			{
-				attachment: path.resolve(`data/baavo/${randomBaavo}`),
-				name: randomBaavo,
-			},
-		],
-	});
+	const clipBuffer: Buffer = fs.readFileSync(`data/baavo/${randomBaavo}`);
+	const attachment: MessageAttachment = new MessageAttachment(clipBuffer, randomBaavo);
+	channel.send(attachment);
 
 	await addView(randomBaavo);
 }
