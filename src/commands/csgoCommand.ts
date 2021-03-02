@@ -95,7 +95,7 @@ async function sendProfile(channel: TextChannel | DMChannel | NewsChannel, steam
 				inline: true,
 			},
 		)
-		.addField('Link', `https://juho.dev/steam?id=${csgoProfile.id}`)
+		.addField('Link', `https://juho.dev/cs?id=${csgoProfile.id}`)
 		.setThumbnail(csgoProfile.avatarLink);
 
 	channel.send(embed);
