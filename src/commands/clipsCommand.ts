@@ -149,7 +149,7 @@ async function viewClip(
 	}
 
 	const clipBuffer: Buffer = fs.readFileSync(clip.path);
-	const attachment: MessageAttachment = new MessageAttachment(clipBuffer, clip.name);
+	const attachment: MessageAttachment = new MessageAttachment(clipBuffer, `${clip.name}.mp4`);
 	channel.send(attachment);
 }
 
