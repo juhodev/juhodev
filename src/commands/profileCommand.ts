@@ -68,6 +68,10 @@ async function sendUserProfile(channel: TextChannel | DMChannel | NewsChannel, n
 			name: 'Commands',
 			value: commandMessage,
 		},
+		{
+			name: 'Link',
+			value: `https://juho.dev/profile?snowflake=${userData.snowflake}`,
+		},
 	);
 	embed.setThumbnail(`https://cdn.discordapp.com/avatars/${userData.snowflake}/${userData.avatar}`);
 
