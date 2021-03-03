@@ -8,13 +8,15 @@ const HelpCommand: Command = {
 		})
 			.addField('!baavo', 'Send baavos')
 			.addField('!times <page>', 'Leaderboard of time spent on voice channels')
+			.addField('!meme', 'Random meme from r/memes daily top 50')
+			.addField('!topmeme', 'Most upvoted meme of the day from r/memes')
 			.addField('!commands', 'Number of commands sent by you')
-			.addField('!il', 'news')
+			.addField('!il', 'Top 3 news articles right now')
 			.addField('!quote', 'Random quote, often by russian csgo players')
 			.addField('!clips', 'Random clip')
 			.addField('!gif <word>', 'Random gif of said word')
 			.addField('!img', 'Random image')
-			.addField('!csgo <profile link>', 'soon™');
+			.addField('!csgo <profile link or steamid (try your luck)>', 'CS:GO stats of linked profile or steamid');
 
 		channel.send(helpMessage);
 	},
