@@ -9,6 +9,7 @@ const HelpCommand: Command = {
 			.addField('!baavo', 'Send baavos')
 			.addField('!times <page>', 'Leaderboard of time spent on voice channels')
 			.addField('!commands', 'Number of commands sent by you')
+			.addField('!il', 'news')
 			.addField('!quote', 'Random quote, often by russian csgo players')
 			.addField('!clips', 'Random clip')
 			.addField('!gif <word>', 'Random gif of said word')
