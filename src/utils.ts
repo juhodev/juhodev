@@ -10,6 +10,10 @@ import { siteMetrics } from '.';
 
 const streamPipeline = util.promisify(require('stream').pipeline);
 
+export function isNil(x: any): boolean {
+	return x === null || x === undefined;
+}
+
 /**
  * Logs a 1 in siteMetrics with the given `name`.
  *
