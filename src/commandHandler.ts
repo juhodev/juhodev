@@ -64,6 +64,15 @@ class CommandHandler {
 				discord_tag: user.discriminator,
 				first_seen: new Date().getTime(),
 			});
+		} else {
+			await knex<DBUser>('users')
+				.update({
+					avatar: user.avatar,
+					discord_tag: user.discriminator,
+					discord_name_uppercase: user.username.toUpperCase(),
+					discord_name_original: user.username,
+				})
+				.where({ snowflake: user.id });
 		}
 	}
 
@@ -73,8 +82,7 @@ class CommandHandler {
 		args: string[],
 		author: User,
 	) {
-		const channelName: string =
-			channel instanceof DMChannel ? 'DM' : channel.name;
+		const channelName: string = channel instanceof DMChannel ? 'DM' : channel.name;
 
 		await knex<DBCommandLog>('command_log').insert({
 			snowflake: author.id,
