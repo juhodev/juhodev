@@ -4,6 +4,10 @@ import { DBUser } from './db/types';
 import { knex } from './db/utils';
 
 export const logUsers = async (db: DB) => {
+	if (db.getGuild() === undefined) {
+		return;
+	}
+
 	for (const [_, member] of db.getGuild().members.cache) {
 		const { user } = member;
 
