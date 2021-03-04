@@ -27,13 +27,13 @@ const { ENVIRONMENT } = process.env;
 
 export const steam: Steam = new Steam();
 export const demoMaster: DemoMaster = new DemoMaster();
-demoMaster.init();
 
 export function startApi() {
 	if (!config.websiteModule) {
 		return;
 	}
 
+	demoMaster.init();
 	steam.init();
 
 	const app = express();
