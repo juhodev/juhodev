@@ -7,6 +7,7 @@ const HelpCommand: Command = {
 			title: 'Baavo commands:',
 		})
 			.addField('!baavo', 'Send baavos')
+			.addField('!profile <discord name and id> (Example#0000)', 'Discord stats of the user')
 			.addField('!times <page>', 'Leaderboard of time spent on voice channels')
 			.addField('!meme', 'Random meme from r/memes daily top 50')
 			.addField('!topmeme', 'Most upvoted meme of the day from r/memes')
