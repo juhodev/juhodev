@@ -34,6 +34,8 @@ export function startApi() {
 		return;
 	}
 
+	steam.init();
+
 	const app = express();
 	app.use(bodyParser.json());
 	if (process.env.ENVIRONMENT === 'dev') {

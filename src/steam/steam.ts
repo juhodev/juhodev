@@ -34,6 +34,9 @@ class Steam {
 		this.csgoPlayerSoloQueueCache = new Map();
 
 		this.extension = new Extension();
+	}
+
+	init() {
 		startUpdatingUserCodes();
 	}
 
