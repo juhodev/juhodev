@@ -25,20 +25,28 @@ async function getSnowflake(name: string): Promise<string> {
 	const nameUpperCase: string = nameSplit[0].toUpperCase();
 	const tag: string = nameSplit[1];
 
-	const dbUser: DBUser = await knex<DBUser>('users')
-		.where({
-			discord_name_uppercase: nameUpperCase,
-			discord_tag: tag,
-		})
-		.first();
+	const dbUsers: DBUser[] = await knex<DBUser>('users').where({
+		discord_name_uppercase: nameUpperCase,
+		discord_tag: tag,
+	});
 
-	return dbUser?.snowflake;
+	if (dbUsers.length === 0) {
+		return undefined;
+	}
+
+	const dbUser: DBUser = dbUsers.shift();
+	return dbUser.snowflake;
 }
 
 async function sendUserProfile(channel: TextChannel | DMChannel | NewsChannel, name: string) {
 	let snowflake: string = name;
 	if (name.includes('#')) {
 		snowflake = await getSnowflake(name);
+
+		if (isNil(snowflake)) {
+			channel.send(`User ${name} not found!`);
+			return;
+		}
 	}
 
 	const userData: UserData = await getUserDataWithSnowflake(snowflake);
