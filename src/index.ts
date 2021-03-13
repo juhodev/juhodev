@@ -24,6 +24,7 @@ import IlCommand from './commands/ilCommand';
 import MemeCommand from './commands/memeCommand';
 import TopMemeCommand from './commands/topMemeCommand';
 import ProfileCommand from './commands/profileCommand';
+import PlayCommand from './commands/playCommand';
 
 import { logUsers } from './userLogger';
 import { startApi } from './api/server';
@@ -81,6 +82,7 @@ export const csgo: Csgo = new Csgo();
 	commandHandler.registerCommand(MemeCommand);
 	commandHandler.registerCommand(TopMemeCommand);
 	commandHandler.registerCommand(ProfileCommand);
+	commandHandler.registerCommand(PlayCommand);
 
 	client.on('ready', () => {
 		console.log('Connected');
