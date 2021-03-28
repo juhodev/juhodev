@@ -17,6 +17,7 @@ import SteamRouter from './routes/steam/steamRoute';
 import DemoRouter from './routes/demoworker/demoWorkerRoute';
 import MetricsRouter from './routes/metrics/metricsRoute';
 import Hoi4Router from './routes/hoi4/hoi4Route';
+import DiscordRouter from './routes/discord/discordRoute';
 
 import Steam from '../steam/steam';
 
@@ -84,6 +85,7 @@ export function startApi() {
 	app.use('/api/demoworker', DemoRouter);
 	app.use('/api/metrics', MetricsRouter);
 	app.use('/api/hoi4', Hoi4Router);
+	app.use('/api/discord', DiscordRouter);
 
 	app.use('/baavo', express.static('data/baavo'));
 	app.use('/img', express.static('data/imgs'));
