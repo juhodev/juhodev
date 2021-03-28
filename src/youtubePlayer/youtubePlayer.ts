@@ -4,15 +4,18 @@ import {
 	Message,
 	MessageEmbed,
 	NewsChannel,
+	StreamDispatcher,
 	TextChannel,
 	User,
 	VoiceChannel,
 	VoiceConnection,
 } from 'discord.js';
-import * as ytdl from 'youtube-dl';
+import * as ytdl from 'ytdl-core-discord';
+import { db } from '..';
 import DB from '../database/db';
 import { isNil } from '../utils';
 import { QueueItem, VideoInfo } from './types';
+import * as youtubeSearch from 'youtube-search';
 
 class YoutubePlayer {
 	private queue: QueueItem[];
@@ -21,7 +24,11 @@ class YoutubePlayer {
 	private currentItem: QueueItem;
 	private currentStream: any;
 	private currentChannel: VoiceChannel;
+	private currentConnection: VoiceConnection;
+	private currentDispatcher: StreamDispatcher;
 	private currentTimePlayed: number;
+
+	private leavingTimeout: NodeJS.Timeout;
 
 	constructor() {
 		this.queue = [];
@@ -29,21 +36,22 @@ class YoutubePlayer {
 		this.currentTimePlayed = 0;
 	}
 
-	async add(
-		link: string,
-		author: User,
-		channel: TextChannel | DMChannel | NewsChannel,
-		db: DB,
-		userStart?: string,
-		userEnd?: string,
-	) {
+	async add(link: string, author: User, channel: TextChannel | DMChannel | NewsChannel, db: DB) {
 		const userVC: VoiceChannel = this.getUserVoiceChannel(author, db);
 		if (isNil(userVC)) {
 			channel.send('You must be in a voice channel!');
 			return;
 		}
 
-		const videoInfo: VideoInfo = await this.getVideoInfo(link, userStart, userEnd);
+		const validUrl: boolean = this.validUrl(link);
+		if (!validUrl) {
+			const results: youtubeSearch.YouTubeSearchResults[] = await this.search(link);
+			const firstResult: youtubeSearch.YouTubeSearchResults = results.pop();
+
+			link = firstResult.link;
+		}
+
+		const videoInfo: VideoInfo = await this.getVideoInfo(link);
 		if (isNil(videoInfo)) {
 			channel.send(`Couldn't get video info (${link})`);
 			return;
@@ -65,8 +73,27 @@ class YoutubePlayer {
 		this.play();
 	}
 
-	skip() {
-		this.queue.pop();
+	skip(channel: DMChannel | NewsChannel | TextChannel) {
+		if (isNil(this.currentItem)) {
+			channel.send(new MessageEmbed({ title: 'There is nothing to skip <:seriousweldon:822983336803827753>' }));
+			return;
+		}
+
+		channel.send(new MessageEmbed({ title: 'Skipping' }));
+		if (!isNil(this.currentDispatcher)) {
+			this.currentDispatcher.end();
+			this.currentDispatcher.destroy();
+		}
+		this.playing = false;
+		this.currentItem = undefined;
+
+		if (this.queue.length === 0) {
+			this.leavingTimeout = setTimeout(() => {
+				this.leaveVoice();
+			}, 1000 * 60 * 2);
+		}
+
+		this.play();
 	}
 
 	sendCurrentlyPlaying(channel: TextChannel | DMChannel | NewsChannel) {
@@ -76,7 +103,7 @@ class YoutubePlayer {
 		}
 
 		const embed: MessageEmbed = new MessageEmbed({ title: 'Current video' });
-		embed.addField(this.currentItem.video.name, this.currentItem.channel.name);
+		embed.addField(this.currentItem.video.name, `Voice channel: ${this.currentItem.channel.name}`);
 		embed.setThumbnail(this.currentItem.video.thumbnail);
 		embed.setTimestamp();
 
@@ -124,51 +151,21 @@ class YoutubePlayer {
 		this.currentStream = undefined;
 	}
 
-	private getVideoInfo(link: string, start?: string, end?: string): Promise<VideoInfo> {
-		return new Promise((resolve) => {
-			let userStart: number | undefined;
-			let userEnd: number | undefined;
-			if (!isNil(end)) {
-				userStart = this.parseVideoDuration(start);
-				userEnd = this.parseVideoDuration(end);
-			}
-
-			ytdl.getInfo(link, [], {}, (err, info) => {
-				if (err) {
-					console.error(err);
-					resolve(undefined);
-				}
-
-				const videoInfo: VideoInfo = {
-					name: info['title'],
-					thumbnail: info['thumbnail'],
-					url: link,
-					start: userStart || 0,
-					playDuration: userEnd || this.parseVideoDuration(info.duration),
-				};
-
-				resolve(videoInfo);
-			});
-		});
+	private validUrl(link: string) {
+		return link.includes('https://') && link.includes('?v=');
 	}
 
-	private secondsToTimeFormat(seconds: number): string {
-		const minutes: number = Math.floor(seconds / 60);
-		const onlySeconds: number = seconds - minutes * 60;
+	private async getVideoInfo(link: string): Promise<VideoInfo> {
+		const info = await ytdl.getInfo(link);
+		const videoInfo: VideoInfo = {
+			name: info['videoDetails']['title'],
+			thumbnail: info['videoDetails']['thumbnails'][0]['url'],
+			url: link,
+			start: 0,
+			playDuration: parseInt(info['lengthInSeconds']),
+		};
 
-		return `${minutes}:${seconds >= 10 ? seconds : `0${seconds}`}`;
-	}
-
-	private parseVideoDuration(duration: string): number | undefined {
-		if (isNil(duration)) {
-			return undefined;
-		}
-
-		let splitPoint: number = duration.indexOf(':');
-		const minutes: number = parseInt(duration.substr(0, splitPoint));
-		const seconds: number = parseInt(duration.substr(splitPoint + 1, duration.length));
-
-		return minutes * 60 + seconds;
+		return videoInfo;
 	}
 
 	private play() {
@@ -181,26 +178,85 @@ class YoutubePlayer {
 			return;
 		}
 
+		if (!isNil(this.leavingTimeout)) {
+			clearTimeout(this.leavingTimeout);
+			this.leavingTimeout = undefined;
+		}
+
+		db.changeUsernameEvent('DJ-Baavo', item.video.name);
+
 		this.playing = true;
 		this.playYoutube(item);
 	}
 
 	private async playYoutube(item: QueueItem) {
-		const connection: VoiceConnection = await item.channel.join();
-		this.currentChannel = item.channel;
 		this.currentItem = item;
-		this.currentStream = ytdl(item.video.url, [], { quality: 'highestaudio' });
 
-		const dispatcher = connection.play(this.currentStream, { seek: 0, volume: 0.5 });
-		dispatcher.on('start', () => {});
+		if (isNil(this.currentConnection)) {
+			this.currentConnection = await item.channel.join();
+			this.currentChannel = item.channel;
+		} else {
+			if (this.currentChannel.id !== item.channel.id) {
+				this.currentConnection.disconnect();
+				this.currentChannel.leave();
+				this.currentConnection = await item.channel.join();
+				this.currentChannel = item.channel;
+			}
+		}
 
-		dispatcher.on('end', () => {
-			console.log('finished streaming');
-			this.currentChannel.leave();
-			this.currentItem = undefined;
-			this.currentChannel = undefined;
-			this.currentStream = undefined;
+		try {
+			this.currentDispatcher = this.currentConnection.play(
+				await ytdl(item.video.url, { quality: 'highestaudio', highWaterMark: 1 << 25 }),
+				{ type: 'opus' },
+			);
+		} catch (e) {
+			console.error(e);
+		}
+
+		this.currentDispatcher.on('error', console.error);
+
+		this.currentDispatcher.on('finish', () => {
+			this.finishedPlaying();
 		});
+	}
+
+	private finishedPlaying() {
+		if (this.queue.length === 0) {
+			this.leavingTimeout = setTimeout(() => {
+				this.leaveVoice();
+			}, 1000 * 60 * 2);
+		}
+
+		this.playing = false;
+		this.play();
+	}
+
+	private async search(q: string): Promise<youtubeSearch.YouTubeSearchResults[]> {
+		return new Promise((resolve, reject) => {
+			const opts: youtubeSearch.YouTubeSearchOptions = {
+				maxResults: 1,
+				key: process.env.YOUTUBE_API_KEY,
+			};
+
+			youtubeSearch(q, opts, (err, results) => {
+				if (err) {
+					reject(err);
+					return;
+				}
+
+				resolve(results);
+			});
+		});
+	}
+
+	private leaveVoice() {
+		db.changeUsernameEvent('Baavo');
+		this.currentConnection.disconnect();
+		this.currentChannel.leave();
+		this.currentItem = undefined;
+		this.currentChannel = undefined;
+		this.currentStream = undefined;
+		this.currentConnection = undefined;
 	}
 
 	private getUserVoiceChannel(user: User, db: DB): VoiceChannel | undefined {

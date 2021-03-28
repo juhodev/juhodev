@@ -14,6 +14,8 @@ const PlayCommand: Command = {
 		}
 
 		switch (arg.toLowerCase()) {
+			case 'queue':
+			case 'q':
 			case 'list':
 				player.printQueue(channel);
 				return;
@@ -25,12 +27,18 @@ const PlayCommand: Command = {
 			case 'next':
 				player.sendNextVideo(channel);
 				return;
+
+			case 'skip':
+				player.skip(channel);
+				return;
 		}
 
-		const userStart: string = args.shift();
-		const userEnd: string = args.shift();
+		let query: string = arg;
+		for (const otherArgs of args) {
+			query += ` ${otherArgs}`;
+		}
 
-		player.add('https://www.youtube.com/watch?v=dQw4w9WgXcQ', author, channel, db, userStart, userEnd);
+		player.add(query, author, channel, db);
 	},
 	alias: ['!play'],
 };
