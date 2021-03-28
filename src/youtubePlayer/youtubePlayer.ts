@@ -46,7 +46,7 @@ class YoutubePlayer {
 		const validUrl: boolean = this.validUrl(link);
 		if (!validUrl) {
 			const results: youtubeSearch.YouTubeSearchResults[] = await this.search(link);
-			const firstResult: youtubeSearch.YouTubeSearchResults = results.pop();
+			const firstResult: youtubeSearch.YouTubeSearchResults = results.shift();
 
 			link = firstResult.link;
 		}
@@ -173,7 +173,7 @@ class YoutubePlayer {
 			return;
 		}
 
-		const item: QueueItem = this.queue.pop();
+		const item: QueueItem = this.queue.shift();
 		if (isNil(item)) {
 			return;
 		}
