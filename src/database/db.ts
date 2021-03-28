@@ -18,6 +18,8 @@ import QuoteDB from './quoteDB';
 import { DBConfig, DB_CONFIG_FILE, DB_DATA_DIR } from './types';
 
 class DB {
+	changeUsernameEvent: (username: string, video?: string) => void;
+
 	private quoteDB: QuoteDB;
 	private imgDB: ImgDB;
 	private rrsg: RRSG;

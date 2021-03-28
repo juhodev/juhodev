@@ -24,12 +24,14 @@ import IlCommand from './commands/ilCommand';
 import MemeCommand from './commands/memeCommand';
 import TopMemeCommand from './commands/topMemeCommand';
 import ProfileCommand from './commands/profileCommand';
+import PlayCommand from './commands/playCommand';
 
 import { logUsers } from './userLogger';
 import { startApi } from './api/server';
 import SiteMetrics from './metrics/siteMetrics';
 import Config from './config/config';
 import Csgo from './steam/csgo/csgo';
+import { isNil } from './utils';
 
 const db = new DB();
 const siteMetrics: SiteMetrics = new SiteMetrics();
@@ -81,6 +83,17 @@ export const csgo: Csgo = new Csgo();
 	commandHandler.registerCommand(MemeCommand);
 	commandHandler.registerCommand(TopMemeCommand);
 	commandHandler.registerCommand(ProfileCommand);
+	commandHandler.registerCommand(PlayCommand);
+
+	db.changeUsernameEvent = (username: string, video?: string) => {
+		db.getGuild().me.setNickname(username);
+
+		if (!isNil(video)) {
+			client.user.setActivity({ name: video });
+		} else {
+			client.user.setActivity({ name: 'with viinirypälerasia' });
+		}
+	};
 
 	client.on('ready', () => {
 		console.log('Connected');

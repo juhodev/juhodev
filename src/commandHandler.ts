@@ -39,6 +39,11 @@ class CommandHandler {
 			return;
 		}
 
+		// Too lazy to code this in the right way
+		if (command === '!play') {
+			message.delete();
+		}
+
 		this.logCommand(channel, command, args, author);
 
 		const realCommand = this.commands.get(command);
