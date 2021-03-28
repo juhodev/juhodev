@@ -6,7 +6,7 @@ const HelpCommand: Command = {
 		const helpMessage: MessageEmbed = new MessageEmbed({
 			title: 'Baavo commands:',
 		})
-			.addField('!play <link> (Example: !play https://www.youtube.com/watch?v=dQw4w9WgXcQ)', 'DJ-Baavo will appear and play you some sick tunes.')
+			.addField('!play <link> (Example: !play https://www.youtube.com/watch?v=34Ig3X59_qA)', 'DJ-Baavo will appear and play you some sick tunes.')
 			.addField('!play <keyword> (Example: !play sup yall)', 'DJ-Baavo plays you the top result on youtube search page of the keyword input.')
 			.addField('!play skip', 'Skips current song and plays the next one in the queue.')
 			.addField('!play q', 'Shows the queue of DJ-Baavo')
