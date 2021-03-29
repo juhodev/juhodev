@@ -6,10 +6,7 @@ const HelpCommand: Command = {
 		const helpMessage: MessageEmbed = new MessageEmbed({
 			title: 'Baavo commands:',
 		})
-			.addField('!play <link> (Example: !play https://www.youtube.com/watch?v=34Ig3X59_qA)', 'DJ-Baavo will appear and play you some sick tunes')
-			.addField('!play <keyword> (Example: !play sup yall)', 'DJ-Baavo plays you the top result on the youtube search page of the keyword input')
-			.addField('!play skip', 'Skips current song and plays the next one in the queue')
-			.addField('!play q or !play queue or !play list miks vitussa näitä on kolme vitun autisti <@140233862235160577>', 'Shows the queue of DJ-Baavo')
+			.addField('!djhelp', 'Help command for DJ-Baavo')
 			.addField('!baavo', 'Send baavos')
 			.addField('!profile <discord name and id> (Example#0000)', 'Discord stats of the user')
 			.addField('!times <page>', 'Leaderboard of time spent on voice channels')

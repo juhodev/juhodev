@@ -26,6 +26,9 @@ import TopMemeCommand from './commands/topMemeCommand';
 import ProfileCommand from './commands/profileCommand';
 import PlayCommand from './commands/playCommand';
 import SkipCommand from './commands/skipCommand';
+import PlaylistCommand from './commands/playlistCommand';
+import PlayNextCommand from './commands/playNextCommand';
+import DJHelpCommand from './commands/djHelpCommand';
 
 import { logUsers } from './userLogger';
 import { startApi } from './api/server';
@@ -88,6 +91,9 @@ export const youtubePlayer: YoutubePlayer = new YoutubePlayer();
 	commandHandler.registerCommand(ProfileCommand);
 	commandHandler.registerCommand(PlayCommand);
 	commandHandler.registerCommand(SkipCommand);
+	commandHandler.registerCommand(PlaylistCommand);
+	commandHandler.registerCommand(PlayNextCommand);
+	commandHandler.registerCommand(DJHelpCommand);
 
 	db.changeUsernameEvent = (username: string, video?: string) => {
 		db.getGuild().me.setNickname(username);

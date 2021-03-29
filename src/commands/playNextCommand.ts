@@ -2,12 +2,12 @@ import { youtubePlayer } from '..';
 import { isNil } from '../utils';
 import { Command } from './types';
 
-const PlayCommand: Command = {
+const PlayNextCommand: Command = {
 	execute: (channel, author, args, db) => {
 		const arg: string = args.shift();
 
 		if (isNil(arg)) {
-			channel.send('!play <url>');
+			channel.send('!playnext <url>');
 			return;
 		}
 
@@ -36,9 +36,9 @@ const PlayCommand: Command = {
 			query += ` ${otherArgs}`;
 		}
 
-		youtubePlayer.add(query, author, channel, db, false);
+		youtubePlayer.add(query, author, channel, db, true);
 	},
-	alias: ['!play'],
+	alias: ['!playnext'],
 };
 
-export default PlayCommand;
+export default PlayNextCommand;

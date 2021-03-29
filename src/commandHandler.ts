@@ -40,7 +40,7 @@ class CommandHandler {
 		}
 
 		// Too lazy to code this in the right way
-		if (command === '!play') {
+		if (command === '!play' || command === '!playlist' || command === '!playnext') {
 			message.delete();
 		}
 

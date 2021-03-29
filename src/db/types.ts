@@ -253,3 +253,18 @@ export type DBHoi4Game = {
 	path: string;
 	name: string;
 };
+
+export type DBYtPlaylist = {
+	id?: number;
+	name: string;
+	creator: string;
+};
+
+export type DBYtMusic = {
+	id?: number;
+	playlist: number;
+	link: string;
+	title: string;
+	thumbnail: string;
+	duration: number;
+};

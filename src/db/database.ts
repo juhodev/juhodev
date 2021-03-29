@@ -533,6 +533,56 @@ export async function initDatabase() {
 				},
 			],
 		},
+		{
+			name: 'yt_playlist',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.INTEGER,
+					primary: true,
+					autoIncrement: true,
+				},
+				{
+					name: 'name',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'creator',
+					type: ColumnType.STRING,
+				},
+			],
+		},
+		{
+			name: 'yt_music',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.INTEGER,
+					primary: true,
+					autoIncrement: true,
+				},
+				{
+					name: 'playlist',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'title',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'link',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'thumbnail',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'duration',
+					type: ColumnType.INTEGER,
+				},
+			],
+		},
 	];
 
 	for (const table of tables) {
