@@ -25,6 +25,7 @@ import MemeCommand from './commands/memeCommand';
 import TopMemeCommand from './commands/topMemeCommand';
 import ProfileCommand from './commands/profileCommand';
 import PlayCommand from './commands/playCommand';
+import SkipCommand from './commands/skipCommand';
 
 import { logUsers } from './userLogger';
 import { startApi } from './api/server';
@@ -32,11 +33,13 @@ import SiteMetrics from './metrics/siteMetrics';
 import Config from './config/config';
 import Csgo from './steam/csgo/csgo';
 import { isNil } from './utils';
+import YoutubePlayer from './youtubePlayer/youtubePlayer';
 
 const db = new DB();
 const siteMetrics: SiteMetrics = new SiteMetrics();
 const config: Config = new Config();
 export const csgo: Csgo = new Csgo();
+export const youtubePlayer: YoutubePlayer = new YoutubePlayer();
 
 (async () => {
 	config.load();
@@ -84,6 +87,7 @@ export const csgo: Csgo = new Csgo();
 	commandHandler.registerCommand(TopMemeCommand);
 	commandHandler.registerCommand(ProfileCommand);
 	commandHandler.registerCommand(PlayCommand);
+	commandHandler.registerCommand(SkipCommand);
 
 	db.changeUsernameEvent = (username: string, video?: string) => {
 		db.getGuild().me.setNickname(username);

@@ -1,8 +1,6 @@
+import { youtubePlayer } from '..';
 import { isNil } from '../utils';
-import YoutubePlayer from '../youtubePlayer/youtubePlayer';
 import { Command } from './types';
-
-const player: YoutubePlayer = new YoutubePlayer();
 
 const PlayCommand: Command = {
 	execute: (channel, author, args, db) => {
@@ -17,19 +15,19 @@ const PlayCommand: Command = {
 			case 'queue':
 			case 'q':
 			case 'list':
-				player.printQueue(channel);
+				youtubePlayer.printQueue(channel);
 				return;
 
 			case 'current':
-				player.sendCurrentlyPlaying(channel);
+				youtubePlayer.sendCurrentlyPlaying(channel);
 				return;
 
 			case 'next':
-				player.sendNextVideo(channel);
+				youtubePlayer.sendNextVideo(channel);
 				return;
 
 			case 'skip':
-				player.skip(channel);
+				youtubePlayer.skip(channel);
 				return;
 		}
 
@@ -38,7 +36,7 @@ const PlayCommand: Command = {
 			query += ` ${otherArgs}`;
 		}
 
-		player.add(query, author, channel, db);
+		youtubePlayer.add(query, author, channel, db);
 	},
 	alias: ['!play'],
 };
