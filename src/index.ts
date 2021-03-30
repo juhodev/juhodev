@@ -24,17 +24,25 @@ import IlCommand from './commands/ilCommand';
 import MemeCommand from './commands/memeCommand';
 import TopMemeCommand from './commands/topMemeCommand';
 import ProfileCommand from './commands/profileCommand';
+import PlayCommand from './commands/playCommand';
+import SkipCommand from './commands/skipCommand';
+import PlaylistCommand from './commands/playlistCommand';
+import PlayNextCommand from './commands/playNextCommand';
+import DJHelpCommand from './commands/djHelpCommand';
 
 import { logUsers } from './userLogger';
 import { startApi } from './api/server';
 import SiteMetrics from './metrics/siteMetrics';
 import Config from './config/config';
 import Csgo from './steam/csgo/csgo';
+import { isNil } from './utils';
+import YoutubePlayer from './youtubePlayer/youtubePlayer';
 
 const db = new DB();
 const siteMetrics: SiteMetrics = new SiteMetrics();
 const config: Config = new Config();
 export const csgo: Csgo = new Csgo();
+export const youtubePlayer: YoutubePlayer = new YoutubePlayer();
 
 (async () => {
 	config.load();
@@ -81,6 +89,21 @@ export const csgo: Csgo = new Csgo();
 	commandHandler.registerCommand(MemeCommand);
 	commandHandler.registerCommand(TopMemeCommand);
 	commandHandler.registerCommand(ProfileCommand);
+	commandHandler.registerCommand(PlayCommand);
+	commandHandler.registerCommand(SkipCommand);
+	commandHandler.registerCommand(PlaylistCommand);
+	commandHandler.registerCommand(PlayNextCommand);
+	commandHandler.registerCommand(DJHelpCommand);
+
+	db.changeUsernameEvent = (username: string, video?: string) => {
+		db.getGuild().me.setNickname(username);
+
+		if (!isNil(video)) {
+			client.user.setActivity({ name: video });
+		} else {
+			client.user.setActivity({ name: 'with viinirypälerasia' });
+		}
+	};
 
 	client.on('ready', () => {
 		console.log('Connected');

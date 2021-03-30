@@ -6,6 +6,7 @@ const HelpCommand: Command = {
 		const helpMessage: MessageEmbed = new MessageEmbed({
 			title: 'Baavo commands:',
 		})
+			.addField('!djhelp', 'Help command for DJ-Baavo')
 			.addField('!baavo', 'Send baavos')
 			.addField('!profile <discord name and id> (Example#0000)', 'Discord stats of the user')
 			.addField('!times <page>', 'Leaderboard of time spent on voice channels')
