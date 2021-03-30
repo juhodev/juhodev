@@ -15,9 +15,9 @@ import { db } from '..';
 import DB from '../database/db';
 import { isNil } from '../utils';
 import { QueueItem, VideoInfo, YTPlaylist } from './types';
-import * as youtubeSearch from 'youtube-search';
 import { DBYtMusic, DBYtPlaylist } from '../db/types';
 import { knex } from '../db/utils';
+import * as ytSearch from 'yt-search';
 
 class YoutubePlayer {
 	private queue: QueueItem[];
@@ -48,10 +48,8 @@ class YoutubePlayer {
 
 		const validUrl: boolean = this.validUrl(link);
 		if (!validUrl) {
-			const results: youtubeSearch.YouTubeSearchResults[] = await this.search(link);
-			const firstResult: youtubeSearch.YouTubeSearchResults = results.shift();
-
-			link = firstResult.link;
+			const result = await this.search(link);
+			link = result.url;
 		}
 
 		const videoInfo: VideoInfo = await this.getVideoInfo(link);
@@ -226,10 +224,9 @@ class YoutubePlayer {
 
 		const validUrl: boolean = this.validUrl(linkOrQuery);
 		if (!validUrl) {
-			const results: youtubeSearch.YouTubeSearchResults[] = await this.search(linkOrQuery);
-			const firstResult: youtubeSearch.YouTubeSearchResults = results.shift();
+			const search = await this.search(linkOrQuery);
 
-			linkOrQuery = firstResult.link;
+			linkOrQuery = search.url;
 		}
 
 		const videoInfo: VideoInfo = await this.getVideoInfo(linkOrQuery);
@@ -474,22 +471,9 @@ class YoutubePlayer {
 		this.play();
 	}
 
-	private async search(q: string): Promise<youtubeSearch.YouTubeSearchResults[]> {
-		return new Promise((resolve, reject) => {
-			const opts: youtubeSearch.YouTubeSearchOptions = {
-				maxResults: 1,
-				key: process.env.YOUTUBE_API_KEY,
-			};
-
-			youtubeSearch(q, opts, (err, results) => {
-				if (err) {
-					reject(err);
-					return;
-				}
-
-				resolve(results);
-			});
-		});
+	private async search(q: string): Promise<ytSearch.VideoSearchResult> {
+		const result = await ytSearch(q);
+		return result.videos.shift();
 	}
 
 	private leaveVoice() {
