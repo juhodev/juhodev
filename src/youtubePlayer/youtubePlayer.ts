@@ -378,6 +378,7 @@ class YoutubePlayer {
 		if (isNil(item)) {
 			return;
 		}
+		this.playing = true;
 
 		if (!isNil(this.leavingTimeout)) {
 			clearTimeout(this.leavingTimeout);
@@ -385,7 +386,7 @@ class YoutubePlayer {
 		}
 
 		const message: MessageEmbed = new MessageEmbed({
-			title: `<a:icanttakethisanymore:826145698311176273> Now playing ${item.video.name} <a:icanttakethisanymore:826145698311176273>`,
+			title: `<a:embed:826734619382251550> Now playing ${item.video.name} <a:embed:826734619382251550>`,
 		});
 		message.setThumbnail(item.video.thumbnail);
 		message.addField('URL', item.video.url, true);
@@ -394,7 +395,6 @@ class YoutubePlayer {
 
 		db.changeUsernameEvent('DJ-Baavo', item.video.name);
 
-		this.playing = true;
 		this.playYoutube(item);
 	}
 
@@ -444,7 +444,7 @@ class YoutubePlayer {
 						this.currentItem.video.name
 					}`,
 				);
-			}, 1000);
+			}, 5000);
 		});
 
 		this.currentDispatcher.on('error', console.error);

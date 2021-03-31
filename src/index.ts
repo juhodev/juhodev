@@ -116,6 +116,7 @@ export const youtubePlayer: YoutubePlayer = new YoutubePlayer();
 
 	client.on('message', (message) => {
 		commandHandler.handle(message);
+		updateGuild(db, client, userMetrics);
 	});
 
 	client.login(process.env.DISCORD_TOKEN);
