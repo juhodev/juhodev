@@ -296,6 +296,25 @@ class YoutubePlayer {
 		channel.send(new MessageEmbed({ title: `${dbMusic[0].title} removed from ${dbPlaylist.name}` }));
 	}
 
+	async sendPlaylists(channel: DMChannel | TextChannel | NewsChannel) {
+		const dbPlaylists: DBYtPlaylist[] = await knex<DBYtPlaylist>('yt_playlist');
+		if (dbPlaylists.length === 0) {
+			channel.send(new MessageEmbed({ title: 'There are no playlists!' }));
+			return;
+		}
+
+		const message: MessageEmbed = new MessageEmbed({ title: 'Playlists' });
+		for (const dbPlaylist of dbPlaylists) {
+			const name: string = dbPlaylist.name;
+			const dbVideos: DBYtMusic[] = await knex<DBYtMusic>('yt_music').where({ playlist: dbPlaylist.id });
+			message.addField(name, `${dbVideos.length} songs`, true);
+			message.addField('Created by', `<@${dbPlaylist.creator}>`, true);
+			message.addField('\u200B', '\u200B', true);
+		}
+
+		channel.send(message);
+	}
+
 	private createVideoTimeline(played: number, videoLength: number): string {
 		const percentPlayed: number = played / videoLength;
 		const totalStringLength: number = 50;
