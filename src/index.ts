@@ -30,6 +30,7 @@ import PlaylistCommand from './commands/playlistCommand';
 import PlayNextCommand from './commands/playNextCommand';
 import DJHelpCommand from './commands/djHelpCommand';
 import PlaylistsCommand from './commands/playlistsCommand';
+import TodoCommand from './commands/todoCommand';
 
 import { logUsers } from './userLogger';
 import { startApi } from './api/server';
@@ -96,6 +97,7 @@ export const youtubePlayer: YoutubePlayer = new YoutubePlayer();
 	commandHandler.registerCommand(PlayNextCommand);
 	commandHandler.registerCommand(DJHelpCommand);
 	commandHandler.registerCommand(PlaylistsCommand);
+	commandHandler.registerCommand(TodoCommand);
 
 	db.changeUsernameEvent = (username: string, video?: string) => {
 		db.getGuild().me.setNickname(username);

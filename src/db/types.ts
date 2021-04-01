@@ -268,3 +268,13 @@ export type DBYtMusic = {
 	thumbnail: string;
 	duration: number;
 };
+
+export type DBTodo = {
+	id?: number;
+	task: string;
+	creator: string;
+	add_date: number;
+	done: boolean;
+	done_date: number;
+	cancelled: boolean;
+};

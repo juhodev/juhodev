@@ -583,6 +583,41 @@ export async function initDatabase() {
 				},
 			],
 		},
+		{
+			name: 'todo',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.INTEGER,
+					primary: true,
+					autoIncrement: true,
+				},
+				{
+					name: 'task',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'creator',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'add_date',
+					type: ColumnType.BIG_INTEGER,
+				},
+				{
+					name: 'done',
+					type: ColumnType.BOOLEAN,
+				},
+				{
+					name: 'done_date',
+					type: ColumnType.BIG_INTEGER,
+				},
+				{
+					name: 'cancelled',
+					type: ColumnType.BOOLEAN,
+				},
+			],
+		},
 	];
 
 	for (const table of tables) {

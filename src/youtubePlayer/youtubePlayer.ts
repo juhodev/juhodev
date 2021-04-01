@@ -17,7 +17,8 @@ import { isNil } from '../utils';
 import { QueueItem, VideoInfo, YTPlaylist } from './types';
 import { DBYtMusic, DBYtPlaylist } from '../db/types';
 import { knex } from '../db/utils';
-import * as ytSearch from 'yt-search';
+// import * as ytSearch from 'yt-search';
+import * as ytsr from 'ytsr';
 
 class YoutubePlayer {
 	private queue: QueueItem[];
@@ -490,9 +491,28 @@ class YoutubePlayer {
 		this.play();
 	}
 
-	private async search(q: string): Promise<ytSearch.VideoSearchResult> {
-		const result = await ytSearch(q);
-		return result.videos.shift();
+	private async search(q: string): Promise<VideoInfo> {
+		try {
+			const result = await ytsr(q);
+			const first = result.items.filter((item) => item.type === 'video').shift();
+			return {
+				name: first['name'],
+				playDuration: this.timeToSeconds(first['duration']),
+				start: 0,
+				thumbnail: first['bestThumbnail']['url'],
+				url: first['url'],
+			};
+		} catch (e) {
+			console.error(e);
+			return undefined;
+		}
+	}
+
+	private timeToSeconds(time: string): number {
+		const firstCol: number = time.indexOf(':');
+		const minStr: string = time.substr(0, firstCol);
+		const seconds: string = time.substr(firstCol + 1, time.length);
+		return parseInt(minStr) * 60 + parseInt(seconds);
 	}
 
 	private leaveVoice() {

@@ -14,7 +14,7 @@ const DJHelpCommand: Command = {
 				'!play <keyword/link> (Example: !play sup yall)',
 				'DJ-Baavo plays you the top result on the youtube search page of the keyword input',
 			)
-			.addField('!play skip', 'Skips current song and plays the next one in the queue or playlist')
+			.addField('!skip', 'Skips current song and plays the next one in the queue or playlist')
 			.addField(
 				'!playnext <keyword/link> (Example: !playnext hej då pappa ha det bra)',
 				'Works the same way as !play, adds the song to the front of the queue',
