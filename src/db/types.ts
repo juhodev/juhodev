@@ -278,3 +278,11 @@ export type DBTodo = {
 	done_date: number;
 	cancelled: boolean;
 };
+
+export type DBYtHistory = {
+	id?: number;
+	link: string;
+	name: string;
+	added_by: string;
+	date: number;
+};

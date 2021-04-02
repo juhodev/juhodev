@@ -35,7 +35,7 @@ const PlaylistCommand: Command = {
 				for (const otherArgs of args) {
 					query += ` ${otherArgs}`;
 				}
-				youtubePlayer.addMusicToPlaylist(channel, playlist, query);
+				youtubePlayer.addMusicToPlaylist(channel, author, playlist, query);
 				break;
 
 			case 'remove':

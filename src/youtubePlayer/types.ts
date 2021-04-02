@@ -7,6 +7,7 @@ export type QueueItem = {
 };
 
 export type VideoInfo = {
+	addedBy: string;
 	name: string;
 	url: string;
 	thumbnail: string;

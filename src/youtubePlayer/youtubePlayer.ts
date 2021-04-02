@@ -15,7 +15,7 @@ import { db } from '..';
 import DB from '../database/db';
 import { isNil } from '../utils';
 import { QueueItem, VideoInfo, YTPlaylist } from './types';
-import { DBYtMusic, DBYtPlaylist } from '../db/types';
+import { DBYtHistory, DBYtMusic, DBYtPlaylist } from '../db/types';
 import { knex } from '../db/utils';
 // import * as ytSearch from 'yt-search';
 import * as ytsr from 'ytsr';
@@ -49,11 +49,11 @@ class YoutubePlayer {
 
 		const validUrl: boolean = this.validUrl(link);
 		if (!validUrl) {
-			const result = await this.search(link);
+			const result = await this.search(link, author.id);
 			link = result.url;
 		}
 
-		const videoInfo: VideoInfo = await this.getVideoInfo(link);
+		const videoInfo: VideoInfo = await this.getVideoInfo(link, author.id);
 		if (isNil(videoInfo)) {
 			channel.send(`Couldn't get video info (${link})`);
 			return;
@@ -181,7 +181,7 @@ class YoutubePlayer {
 			return;
 		}
 
-		const playlist: YTPlaylist = await this.getPlaylist(playlistName);
+		const playlist: YTPlaylist = await this.getPlaylist(playlistName, author.id);
 		const queueItems: QueueItem[] = playlist.music.map((song) => {
 			return { channel: userVC, textChannel: channel, video: song };
 		});
@@ -202,7 +202,7 @@ class YoutubePlayer {
 			return;
 		}
 
-		const playlist: YTPlaylist = await this.getPlaylist(playlistName);
+		const playlist: YTPlaylist = await this.getPlaylist(playlistName, '');
 		const message: MessageEmbed = new MessageEmbed({ title: playlist.name });
 		for (const song of playlist.music) {
 			message.addField(song.name, this.getShortLink(song.url), true);
@@ -211,7 +211,12 @@ class YoutubePlayer {
 		channel.send(message);
 	}
 
-	async addMusicToPlaylist(channel: DMChannel | TextChannel | NewsChannel, playlist: string, linkOrQuery: string) {
+	async addMusicToPlaylist(
+		channel: DMChannel | TextChannel | NewsChannel,
+		author: User,
+		playlist: string,
+		linkOrQuery: string,
+	) {
 		const playlistExists: boolean = await this.hasPlaylist(playlist);
 		if (!playlistExists) {
 			channel.send(
@@ -225,12 +230,12 @@ class YoutubePlayer {
 
 		const validUrl: boolean = this.validUrl(linkOrQuery);
 		if (!validUrl) {
-			const search = await this.search(linkOrQuery);
+			const search = await this.search(linkOrQuery, author.id);
 
 			linkOrQuery = search.url;
 		}
 
-		const videoInfo: VideoInfo = await this.getVideoInfo(linkOrQuery);
+		const videoInfo: VideoInfo = await this.getVideoInfo(linkOrQuery, author.id);
 		await knex<DBYtMusic>('yt_music').insert({
 			title: videoInfo.name,
 			duration: videoInfo.playDuration,
@@ -335,6 +340,15 @@ class YoutubePlayer {
 		return str;
 	}
 
+	private async saveToHistory(videoInfo: VideoInfo) {
+		await knex<DBYtHistory>('yt_history').insert({
+			name: videoInfo.name,
+			added_by: videoInfo.addedBy,
+			date: new Date().getTime(),
+			link: videoInfo.url,
+		});
+	}
+
 	private getLongLink(link: string): string {
 		const lastEqualsIndex: number = link.lastIndexOf('/');
 		const videoId: string = link.substr(lastEqualsIndex + 1, link.length);
@@ -347,7 +361,7 @@ class YoutubePlayer {
 		return `https://youtu.be/${videoId}`;
 	}
 
-	private async getPlaylist(name: string): Promise<YTPlaylist> {
+	private async getPlaylist(name: string, authorId: string): Promise<YTPlaylist> {
 		const dbPlaylist: DBYtPlaylist = await knex<DBYtPlaylist>('yt_playlist').where({ name }).first();
 		const dbMusic: DBYtMusic[] = await knex<DBYtMusic>('yt_music').where({ playlist: dbPlaylist.id });
 
@@ -355,6 +369,7 @@ class YoutubePlayer {
 			name: dbPlaylist.name,
 			music: dbMusic.map((music) => {
 				return {
+					addedBy: authorId,
 					name: music.title,
 					playDuration: music.duration,
 					start: 0,
@@ -376,7 +391,7 @@ class YoutubePlayer {
 		return link.includes('https://') && link.includes('?v=');
 	}
 
-	private async getVideoInfo(link: string): Promise<VideoInfo> {
+	private async getVideoInfo(link: string, authorId: string): Promise<VideoInfo> {
 		const info = await ytdl.getInfo(link);
 		const videoInfo: VideoInfo = {
 			name: info['videoDetails']['title'],
@@ -384,6 +399,7 @@ class YoutubePlayer {
 			url: link,
 			start: 0,
 			playDuration: parseInt(info['videoDetails']['lengthSeconds']),
+			addedBy: authorId,
 		};
 
 		return videoInfo;
@@ -426,6 +442,8 @@ class YoutubePlayer {
 
 	private async playYoutube(item: QueueItem) {
 		this.currentItem = item;
+
+		await this.saveToHistory(item.video);
 
 		if (isNil(this.currentConnection)) {
 			this.currentConnection = await item.channel.join();
@@ -491,7 +509,7 @@ class YoutubePlayer {
 		this.play();
 	}
 
-	private async search(q: string): Promise<VideoInfo> {
+	private async search(q: string, authorId: string): Promise<VideoInfo> {
 		try {
 			const result = await ytsr(q);
 			const first = result.items.filter((item) => item.type === 'video').shift();
@@ -501,6 +519,7 @@ class YoutubePlayer {
 				start: 0,
 				thumbnail: first['bestThumbnail']['url'],
 				url: first['url'],
+				addedBy: authorId,
 			};
 		} catch (e) {
 			console.error(e);

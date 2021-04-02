@@ -618,6 +618,33 @@ export async function initDatabase() {
 				},
 			],
 		},
+		{
+			name: 'yt_history',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.INTEGER,
+					primary: true,
+					autoIncrement: true,
+				},
+				{
+					name: 'link',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'name',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'added_by',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'date',
+					type: ColumnType.BIG_INTEGER,
+				},
+			],
+		},
 	];
 
 	for (const table of tables) {
