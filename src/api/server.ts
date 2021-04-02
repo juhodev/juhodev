@@ -23,6 +23,7 @@ import Steam from '../steam/steam';
 
 import DemoMaster from '../steam/matchsharing/demos/demoMaster';
 import { config } from '..';
+import { isNil } from '../utils';
 
 const { ENVIRONMENT } = process.env;
 
@@ -103,6 +104,17 @@ export function startApi() {
 	}
 
 	if (ENVIRONMENT === 'prod') {
+		const privKeyPath: string = '/etc/letsencrypt/live/juho.dev/privkey.pem';
+		const fullChainPath: string = '/etc/letsencrypt/live/juho.dev/fullchain.pem';
+
+		if (!fs.existsSync(privKeyPath) || !fs.existsSync(fullChainPath)) {
+			console.log('--- PRIVKEY OR FULLCHAIN IS UNDEFINED!!! STARTING SERVER ON PORT 80!!! ---');
+			app.listen(80, () => {
+				console.log(`Listening on port ${80}`);
+			});
+			return;
+		}
+
 		const privKey: string = fs.readFileSync('/etc/letsencrypt/live/juho.dev/privkey.pem', 'utf-8');
 		const cert: string = fs.readFileSync('/etc/letsencrypt/live/juho.dev/fullchain.pem', 'utf-8');
 
