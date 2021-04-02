@@ -15,7 +15,7 @@ import { db } from '..';
 import DB from '../database/db';
 import { isNil } from '../utils';
 import { QueueItem, VideoInfo, YTPlaylist } from './types';
-import { DBYtHistory, DBYtMusic, DBYtPlaylist } from '../db/types';
+import { DBYtHistory, DBYtMusic, DBYtPlaylist, DBYTSearch } from '../db/types';
 import { knex } from '../db/utils';
 // import * as ytSearch from 'yt-search';
 import * as ytsr from 'ytsr';
@@ -510,21 +510,47 @@ class YoutubePlayer {
 	}
 
 	private async search(q: string, authorId: string): Promise<VideoInfo> {
-		try {
-			const result = await ytsr(q);
-			const first = result.items.filter((item) => item.type === 'video').shift();
-			return {
-				name: first['name'],
-				playDuration: this.timeToSeconds(first['duration']),
-				start: 0,
-				thumbnail: first['bestThumbnail']['url'],
-				url: first['url'],
-				addedBy: authorId,
-			};
-		} catch (e) {
-			console.error(e);
+		const offlineQuery: VideoInfo = await this.searchOffline(q, authorId);
+
+		if (!isNil(offlineQuery)) {
+			return offlineQuery;
+		}
+
+		return this.searchOnline(q, authorId);
+	}
+
+	private async searchOffline(q: string, authorId: string): Promise<VideoInfo> {
+		const dbSearch: DBYTSearch[] = await knex('yt_search').where({ query: q });
+
+		if (dbSearch.length === 0) {
 			return undefined;
 		}
+
+		// We're only actually using the url from this `VideoInfo` object
+		return {
+			url: dbSearch[0].url,
+			addedBy: authorId,
+			name: '',
+			playDuration: 0,
+			start: 0,
+			thumbnail: '',
+		};
+	}
+
+	private async searchOnline(q: string, authorId: string): Promise<VideoInfo> {
+		const result = await ytsr(q);
+		const first = result.items.filter((item) => item.type === 'video').shift();
+
+		await knex<DBYTSearch>('yt_search').insert({ query: q, url: first['url'] });
+
+		return {
+			name: first['name'],
+			playDuration: this.timeToSeconds(first['duration']),
+			start: 0,
+			thumbnail: first['bestThumbnail']['url'],
+			url: first['url'],
+			addedBy: authorId,
+		};
 	}
 
 	private timeToSeconds(time: string): number {

@@ -645,6 +645,25 @@ export async function initDatabase() {
 				},
 			],
 		},
+		{
+			name: 'yt_search',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.INTEGER,
+					primary: true,
+					autoIncrement: true,
+				},
+				{
+					name: 'query',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'url',
+					type: ColumnType.STRING,
+				},
+			],
+		},
 	];
 
 	for (const table of tables) {

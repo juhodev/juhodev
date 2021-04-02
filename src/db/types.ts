@@ -286,3 +286,9 @@ export type DBYtHistory = {
 	added_by: string;
 	date: number;
 };
+
+export type DBYTSearch = {
+	id?: number;
+	query: string;
+	url: string;
+};
