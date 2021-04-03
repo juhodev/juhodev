@@ -29,6 +29,17 @@ const PlayCommand: Command = {
 			case 'skip':
 				youtubePlayer.skip(channel);
 				return;
+
+			case 'random':
+				const nextArg: string = args.shift();
+				if (!isNil(nextArg)) {
+					const count: number = parseInt(nextArg);
+					youtubePlayer.playRandom(channel, author, count);
+					return;
+				}
+
+				youtubePlayer.playRandom(channel, author, 1);
+				return;
 		}
 
 		let query: string = arg;

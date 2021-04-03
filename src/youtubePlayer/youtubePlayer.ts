@@ -164,6 +164,59 @@ class YoutubePlayer {
 		this.currentStream = undefined;
 	}
 
+	async playRandom(channel: DMChannel | TextChannel | NewsChannel, author: User, count: number) {
+		const userVC: VoiceChannel = this.getUserVoiceChannel(author, db);
+		if (isNil(userVC)) {
+			channel.send('You must be in a voice channel!');
+			return;
+		}
+
+		const newItems: QueueItem[] = [];
+		let failCount: number = 0;
+
+		// This is a bad idea and I should rewrite this ASAP.
+		// Note: I very well acknowledge that the rewrite will never happen.
+		const all: DBYtHistory[] = await knex<DBYtHistory>('yt_history').where({});
+		for (let i = 0; i < count; i++) {
+			const random: DBYtHistory = all[Math.floor(Math.random() * all.length)];
+
+			if (newItems.some((x) => x.video.url === random.link)) {
+				i--;
+				failCount++;
+				if (failCount < 10) {
+					continue;
+				}
+			}
+
+			const videoInfo: VideoInfo = await this.getVideoInfo(random.link, author.id);
+			if (isNil(videoInfo)) {
+				channel.send(`Couldn't get video info (${random.link})`);
+				return;
+			}
+			const queueItem: QueueItem = {
+				channel: userVC,
+				textChannel: channel,
+				video: videoInfo,
+			};
+
+			newItems.push(queueItem);
+
+			if (isNil(this.currentItem) && count === 1) {
+				const embed: MessageEmbed = new MessageEmbed({ title: `Adding ${videoInfo.name} to the queue` });
+				embed.setThumbnail(videoInfo.thumbnail);
+
+				channel.send(embed);
+			}
+		}
+		
+		this.queue.push(...newItems);
+		this.play();
+
+		if (count > 1) {
+			channel.send(new MessageEmbed({ title: `Added ${count} random songs to the queue!` }));
+		}
+	}
+
 	async playPlaylist(
 		channel: DMChannel | TextChannel | NewsChannel,
 		playlistName: string,
