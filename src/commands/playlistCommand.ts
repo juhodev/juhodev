@@ -27,7 +27,12 @@ const PlaylistCommand: Command = {
 				break;
 
 			case 'play':
-				youtubePlayer.playPlaylist(channel, playlist, author);
+				const nextArg: string = args.shift();
+				if (!isNil(nextArg) && nextArg === 'random') {
+					youtubePlayer.playPlaylist(channel, playlist, true, author);
+				} else {
+					youtubePlayer.playPlaylist(channel, playlist, false, author);
+				}
 				break;
 
 			case 'add':

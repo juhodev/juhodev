@@ -164,7 +164,12 @@ class YoutubePlayer {
 		this.currentStream = undefined;
 	}
 
-	async playPlaylist(channel: DMChannel | TextChannel | NewsChannel, playlistName: string, author: User) {
+	async playPlaylist(
+		channel: DMChannel | TextChannel | NewsChannel,
+		playlistName: string,
+		random: boolean,
+		author: User,
+	) {
 		const userVC: VoiceChannel = this.getUserVoiceChannel(author, db);
 		if (isNil(userVC)) {
 			channel.send('You must be in a voice channel!');
@@ -186,8 +191,19 @@ class YoutubePlayer {
 			return { channel: userVC, textChannel: channel, video: song };
 		});
 
-		this.queue.push(...queueItems);
-		channel.send(new MessageEmbed({ title: `Added ${queueItems.length} songs to the queue!` }));
+		if (random) {
+			this.queue.push(...this.randomizePlaylist(queueItems));
+		} else {
+			this.queue.push(...queueItems);
+		}
+
+		if (random) {
+			channel.send(
+				new MessageEmbed({ title: `Added ${queueItems.length} songs to the queue in a random order!` }),
+			);
+		} else {
+			channel.send(new MessageEmbed({ title: `Added ${queueItems.length} songs to the queue!` }));
+		}
 		this.play();
 	}
 
@@ -319,6 +335,21 @@ class YoutubePlayer {
 		}
 
 		channel.send(message);
+	}
+
+	// https://stackoverflow.com/a/2450976
+	private randomizePlaylist(playlist: QueueItem[]): QueueItem[] {
+		let currentIndex: number = playlist.length;
+		while (0 !== currentIndex) {
+			const randomIndex: number = Math.floor(Math.random() * currentIndex);
+			currentIndex--;
+
+			const temp: QueueItem = playlist[currentIndex];
+			playlist[currentIndex] = playlist[randomIndex];
+			playlist[randomIndex] = temp;
+		}
+
+		return playlist;
 	}
 
 	private createVideoTimeline(played: number, videoLength: number): string {
