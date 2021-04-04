@@ -208,7 +208,7 @@ class YoutubePlayer {
 				channel.send(embed);
 			}
 		}
-		
+
 		this.queue.push(...newItems);
 		this.play();
 
@@ -275,6 +275,31 @@ class YoutubePlayer {
 		const message: MessageEmbed = new MessageEmbed({ title: playlist.name });
 		for (const song of playlist.music) {
 			message.addField(song.name, this.getShortLink(song.url), true);
+		}
+
+		channel.send(message);
+	}
+
+	async sendHistory(channel: DMChannel | TextChannel | NewsChannel) {
+		const all: DBYtHistory[] = await knex<DBYtHistory>('yt_history').where({});
+		const counts: { history: DBYtHistory; count: number }[] = [];
+
+		for (const history of all) {
+			const old: { history: DBYtHistory; count: number } = counts.find((x) => x.history.link === history.link);
+			if (isNil(old)) {
+				counts.push({ history: history, count: 1 });
+				continue;
+			}
+
+			old.count++;
+		}
+
+		const top: { history: DBYtHistory; count: number }[] = counts.sort((a, b) => b.count - a.count).slice(0, 10);
+		const message: MessageEmbed = new MessageEmbed({ title: 'Most played songs' });
+
+		let position: number = 1;
+		for (const song of top) {
+			message.addField(`${position++}: ${song.history.name}`, `${song.count} times`);
 		}
 
 		channel.send(message);
