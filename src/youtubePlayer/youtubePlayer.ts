@@ -282,24 +282,32 @@ class YoutubePlayer {
 
 	async sendHistory(channel: DMChannel | TextChannel | NewsChannel) {
 		const all: DBYtHistory[] = await knex<DBYtHistory>('yt_history').where({});
-		const counts: { history: DBYtHistory; count: number }[] = [];
+		const counts: { history: DBYtHistory; time: number; count: number }[] = [];
 
 		for (const history of all) {
-			const old: { history: DBYtHistory; count: number } = counts.find((x) => x.history.link === history.link);
+			const old: { history: DBYtHistory; time: number; count: number } = counts.find(
+				(x) => x.history.link === history.link,
+			);
 			if (isNil(old)) {
-				counts.push({ history: history, count: 1 });
+				counts.push({ history: history, time: history.duration, count: 1 });
 				continue;
 			}
 
+			old.time += history.duration;
 			old.count++;
 		}
 
-		const top: { history: DBYtHistory; count: number }[] = counts.sort((a, b) => b.count - a.count).slice(0, 10);
+		const top: { history: DBYtHistory; time: number; count: number }[] = counts
+			.sort((a, b) => b.time - a.time)
+			.slice(0, 10);
 		const message: MessageEmbed = new MessageEmbed({ title: 'Most played songs' });
 
 		let position: number = 1;
 		for (const song of top) {
-			message.addField(`${position++}: ${song.history.name}`, `${song.count} times`);
+			message.addField(
+				`${position++}: ${song.history.name}`,
+				`${this.formatToPlayTime(song.time)} (${song.count} times)`,
+			);
 		}
 
 		channel.send(message);
@@ -455,6 +463,7 @@ class YoutubePlayer {
 			added_by: videoInfo.addedBy,
 			date: new Date().getTime(),
 			link: videoInfo.url,
+			duration: videoInfo.playDuration,
 		});
 	}
 
@@ -541,6 +550,12 @@ class YoutubePlayer {
 		db.changeUsernameEvent('DJ-Baavo', item.video.name);
 
 		this.playYoutube(item);
+	}
+
+	private formatToPlayTime(x: number): string {
+		const minutes: number = Math.floor(x / 60);
+		const seconds: number = x - minutes * 60;
+		return `${minutes} minutes ${seconds < 10 ? '0' + seconds : seconds} seconds`;
 	}
 
 	private formatSeconds(number: number): string {

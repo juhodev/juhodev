@@ -662,6 +662,10 @@ export async function initDatabase() {
 					name: 'url',
 					type: ColumnType.STRING,
 				},
+				{
+					name: 'duration',
+					type: ColumnType.BIG_INTEGER,
+				},
 			],
 		},
 	];

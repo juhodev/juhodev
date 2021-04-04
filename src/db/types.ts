@@ -285,6 +285,7 @@ export type DBYtHistory = {
 	name: string;
 	added_by: string;
 	date: number;
+	duration: number;
 };
 
 export type DBYTSearch = {
