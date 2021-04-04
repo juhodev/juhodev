@@ -31,7 +31,7 @@ import PlayNextCommand from './commands/playNextCommand';
 import DJHelpCommand from './commands/djHelpCommand';
 import PlaylistsCommand from './commands/playlistsCommand';
 import TodoCommand from './commands/todoCommand';
-import HistoryCommand from './commands/HistoryCommand';
+import HistoryCommand from './commands/historyCommand';
 
 import { logUsers } from './userLogger';
 import { startApi } from './api/server';
