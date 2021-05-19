@@ -506,7 +506,11 @@ class YoutubePlayer {
 	}
 
 	private validUrl(link: string) {
-		return link.includes('https://') && link.includes('?v=');
+		// This will work if the url is one of these:
+		// https://*.*?v=*
+		// *youtu.be*
+		// Honestly not the best idea to match them like this but who cares
+		return (link.includes('https://') && link.includes('?v=')) || link.includes('youtu.be');
 	}
 
 	private async getVideoInfo(link: string, authorId: string): Promise<VideoInfo> {

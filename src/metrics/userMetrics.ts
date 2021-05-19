@@ -23,9 +23,7 @@ class UserMetrics {
 
 		if (guild === undefined) {
 			console.log(guild);
-			console.error(
-				`Couldn't log guild voice chat times it is either undefined or unavailable`,
-			);
+			console.error(`Couldn't log guild voice chat times it is either undefined or unavailable`);
 			return;
 		}
 
@@ -41,8 +39,10 @@ class UserMetrics {
 			const { members } = voiceChannel;
 
 			// Don't log afk user times
-			if (members.size <= 1) {
-				continue;
+			if (process.env.ENVIRONMENT === 'prod') {
+				if (members.size <= 1) {
+					continue;
+				}
 			}
 
 			for (const [_, member] of members) {
