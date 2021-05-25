@@ -514,17 +514,21 @@ class YoutubePlayer {
 	}
 
 	private async getVideoInfo(link: string, authorId: string): Promise<VideoInfo> {
-		const info = await ytdl.getInfo(link);
-		const videoInfo: VideoInfo = {
-			name: info['videoDetails']['title'],
-			thumbnail: info['videoDetails']['thumbnails'][0]['url'],
-			url: link,
-			start: 0,
-			playDuration: parseInt(info['videoDetails']['lengthSeconds']),
-			addedBy: authorId,
-		};
+		try {
+			const info = await ytdl.getInfo(link);
+			const videoInfo: VideoInfo = {
+				name: info['videoDetails']['title'],
+				thumbnail: info['videoDetails']['thumbnails'][0]['url'],
+				url: link,
+				start: 0,
+				playDuration: parseInt(info['videoDetails']['lengthSeconds']),
+				addedBy: authorId,
+			};
 
-		return videoInfo;
+			return videoInfo;
+		} catch (e) {
+			console.error(e);
+		}
 	}
 
 	private play() {
