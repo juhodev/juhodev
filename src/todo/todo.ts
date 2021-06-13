@@ -62,6 +62,18 @@ export async function removeTodo(channel: TextChannel | DMChannel | NewsChannel,
 	channel.send(new MessageEmbed({ title: `Todo ${correctTodo.task} removed` }));
 }
 
+export async function completeTodoWithId(todoId: number) {
+	await knex<DBTodo>('todo').where({ id: todoId }).update({ done: true, done_date: new Date().getTime() });
+}
+
+export async function cancelTodoWithId(todoId: number) {
+	await knex<DBTodo>('todo').where({ id: todoId }).update({ cancelled: true });
+}
+
+export async function removeTodoWithId(todoId: number) {
+	await knex<DBTodo>('todo').where({ id: todoId }).delete();
+}
+
 export async function sendUserTodos(channel: TextChannel | DMChannel | NewsChannel, author: User) {
 	const todos: DBTodo[] = await getTodosForUser(author.id);
 
@@ -91,7 +103,7 @@ export async function sendUserTodos(channel: TextChannel | DMChannel | NewsChann
 	channel.send(message);
 }
 
-async function getTodosForUser(id: string): Promise<DBTodo[]> {
+export async function getTodosForUser(id: string): Promise<DBTodo[]> {
 	const dbTodos: DBTodo[] = await knex<DBTodo>('todo').where({ creator: id });
 
 	return dbTodos;
