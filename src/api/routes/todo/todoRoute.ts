@@ -4,7 +4,13 @@ import { verifyIdentity } from '../middleware/middleware';
 import * as jwt from 'jsonwebtoken';
 import { DBDiscordData, DBTodo } from '../../../db/types';
 import { fetchUserIdentity } from '../../discord';
-import { cancelTodoWithId, completeTodoWithId, getTodosForUser, removeTodoWithId } from '../../../todo/todo';
+import {
+	cancelTodoWithId,
+	completeTodoWithId,
+	getTodosForUser,
+	insertTodo,
+	removeTodoWithId,
+} from '../../../todo/todo';
 import { Todo, TodoResponse } from './types';
 import { UserData } from '../../types';
 
@@ -55,6 +61,15 @@ router.post('/cancel', [verifyIdentity], async (req, res) => {
 router.post('/remove', [verifyIdentity], async (req, res) => {
 	const id: number = req.body.id;
 	await removeTodoWithId(id);
+	res.sendStatus(200);
+});
+
+router.post('/add', [verifyIdentity], async (req, res) => {
+	const identity: DBDiscordData = await getIdentify(req);
+
+	const { task } = req.body;
+	await insertTodo(identity.snowflake, task);
+
 	res.sendStatus(200);
 });
 

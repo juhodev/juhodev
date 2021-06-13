@@ -62,6 +62,19 @@ export async function removeTodo(channel: TextChannel | DMChannel | NewsChannel,
 	channel.send(new MessageEmbed({ title: `Todo ${correctTodo.task} removed` }));
 }
 
+export async function insertTodo(creator: string, task: string) {
+	const todo: DBTodo = {
+		add_date: new Date().getTime(),
+		cancelled: false,
+		done: false,
+		done_date: 0,
+		task,
+		creator,
+	};
+
+	await knex<DBTodo>('todo').insert(todo);
+}
+
 export async function completeTodoWithId(todoId: number) {
 	await knex<DBTodo>('todo').where({ id: todoId }).update({ done: true, done_date: new Date().getTime() });
 }
