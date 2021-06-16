@@ -19,7 +19,6 @@ async function sendMeme(args: string[], channel: TextChannel | DMChannel | NewsC
 	const text: string = args.join(' ');
 
 	const memePath: string = await generateMeme(source, text);
-	console.log('path', memePath);
 	channel.send({
 		files: [
 			{
