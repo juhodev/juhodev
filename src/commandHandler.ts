@@ -28,7 +28,7 @@ class CommandHandler {
 		const args = content.split(' ');
 		const command = args.shift();
 
-		if (command === '!poll') {
+		if (command === '!poll' || command === '!kill') {
 			return;
 		}
 
