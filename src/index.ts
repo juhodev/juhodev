@@ -34,6 +34,7 @@ import TodoCommand from './commands/todoCommand';
 import HistoryCommand from './commands/historyCommand';
 import MemeGeneratorCommand from './commands/memeGeneratorCommand';
 import AddMemeCommand from './commands/addMemeCommand';
+import BlackjackCommand from './commands/blackjackCommand';
 
 import { logUsers } from './userLogger';
 import { startApi } from './api/server';
@@ -104,6 +105,7 @@ export const youtubePlayer: YoutubePlayer = new YoutubePlayer();
 	commandHandler.registerCommand(HistoryCommand);
 	commandHandler.registerCommand(MemeGeneratorCommand);
 	commandHandler.registerCommand(AddMemeCommand);
+	commandHandler.registerCommand(BlackjackCommand);
 
 	db.changeUsernameEvent = (username: string, video?: string) => {
 		db.getGuild().me.setNickname(username);
