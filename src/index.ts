@@ -43,12 +43,14 @@ import Config from './config/config';
 import Csgo from './steam/csgo/csgo';
 import { isNil } from './utils';
 import YoutubePlayer from './youtubePlayer/youtubePlayer';
+import Blackjack from './blackjack/blackjack';
 
 const db = new DB();
 const siteMetrics: SiteMetrics = new SiteMetrics();
 const config: Config = new Config();
 export const csgo: Csgo = new Csgo();
 export const youtubePlayer: YoutubePlayer = new YoutubePlayer();
+export const blackjack: Blackjack = new Blackjack();
 
 (async () => {
 	config.load();
@@ -128,6 +130,10 @@ export const youtubePlayer: YoutubePlayer = new YoutubePlayer();
 
 	client.on('message', (message) => {
 		commandHandler.handle(message);
+	});
+
+	client.on('messageReactionAdd', (reaction, user) => {
+		blackjack.onReaction(reaction, user);
 	});
 
 	client.login(process.env.DISCORD_TOKEN);
