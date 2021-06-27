@@ -235,11 +235,11 @@ class Blackjack {
 			count += card.number;
 		}
 
-		if (count === 10 && this.cards.length === 2 && hasAce) {
+		if (count === 11 && this.cards.length === 2 && hasAce) {
 			return `Blackjack`;
 		}
 
-		if (count < 10 && hasAce) {
+		if (count <= 10 && hasAce) {
 			return `${count - 10}/${count}`;
 		}
 
