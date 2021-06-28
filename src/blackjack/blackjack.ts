@@ -11,30 +11,41 @@ import {
 import { createDeck } from './deck/deck';
 import { Card } from './deck/types';
 import { isNil } from '../utils';
-import { BlackjackPlayer, PlayerState } from './types';
+import { BlackjackPlayer, GameState, PlayerState } from './types';
 
 class Blackjack {
 	private cards: Card[];
 
-	private dealer: Card[];
+	private dealer: BlackjackPlayer;
 	private currentPlayer: string;
 	private players: Map<string, BlackjackPlayer>;
 
 	private gameMessage: Message;
-	private errorMessage: string;
+	private errorMessages: string[];
+	private historyMessages: string[];
+	private gameState: GameState;
 
 	private willUpdate: boolean;
+	private updateTimeout: NodeJS.Timeout;
 
 	constructor() {
 		this.cards = [];
 		this.players = new Map();
 		this.willUpdate = false;
+		this.errorMessages = [];
+		this.historyMessages = [];
 	}
 
 	onReaction(reaction: MessageReaction, user: User | PartialUser) {
 		if (isNil(this.gameMessage) || reaction.message.id !== this.gameMessage.id) {
 			return;
 		}
+
+		if (user.bot) {
+			return;
+		}
+
+		reaction.message.reactions.resolve(reaction.emoji.name).users.remove(user.id);
 
 		switch (reaction.emoji.name) {
 			case '✅':
@@ -71,23 +82,44 @@ class Blackjack {
 	}
 
 	async sendInitial(channel: TextChannel | DMChannel | NewsChannel) {
+		if (this.gameState === GameState.RUNNING) {
+			channel.send('A blackjack game has already been created!');
+			return;
+		}
+
+		if (this.gameState === GameState.ENDED) {
+			this.resetGame();
+		}
+
 		const embed: MessageEmbed = this.createMessageEmbed();
 
 		const msg: Message = await channel.send(embed);
+		this.gameMessage = msg;
+
 		await msg.react('✅');
 		await msg.react('💵');
 		await msg.react('➕');
 		await msg.react('➖');
-
-		this.gameMessage = msg;
 	}
 
 	private updateRound() {
-		const currentPlayer: BlackjackPlayer = this.players.get(this.currentPlayer);
+		if (isNil(this.currentPlayer)) {
+			return;
+		}
 
-		if (currentPlayer.state === PlayerState.STAND || currentPlayer.state === PlayerState.HIT) {
-			this.dealToPlayer(currentPlayer.id);
+		const player: BlackjackPlayer = this.players.get(this.currentPlayer);
+		if (isNil(player)) {
+			console.error(`[Blackjack] Player not found! ${this.currentPlayer}`);
+			return;
+		}
 
+		if (player.state === PlayerState.HIT) {
+			this.dealToPlayer(player.id);
+			this.update();
+		}
+
+		if (player.state === PlayerState.STAND) {
+			this.updatePlayer();
 			this.update();
 		}
 	}
@@ -96,7 +128,7 @@ class Blackjack {
 		if (this.cards.length === 0) {
 			this.initialize(2);
 			this.shuffleDeck();
-			this.dealer = [];
+			this.dealer = { cards: [], id: '-1', state: PlayerState.WAITING };
 		}
 
 		this.players.set(snowflake, { id: snowflake, cards: [], state: PlayerState.WAITING });
@@ -104,44 +136,57 @@ class Blackjack {
 			this.currentPlayer = snowflake;
 		}
 
+		this.addMessage(`<@${snowflake}> joined!`);
 		this.update();
 	}
 
 	private start() {
+		this.gameState = GameState.RUNNING;
+
 		this.dealCardToPlayers();
 		this.dealCardToPlayers();
 
 		this.update();
 	}
 
-	private updateGameState() {
+	private async updateGameState() {
 		if (isNil(this.gameMessage)) {
-			console.error('game message is null');
 			return;
 		}
 
 		const embed: MessageEmbed = this.createMessageEmbed();
 		if (!isNil(this.dealer)) {
-			embed.addField('Dealer', `(${this.calculateCards(this.dealer)}) ${this.getPlayerCardString(this.dealer)}`);
+			embed.addField(
+				'Dealer',
+				`(${this.calculateCards(this.dealer)}) ${this.getPlayerCardString(this.dealer.cards)}`,
+			);
 
 			let cardString: string = '';
 			for (const player of this.players) {
-				cardString += `<@${player[0]}>: (${this.calculateCards(player[1].cards)}) ${this.getPlayerCardString(
+				cardString += `<@${player[0]}>: (${this.calculateCards(player[1])}) ${this.getPlayerCardString(
 					player[1].cards,
 				)} **[${player[1].state}]**`;
 			}
 			embed.addField('Players', cardString);
 		}
 
-		this.gameMessage.edit(embed);
+		await this.gameMessage.edit(embed);
+		this.willUpdate = false;
 	}
 
 	private createMessageEmbed(): MessageEmbed {
 		const embed: MessageEmbed = new MessageEmbed({ title: 'Blackjack' });
-		embed.addField('Reactions', '✅: Join\n💵: Start game\n➕: Hit\n➖: Stand');
+		embed.addField('Reactions', '✅: Join\n💵: Start game', true);
+		embed.addField('\u200B', '➕: Hit\n➖: Stand', true);
 
-		if (!isNil(this.errorMessage)) {
-			embed.addField('Error', this.errorMessage);
+		if (this.errorMessages.length > 0) {
+			const oneErrorMessage: string = this.errorMessages.join('\n');
+			embed.addField('Error', oneErrorMessage);
+		}
+
+		if (this.historyMessages.length > 0) {
+			const oneMessage: string = this.historyMessages.join('\n');
+			embed.addField('History', oneMessage);
 		}
 
 		embed.setTimestamp();
@@ -151,16 +196,24 @@ class Blackjack {
 
 	private dealToPlayer(snowflake: string) {
 		if (!this.players.has(snowflake)) {
-			this.errorMessage = `<@${snowflake}> you must first join the game`;
-			this.update();
+			this.addErrorMessage(`<@${snowflake}> you must first join the game`);
+			return;
+		}
+
+		if (this.gameState !== GameState.RUNNING) {
+			this.addErrorMessage('The game has not started yet!');
 			return;
 		}
 
 		const player: BlackjackPlayer = this.players.get(snowflake);
-		player.cards.push(this.cards.pop());
+		const newCard: Card = this.cards.pop();
+		player.cards.push(newCard);
+		this.addMessage(`<@${player.id}> hits (${newCard.suit}${newCard.numberString})`);
 
-		if (this.hasBusted(player.cards)) {
+		if (this.hasBusted(player)) {
 			player.state = PlayerState.BUSTED;
+			this.addMessage(`<@${player.id}> busted`);
+			this.updatePlayer();
 		} else {
 			player.state = PlayerState.WAITING;
 		}
@@ -182,31 +235,125 @@ class Blackjack {
 			}
 		}
 
+		this.currentPlayer = undefined;
 		this.endGame();
 	}
 
 	private endGame() {
-		if (this.hasBusted(this.dealer)) {
-			// Everyone wins
+		if (this.gameState === GameState.ENDED) {
 			return;
 		}
 
-		
+		this.gameState = GameState.ENDED;
+		this.drawToDealerUntil17OrAbove();
+
+		const dealerCount: number = parseInt(this.calculateCards(this.dealer));
+		if (dealerCount > 21) {
+			this.dealer.state = PlayerState.BUSTED;
+			this.addMessage('Dealer busted');
+		}
+
+		for (const player of this.players) {
+			const state: PlayerState = player[1].state;
+
+			if (state === PlayerState.BUSTED || this.dealer.state === PlayerState.BLACKJACK) {
+				player[1].state = PlayerState.LOST;
+				continue;
+			}
+
+			if (this.dealer.state === PlayerState.BUSTED) {
+				player[1].state = PlayerState.WON;
+				continue;
+			}
+
+			const playerCount: number = parseInt(this.calculateCards(player[1]));
+			if (dealerCount > playerCount) {
+				player[1].state = PlayerState.LOST;
+				continue;
+			}
+
+			if (dealerCount === playerCount) {
+				player[1].state = PlayerState.PUSH;
+				continue;
+			}
+
+			if (dealerCount < playerCount) {
+				player[1].state = PlayerState.WON;
+				continue;
+			}
+		}
+
+		this.addMessage('Game ended');
+		this.forceUpdate();
+	}
+
+	private resetGame() {
+		this.dealer = undefined;
+		this.cards = [];
+		this.players.clear();
+		this.gameMessage = undefined;
+		this.errorMessages = [];
+		this.historyMessages = [];
+	}
+
+	private drawToDealerUntil17OrAbove() {
+		while (this.dealerShouldHit()) {
+			const newCard: Card = this.cards.pop();
+			this.dealer.cards.push(newCard);
+			this.addMessage(`+ Dealer ${newCard.suit}${newCard.numberString}`);
+
+			const dealerCount: string = this.calculateCards(this.dealer);
+			if (dealerCount === 'Blackjack') {
+				this.dealer.state = PlayerState.BLACKJACK;
+				return;
+			}
+		}
+	}
+
+	private dealerShouldHit(): boolean {
+		const dealerCount: string = this.calculateCards(this.dealer);
+		if (dealerCount === 'Blackjack') {
+			return false;
+		}
+
+		if (dealerCount.includes('/')) {
+			const highNumber: number = parseInt(dealerCount.split('/')[1]);
+
+			if (highNumber < 17) {
+				return true;
+			}
+
+			return false;
+		}
+
+		if (parseInt(dealerCount) < 17) {
+			return true;
+		}
+
+		return false;
 	}
 
 	private playerStand(snowflake: string) {
 		if (!this.players.has(snowflake)) {
-			this.errorMessage = `<@${snowflake}> you must first join the game`;
-			this.update();
+			this.addErrorMessage(`<@${snowflake}> you must first join the game`);
 			return;
 		}
 
-		this.players.get(snowflake).state = PlayerState.STAND;
+		if (this.gameState !== GameState.RUNNING) {
+			this.addErrorMessage('The game has not started yet!');
+			return;
+		}
+
+		const player: BlackjackPlayer = this.players.get(snowflake);
+		player.state = PlayerState.STAND;
+		this.addMessage(`<@${player.id}> stands`);
+
+		this.updatePlayer();
 		this.update();
 	}
 
-	private hasBusted(cards: Card[]): boolean {
-		const cardResult: string = this.calculateCards(cards);
+	private hasBusted(player: BlackjackPlayer): boolean {
+		const cardResult: string = this.calculateCards(player);
 
 		if (cardResult == 'Blackjack') {
 			return false;
@@ -223,11 +370,11 @@ class Blackjack {
 		return true;
 	}
 
-	private calculateCards(cards: Card[]): string {
+	private calculateCards(player: BlackjackPlayer): string {
 		let hasAce: boolean = false;
 		let count: number = 0;
 
-		for (const card of cards) {
+		for (const card of player.cards) {
 			if (card.number === 1) {
 				hasAce = true;
 			}
@@ -235,11 +382,11 @@ class Blackjack {
 			count += card.number;
 		}
 
-		if (count === 11 && this.cards.length === 2 && hasAce) {
-			return `Blackjack`;
+		if (count === 11 && player.cards.length === 2 && hasAce) {
+			return 'Blackjack';
 		}
 
-		if (count <= 10 && hasAce) {
+		if (count <= 10 && hasAce && player.state !== PlayerState.STAND) {
 			return `${count - 10}/${count}`;
 		}
 
@@ -264,10 +411,48 @@ class Blackjack {
 		for (const player of this.players) {
 			const cards: Card[] = player[1].cards;
 
-			cards.push(this.cards.pop());
+			const newCard: Card = this.cards.pop();
+			cards.push(newCard);
+			this.addMessage(`+ <@${player[1].id}> ${newCard.suit}${newCard.numberString}`);
 		}
 
-		this.dealer.push(this.cards.pop());
+		const dealerCard: Card = this.cards.pop();
+		this.dealer.cards.push(dealerCard);
+		this.addMessage(`+ Dealer ${dealerCard.suit}${dealerCard.numberString}`);
+
+		const dealerCount: string = this.calculateCards(this.dealer);
+		if (dealerCount === 'Blackjack') {
+			this.dealer.state = PlayerState.BLACKJACK;
+		}
+	}
+
+	private addErrorMessage(errorMessage: string) {
+		if (this.errorMessages.length >= 3) {
+			this.errorMessages.shift();
+		}
+
+		this.errorMessages.push(errorMessage);
+		this.update();
+	}
+
+	private addMessage(message: string) {
+		if (this.historyMessages.length >= 5) {
+			this.historyMessages.shift();
+		}
+
+		this.historyMessages.push(message);
+		this.update();
+	}
+
+	private forceUpdate() {
+		this.updateRound();
+		this.willUpdate = false;
+		if (!isNil(this.updateTimeout)) {
+			clearTimeout(this.updateTimeout);
+			this.updateTimeout = undefined;
+		}
+
+		this.updateGameState();
 	}
 
 	private update() {
@@ -278,9 +463,9 @@ class Blackjack {
 		}
 
 		this.willUpdate = true;
-		setTimeout(() => {
+		this.updateTimeout = setTimeout(() => {
 			this.updateGameState();
-			this.willUpdate = false;
+			this.updateTimeout = undefined;
 		}, 500);
 	}
 }

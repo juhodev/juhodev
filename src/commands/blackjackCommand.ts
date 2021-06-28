@@ -11,11 +11,8 @@ const BlackjackCommand: Command = {
 };
 
 async function handleCommand(channel: DMChannel | NewsChannel | TextChannel, author: User, args: string[]) {
-	const action: string = args.shift();
-	switch (action) {
-		case 'start':
-			await blackjack.sendInitial(channel);
-			break;
+	if(args.length === 0) {
+		await blackjack.sendInitial(channel);
 	}
 }
 
