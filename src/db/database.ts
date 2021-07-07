@@ -668,6 +668,67 @@ export async function initDatabase() {
 				},
 			],
 		},
+		{
+			name: 'blackjack_hand',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.INTEGER,
+					primary: true,
+					autoIncrement: true,
+				},
+				{
+					name: 'snowflake',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'result',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'game_id',
+					type: ColumnType.INTEGER,
+				},
+			],
+		},
+		{
+			name: 'blackjack_card',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.INTEGER,
+					primary: true,
+					autoIncrement: true,
+				},
+				{
+					name: 'card',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'hand_id',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'snowflake',
+					type: ColumnType.STRING,
+				},
+			],
+		},
+		{
+			name: 'blackjack_game',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.INTEGER,
+					primary: true,
+					autoIncrement: true,
+				},
+				{
+					name: 'timestamp',
+					type: ColumnType.BIG_INTEGER,
+				},
+			],
+		},
 	];
 
 	for (const table of tables) {

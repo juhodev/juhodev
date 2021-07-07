@@ -21,4 +21,5 @@ export type BlackjackPlayer = {
 	id: string;
 	cards: Card[];
 	state: PlayerState;
+	handId: number;
 };

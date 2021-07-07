@@ -12,6 +12,7 @@ import { createDeck } from './deck/deck';
 import { Card } from './deck/types';
 import { isNil } from '../utils';
 import { BlackjackPlayer, GameState, PlayerState } from './types';
+import { createBlackjackHand, saveBlackjackCard } from './blackjackDB';
 
 class Blackjack {
 	private cards: Card[];
@@ -124,14 +125,16 @@ class Blackjack {
 		}
 	}
 
-	private join(snowflake: string) {
+	private async join(snowflake: string) {
 		if (this.cards.length === 0) {
 			this.initialize(2);
 			this.shuffleDeck();
-			this.dealer = { cards: [], id: '-1', state: PlayerState.WAITING };
+			const handId: number = await createBlackjackHand('Dealer');
+			this.dealer = { cards: [], id: '-1', state: PlayerState.WAITING, handId };
 		}
 
-		this.players.set(snowflake, { id: snowflake, cards: [], state: PlayerState.WAITING });
+		const handId: number = await createBlackjackHand(snowflake);
+		this.players.set(snowflake, { id: snowflake, cards: [], state: PlayerState.WAITING, handId });
 		if (isNil(this.currentPlayer)) {
 			this.currentPlayer = snowflake;
 		}
@@ -194,7 +197,7 @@ class Blackjack {
 		return embed;
 	}
 
-	private dealToPlayer(snowflake: string) {
+	private async dealToPlayer(snowflake: string) {
 		if (!this.players.has(snowflake)) {
 			this.addErrorMessage(`<@${snowflake}> you must first join the game`);
 			return;
@@ -209,6 +212,7 @@ class Blackjack {
 		const newCard: Card = this.cards.pop();
 		player.cards.push(newCard);
 		this.addMessage(`<@${player.id}> hits (${newCard.suit}${newCard.numberString})`);
+		await saveBlackjackCard(player.handId, player.id, `${newCard.suit}${newCard.numberString}`);
 
 		if (this.hasBusted(player)) {
 			player.state = PlayerState.BUSTED;

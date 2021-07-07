@@ -293,3 +293,17 @@ export type DBYTSearch = {
 	query: string;
 	url: string;
 };
+
+export type DBBlackjackHand = {
+	id?: number;
+	snowflake: string;
+	result: string;
+	game_id: number;
+};
+
+export type DBBlackjackCard = {
+	id?: number;
+	card: string;
+	hand_id: number;
+	snowflake: string;
+};
