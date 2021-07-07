@@ -1,15 +1,20 @@
 package dev.juho.fileshare.server.server.client;
 
+import dev.juho.fileshare.server.fs.FileSystem;
+import dev.juho.fileshare.server.fs.FileWriteBuffer;
 import dev.juho.fileshare.server.log.Log;
 import dev.juho.fileshare.server.server.Server;
 import dev.juho.fileshare.server.server.client.io.Message;
 import dev.juho.fileshare.server.server.client.io.Reader;
 import dev.juho.fileshare.server.server.client.io.Writer;
 
+import java.io.File;
 import java.net.Socket;
 import java.util.Date;
 
 public class Client {
+
+	private final FileSystem fs;
 
 	private final Socket socket;
 	private final Reader reader;
@@ -21,8 +26,10 @@ public class Client {
 	private long lastMessageTime;
 
 	private String friendToken;
+	private FileWriteBuffer fileWriteBuffer;
 
-	public Client(Socket socket) {
+	public Client(FileSystem fs, Socket socket) {
+		this.fs = fs;
 		this.socket = socket;
 		this.clientState = ClientState.WAITING_FOR_CONNECTION;
 		this.reader = new Reader(this);
@@ -55,6 +62,11 @@ public class Client {
 					break;
 
 				case Message.TYPE_NEW_FILE:
+					handleNewFileCreate(message);
+					break;
+
+				case Message.TYPE_FILE_TRANSFER:
+					handleFileTransfer(message);
 					break;
 			}
 		});
@@ -99,5 +111,19 @@ public class Client {
 	@Override
 	public String toString() {
 		return socket.getInetAddress().toString() + "," + clientState + "," + clientId + "," + lastMessageTime + "," + friendToken;
+	}
+
+	private void handleNewFileCreate(Message message) {
+		String payload = new String(message.getPayload());
+		fileWriteBuffer = new FileWriteBuffer(fs, payload);
+	}
+
+	private void handleFileTransfer(Message message) {
+		if (fileWriteBuffer == null) {
+			Log.e("File write buffer does not exist!!!");
+			return;
+		}
+
+		fileWriteBuffer.append(message.getPayload(), 0, message.getPayloadLength());
 	}
 }

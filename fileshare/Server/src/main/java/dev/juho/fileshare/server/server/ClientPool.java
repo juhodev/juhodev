@@ -8,14 +8,16 @@ import java.util.HashMap;
 
 public class ClientPool {
 
+	private final FileSystem fs;
 	private final HashMap<Short, Client> clients;
 
-	public ClientPool() {
+	public ClientPool(FileSystem fs) {
+		this.fs = fs;
 		this.clients = new HashMap<>();
 	}
 
 	public void add(Socket socket) {
-		Client client = new Client(socket);
+		Client client = new Client(fs, socket);
 		client.listen();
 
 		short id = getIdForClient();

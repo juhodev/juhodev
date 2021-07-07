@@ -24,7 +24,7 @@ public class Server {
 	public Server(int port) {
 		this.port = port;
 		this.fs = new FileSystem(new File("data"));
-		this.clientPool = new ClientPool();
+		this.clientPool = new ClientPool(fs);
 	}
 
 	public void start() throws IOException {

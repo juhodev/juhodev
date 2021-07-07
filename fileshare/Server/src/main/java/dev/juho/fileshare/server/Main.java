@@ -1,6 +1,5 @@
 package dev.juho.fileshare.server;
 
-import dev.juho.fileshare.server.log.Log;
 import dev.juho.fileshare.server.server.Server;
 
 import java.io.IOException;
