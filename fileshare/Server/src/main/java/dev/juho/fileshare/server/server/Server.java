@@ -1,9 +1,11 @@
 package dev.juho.fileshare.server.server;
 
+import dev.juho.fileshare.server.fs.FileSystem;
 import dev.juho.fileshare.server.log.Log;
 import dev.juho.fileshare.server.server.client.Client;
 import dev.juho.fileshare.server.server.client.io.Message;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -13,14 +15,18 @@ public class Server {
 
 	private final int port;
 
+	private final FileSystem fs;
 	private final ClientPool clientPool;
 
 	public Server(int port) {
 		this.port = port;
-		this.clientPool = new ClientPool();
+		this.fs = new FileSystem(new File("data"));
+		this.clientPool = new ClientPool(fs);
 	}
 
 	public void start() throws IOException {
+		fs.init();
+
 		Log.i("Starting server on port " + port);
 		ServerSocket serverSocket = new ServerSocket(port);
 

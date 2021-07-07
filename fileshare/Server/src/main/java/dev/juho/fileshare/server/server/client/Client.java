@@ -95,4 +95,9 @@ public class Client {
 	public long getLastMessageTime() {
 		return lastMessageTime;
 	}
+
+	@Override
+	public String toString() {
+		return socket.getInetAddress().toString() + "," + clientState + "," + clientId + "," + lastMessageTime + "," + friendToken;
+	}
 }
