@@ -45,7 +45,7 @@ public class FileSystem {
 
 		Log.d("Trying to write to " + file);
 		try {
-			File f = new File(file);
+			File f = new File(rootDataDir.getAbsolutePath() + "/" + file);
 
 			FileWriter writer = new FileWriter(f);
 			writer.write(data.toString());

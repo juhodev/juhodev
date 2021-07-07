@@ -8,12 +8,9 @@ import java.util.HashMap;
 
 public class ClientPool {
 
-	private final FileSystem fs;
 	private final HashMap<Short, Client> clients;
 
-
-	public ClientPool(FileSystem fs) {
-		this.fs = fs;
+	public ClientPool() {
 		this.clients = new HashMap<>();
 	}
 
@@ -24,7 +21,10 @@ public class ClientPool {
 		short id = getIdForClient();
 		client.setClientId(id);
 		clients.put(id, client);
-		updateInfoFile();
+	}
+
+	public int size() {
+		return clients.size();
 	}
 
 	/**
@@ -35,16 +35,6 @@ public class ClientPool {
 	 */
 	private short getIdForClient() {
 		return (short) (Math.random() * Short.MAX_VALUE);
-	}
-
-	/**
-	 * This updates local file of current clients.
-	 * <p>
-	 * The file is intended to be read by other programs. I could use something like RPC for this
-	 * but for now this is good enough.
-	 */
-	private void updateInfoFile() {
-		fs.write("client_pool.csv", this);
 	}
 
 	@Override
