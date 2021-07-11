@@ -159,6 +159,10 @@ class YoutubePlayer {
 			return;
 		}
 
+		if (isNil(this.currentChannel)) {
+			return;
+		}
+
 		this.currentChannel.leave();
 		this.currentItem = undefined;
 		this.currentStream = undefined;
