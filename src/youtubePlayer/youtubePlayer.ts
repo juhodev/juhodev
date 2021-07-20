@@ -706,10 +706,12 @@ class YoutubePlayer {
 
 	private leaveVoice() {
 		db.changeUsernameEvent('Baavo');
-		if (!this.currentConnection === undefined) {
+		if (this.currentConnection !== undefined) {
 			this.currentConnection.disconnect();
 		}
-		this.currentChannel.leave();
+		if (!isNil(this.currentChannel)) {
+			this.currentChannel.leave();
+		}
 		this.currentItem = undefined;
 		this.currentChannel = undefined;
 		this.currentStream = undefined;
