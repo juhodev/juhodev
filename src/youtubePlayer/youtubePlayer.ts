@@ -599,7 +599,10 @@ class YoutubePlayer {
 				{ type: 'opus' },
 			);
 		} catch (e) {
+			this.currentItem = undefined;
+			this.finishedPlaying();
 			console.error(e);
+			item.textChannel.send('<:youtube:858623382399483924> <:KermitENOUGH:821112365696417813>');
 		}
 
 		this.currentDispatcher.on('start', () => {
@@ -621,7 +624,12 @@ class YoutubePlayer {
 			}, 5000);
 		});
 
-		this.currentDispatcher.on('error', console.error);
+		this.currentDispatcher.on('error', (e) => {
+			this.currentItem = undefined;
+			this.finishedPlaying();
+			console.error(e);
+			item.textChannel.send('<:youtube:858623382399483924> <:KermitENOUGH:821112365696417813>');
+		});
 
 		this.currentDispatcher.on('finish', () => {
 			this.currentItem = undefined;
