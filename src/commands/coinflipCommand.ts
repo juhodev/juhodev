@@ -52,8 +52,10 @@ async function coinflip(channel: DMChannel | NewsChannel | TextChannel, author: 
 	embed.setTimestamp();
 	embed.addField('Sides', `${aSide} and ${bSide}`);
 
+	const random: number = Math.random();
+	embed.setFooter(random);
 	// < .5 A side wins, > .5 B side wins
-	if (Math.random() < 0.5) {
+	if (random < 0.5) {
 		embed.addField('Coin', `Landed on ${aSide} side`);
 		if (userSide === aSide.toLowerCase()) {
 			bank.addToUser(author.id, amountFloat * 2, BankChangeType.COINFLIP);
