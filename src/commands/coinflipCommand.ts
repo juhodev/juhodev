@@ -41,7 +41,7 @@ async function coinflip(channel: DMChannel | NewsChannel | TextChannel, author: 
 	const bSide: string = 'B';
 
 	if (![aSide.toLowerCase(), bSide.toLowerCase()].includes(userSide)) {
-		channel.send('!coinflip <side> <amount>\nSides: A or B');
+		channel.send('!coinflip <side> <amount>\nSides: A and B');
 		return;
 	}
 
@@ -50,14 +50,14 @@ async function coinflip(channel: DMChannel | NewsChannel | TextChannel, author: 
 	const embed: MessageEmbed = new MessageEmbed({ title: 'Coinflip' });
 	embed.setThumbnail('https://cdn.betterttv.net/emote/6094368d39b5010444d0cc16/3x.gif');
 	embed.setTimestamp();
-	embed.addField('Sides', `${aSide} or ${bSide}`);
+	embed.addField('Sides', `${aSide} and ${bSide}`);
 
 	// < .5 A side wins, > .5 B side wins
 	if (Math.random() < 0.5) {
 		embed.addField('Coin', `Landed on ${aSide} side`);
 		if (userSide === aSide.toLowerCase()) {
 			bank.addToUser(author.id, amountFloat * 2, BankChangeType.COINFLIP);
-			embed.addField('Result', `💵💵💵 You won ${(amountFloat * 2).toLocaleString()}`);
+			embed.addField('Result', `💵 💵 💵 You won ${(amountFloat * 2).toLocaleString()} 💵 💵 💵`);
 			await saveCoinflip(author.id, userSide, aSide, amountFloat, true);
 		} else {
 			embed.addField('Result', `You lost ${amountFloat.toLocaleString()}`);
@@ -70,7 +70,7 @@ async function coinflip(channel: DMChannel | NewsChannel | TextChannel, author: 
 			await saveCoinflip(author.id, userSide, bSide, amountFloat, false);
 		} else {
 			bank.addToUser(author.id, amountFloat * 2, BankChangeType.COINFLIP);
-			embed.addField('Result', `💵💵💵 You won ${(amountFloat * 2).toLocaleString()}`);
+			embed.addField('Result', `💵 💵 💵 You won ${(amountFloat * 2).toLocaleString()} 💵 💵 💵`);
 			await saveCoinflip(author.id, userSide, bSide, amountFloat, true);
 		}
 	}
