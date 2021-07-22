@@ -14,6 +14,7 @@ export type BankLog = {
 export enum BankChangeType {
 	COINFLIP = 'COINFLIP',
 	ECO = 'ECO',
+	IN_VOICE_CHANNEL = 'IN_VOICE_CHANNEL',
 }
 
 export enum BankLogType {

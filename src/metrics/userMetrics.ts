@@ -1,4 +1,6 @@
 import { VoiceChannel } from 'discord.js';
+import { bank } from '..';
+import { BankChangeType } from '../bank/types';
 import DB from '../database/db';
 import { knex } from '../db/utils';
 import { LOG_INTERVAL } from './types';
@@ -54,6 +56,10 @@ class UserMetrics {
 					channel.name,
 					LOG_INTERVAL,
 				]);
+
+				const pointsPerMinute: number = 1;
+				const pointsPerInterval: number = LOG_INTERVAL / (1000 * 60);
+				bank.addToUser(member.id, pointsPerMinute * pointsPerInterval, BankChangeType.IN_VOICE_CHANNEL);
 			}
 		}
 	}
