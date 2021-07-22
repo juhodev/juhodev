@@ -668,6 +668,41 @@ export async function initDatabase() {
 				},
 			],
 		},
+		{
+			name: 'coinflip',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.INTEGER,
+					primary: true,
+					autoIncrement: true,
+				},
+				{
+					name: 'player',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'amount',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'date',
+					type: ColumnType.BIG_INTEGER,
+				},
+				{
+					name: 'player_bet',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'coin_side',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'win',
+					type: ColumnType.BOOLEAN,
+				},
+			],
+		},
 	];
 
 	for (const table of tables) {

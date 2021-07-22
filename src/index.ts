@@ -36,6 +36,7 @@ import MemeGeneratorCommand from './commands/memeGeneratorCommand';
 import AddMemeCommand from './commands/addMemeCommand';
 import BankCommand from './commands/bankCommand';
 import BalanceCommand from './commands/balanceCommand';
+import CoinflipCommand from './commands/coinflipCommand';
 
 import { logUsers } from './userLogger';
 import { startApi } from './api/server';
@@ -111,6 +112,7 @@ export const bank: Bank = new Bank();
 	commandHandler.registerCommand(AddMemeCommand);
 	commandHandler.registerCommand(BankCommand);
 	commandHandler.registerCommand(BalanceCommand);
+	commandHandler.registerCommand(CoinflipCommand);
 
 	db.changeUsernameEvent = (username: string, video?: string) => {
 		db.getGuild().me.setNickname(username);

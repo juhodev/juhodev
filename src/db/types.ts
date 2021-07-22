@@ -293,3 +293,13 @@ export type DBYTSearch = {
 	query: string;
 	url: string;
 };
+
+export type DBCoinflip = {
+	id?: number;
+	player: string;
+	amount: number;
+	date: number;
+	player_bet: string;
+	coin_side: string;
+	win: boolean;
+};

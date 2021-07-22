@@ -47,6 +47,10 @@ class Bank {
 		return this.getOrCreateBankAccount(id).amount;
 	}
 
+	hasBalance(id: string, amount: number): boolean {
+		return this.getBalance(id) >= amount;
+	}
+
 	loadBank() {
 		const logFile: string = path.resolve('data', 'bank.log');
 
