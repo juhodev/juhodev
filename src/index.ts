@@ -34,6 +34,8 @@ import TodoCommand from './commands/todoCommand';
 import HistoryCommand from './commands/historyCommand';
 import MemeGeneratorCommand from './commands/memeGeneratorCommand';
 import AddMemeCommand from './commands/addMemeCommand';
+import BankCommand from './commands/bankCommand';
+import BalanceCommand from './commands/balanceCommand';
 
 import { logUsers } from './userLogger';
 import { startApi } from './api/server';
@@ -42,12 +44,14 @@ import Config from './config/config';
 import Csgo from './steam/csgo/csgo';
 import { isNil } from './utils';
 import YoutubePlayer from './youtubePlayer/youtubePlayer';
+import Bank from './bank/bank';
 
 const db = new DB();
 const siteMetrics: SiteMetrics = new SiteMetrics();
 const config: Config = new Config();
 export const csgo: Csgo = new Csgo();
 export const youtubePlayer: YoutubePlayer = new YoutubePlayer();
+export const bank: Bank = new Bank();
 
 (async () => {
 	config.load();
@@ -57,6 +61,7 @@ export const youtubePlayer: YoutubePlayer = new YoutubePlayer();
 	db.load();
 
 	await csgo.load();
+	bank.loadBank();
 
 	const userMetrics = new UserMetrics(db);
 	const commandHandler = new CommandHandler(db);
@@ -104,6 +109,8 @@ export const youtubePlayer: YoutubePlayer = new YoutubePlayer();
 	commandHandler.registerCommand(HistoryCommand);
 	commandHandler.registerCommand(MemeGeneratorCommand);
 	commandHandler.registerCommand(AddMemeCommand);
+	commandHandler.registerCommand(BankCommand);
+	commandHandler.registerCommand(BalanceCommand);
 
 	db.changeUsernameEvent = (username: string, video?: string) => {
 		db.getGuild().me.setNickname(username);

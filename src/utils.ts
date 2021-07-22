@@ -3,7 +3,7 @@ import * as util from 'util';
 import * as path from 'path';
 import * as fs from 'fs';
 import { DB_DATA_DIR } from './database/types';
-import { DBImage } from './db/types';
+import { DBImage, DBUser } from './db/types';
 import { knex } from './db/utils';
 import { uuid } from 'uuidv4';
 import { siteMetrics } from '.';
@@ -118,4 +118,31 @@ export function getStandardDeviationAndError(nums: number[]): { standardDeviatio
 		standardDeviation: standardDeviation,
 		standardError: standardError,
 	};
+}
+
+export async function getSnowflakeByUsernameAndId(name: string): Promise<string> {
+	const nameSplit: string[] = name.split('#');
+	const nameUpperCase: string = nameSplit[0].toUpperCase();
+	const tag: string = nameSplit[1];
+
+	const dbUsers: DBUser[] = await knex<DBUser>('users').where({
+		discord_name_uppercase: nameUpperCase,
+		discord_tag: tag,
+	});
+
+	if (dbUsers.length === 0) {
+		return undefined;
+	}
+
+	const dbUser: DBUser = dbUsers.shift();
+	return dbUser.snowflake;
+}
+
+export function isNumeric(str: unknown) {
+	if (typeof str != 'string') return false; // we only process strings!
+	return (
+		// @ts-ignore
+		!isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
+		!isNaN(parseFloat(str))
+	); // ...and ensure strings of whitespace fail
 }
