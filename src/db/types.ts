@@ -303,3 +303,9 @@ export type DBCoinflip = {
 	coin_side: string;
 	win: boolean;
 };
+
+export type DBClaim = {
+	id?: number;
+	snowflake: string;
+	last_claim: number;
+};

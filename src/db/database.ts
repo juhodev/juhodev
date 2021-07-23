@@ -703,6 +703,25 @@ export async function initDatabase() {
 				},
 			],
 		},
+		{
+			name: 'claims',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.INTEGER,
+					primary: true,
+					autoIncrement: true,
+				},
+				{
+					name: 'snowflake',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'last_claim',
+					type: ColumnType.BIG_INTEGER,
+				},
+			],
+		},
 	];
 
 	for (const table of tables) {
