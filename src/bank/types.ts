@@ -17,6 +17,7 @@ export enum BankChangeType {
 	IN_VOICE_CHANNEL = 'IN_VOICE_CHANNEL',
 	CLAIM = 'CLAIM',
 	BLACKJACK = 'BLACKJACK',
+	GIFT = 'GIFT',
 }
 
 export enum BankLogType {
