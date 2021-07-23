@@ -43,6 +43,15 @@ class Bank {
 		});
 	}
 
+	getAllAccounts(): BankAccount[] {
+		const accounts: BankAccount[] = [];
+		for (const kvp of this.users) {
+			accounts.push(kvp[1]);
+		}
+
+		return accounts;
+	}
+
 	getBalance(id: string): number {
 		return this.getOrCreateBankAccount(id).amount;
 	}

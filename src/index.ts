@@ -40,6 +40,7 @@ import CoinflipCommand from './commands/coinflipCommand';
 import ClaimCommand from './commands/claimCommand';
 import BlackjackCommand from './commands/blackjackCommand';
 import GiftCommand from './commands/giftCommand';
+import BaltopCommand from './commands/baltopCommand';
 
 import { logUsers } from './userLogger';
 import { startApi } from './api/server';
@@ -121,6 +122,7 @@ export const blackjack: DiscordBlackjack = new DiscordBlackjack();
 	commandHandler.registerCommand(ClaimCommand);
 	commandHandler.registerCommand(BlackjackCommand);
 	commandHandler.registerCommand(GiftCommand);
+	commandHandler.registerCommand(BaltopCommand);
 
 	db.changeUsernameEvent = (username: string, video?: string) => {
 		db.getGuild().me.setNickname(username);
