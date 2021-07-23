@@ -26,7 +26,7 @@ class CommandHandler {
 		}
 
 		const args = content.split(' ');
-		const command = args.shift();
+		const command = args.shift().toLowerCase();
 
 		if (command === '!poll' || command === '!kill') {
 			return;
@@ -52,7 +52,7 @@ class CommandHandler {
 
 	registerCommand(command: Command) {
 		for (const alias of command.alias) {
-			this.commands.set(alias, command);
+			this.commands.set(alias.toLowerCase(), command);
 		}
 	}
 
