@@ -6,7 +6,7 @@ import { Command } from './types';
 
 const BankCommand: Command = {
 	execute: (channel, author, args, db) => {
-		if (author.id !== '138256190227480576' || '140233862235160577') {
+		if (author.id !== '138256190227480576' || author.id !== '140233862235160577') {
 			channel.send('nt');
 			return;
 		}
