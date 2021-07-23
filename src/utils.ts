@@ -121,6 +121,10 @@ export function getStandardDeviationAndError(nums: number[]): { standardDeviatio
 }
 
 export async function getSnowflakeByUsernameAndId(name: string): Promise<string> {
+	if (!name.includes('#')) {
+		return undefined;
+	}
+	
 	const nameSplit: string[] = name.split('#');
 	const nameUpperCase: string = nameSplit[0].toUpperCase();
 	const tag: string = nameSplit[1];
