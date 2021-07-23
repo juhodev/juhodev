@@ -38,6 +38,7 @@ import BankCommand from './commands/bankCommand';
 import BalanceCommand from './commands/balanceCommand';
 import CoinflipCommand from './commands/coinflipCommand';
 import ClaimCommand from './commands/claimCommand';
+import BlackjackCommand from './commands/blackjackCommand';
 
 import { logUsers } from './userLogger';
 import { startApi } from './api/server';
@@ -47,6 +48,7 @@ import Csgo from './steam/csgo/csgo';
 import { isNil } from './utils';
 import YoutubePlayer from './youtubePlayer/youtubePlayer';
 import Bank from './bank/bank';
+import DiscordBlackjack from './blackjack/discordBlackjack';
 
 const db = new DB();
 const siteMetrics: SiteMetrics = new SiteMetrics();
@@ -54,6 +56,7 @@ const config: Config = new Config();
 export const csgo: Csgo = new Csgo();
 export const youtubePlayer: YoutubePlayer = new YoutubePlayer();
 export const bank: Bank = new Bank();
+export const blackjack: DiscordBlackjack = new DiscordBlackjack();
 
 (async () => {
 	config.load();
@@ -115,6 +118,7 @@ export const bank: Bank = new Bank();
 	commandHandler.registerCommand(BalanceCommand);
 	commandHandler.registerCommand(CoinflipCommand);
 	commandHandler.registerCommand(ClaimCommand);
+	commandHandler.registerCommand(BlackjackCommand);
 
 	db.changeUsernameEvent = (username: string, video?: string) => {
 		db.getGuild().me.setNickname(username);
@@ -137,6 +141,10 @@ export const bank: Bank = new Bank();
 
 	client.on('message', (message) => {
 		commandHandler.handle(message);
+	});
+
+	client.on('messageReactionAdd', (reaction, user) => {
+		blackjack.onReaction(reaction, user);
 	});
 
 	client.login(process.env.DISCORD_TOKEN);
