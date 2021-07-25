@@ -18,6 +18,7 @@ export enum BankChangeType {
 	CLAIM = 'CLAIM',
 	BLACKJACK = 'BLACKJACK',
 	GIFT = 'GIFT',
+	DUELFLIP = 'DUELFLIP',
 }
 
 export enum BankLogType {

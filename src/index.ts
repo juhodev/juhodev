@@ -41,6 +41,7 @@ import ClaimCommand from './commands/claimCommand';
 import BlackjackCommand from './commands/blackjackCommand';
 import GiftCommand from './commands/giftCommand';
 import BaltopCommand from './commands/baltopCommand';
+import DuelflipCommand from './commands/duelflipCommand';
 
 import { logUsers } from './userLogger';
 import { startApi } from './api/server';
@@ -51,6 +52,7 @@ import { isNil } from './utils';
 import YoutubePlayer from './youtubePlayer/youtubePlayer';
 import Bank from './bank/bank';
 import DiscordBlackjack from './blackjack/discordBlackjack';
+import Duelflip from './duelflip/duelflip';
 
 const db = new DB();
 const siteMetrics: SiteMetrics = new SiteMetrics();
@@ -59,6 +61,7 @@ export const csgo: Csgo = new Csgo();
 export const youtubePlayer: YoutubePlayer = new YoutubePlayer();
 export const bank: Bank = new Bank();
 export const blackjack: DiscordBlackjack = new DiscordBlackjack();
+export const duelflip: Duelflip = new Duelflip();
 
 (async () => {
 	config.load();
@@ -123,6 +126,7 @@ export const blackjack: DiscordBlackjack = new DiscordBlackjack();
 	commandHandler.registerCommand(BlackjackCommand);
 	commandHandler.registerCommand(GiftCommand);
 	commandHandler.registerCommand(BaltopCommand);
+	commandHandler.registerCommand(DuelflipCommand);
 
 	db.changeUsernameEvent = (username: string, video?: string) => {
 		db.getGuild().me.setNickname(username);
