@@ -46,7 +46,10 @@ class DiscordBlackjack {
 			return;
 		}
 
-		reaction.message.reactions.resolve(reaction.emoji.name).users.remove(user.id);
+		const resolvedReaction = reaction.message.reactions.resolve(reaction.emoji.name);
+		if (!isNil(resolvedReaction)) {
+			resolvedReaction.users.remove(user.id);
+		}
 
 		let error: string = undefined;
 		switch (reaction.emoji.name) {
@@ -60,6 +63,9 @@ class DiscordBlackjack {
 
 			case '➖':
 				error = this.game.stand(user.id);
+				break;
+
+			default:
 				break;
 		}
 
