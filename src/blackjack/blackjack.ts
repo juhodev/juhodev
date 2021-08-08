@@ -1,10 +1,9 @@
 import { isNil } from '../utils';
-import { createDeck } from './deck';
 import { BlackjackPlayer, Card, GameState, PlayerState } from './types';
+import Deck from './deck';
 
 class BlackjackGame {
 	private players: BlackjackPlayer[];
-	private cards: Card[];
 	private currentPlayerIndex: number;
 	private gameState: GameState;
 
@@ -12,7 +11,6 @@ class BlackjackGame {
 
 	constructor() {
 		this.players = [];
-		this.cards = [];
 		this.gameState = GameState.NOT_STARTED;
 	}
 
@@ -22,7 +20,7 @@ class BlackjackGame {
 		}
 
 		if (this.players.length === 0) {
-			this.initialize(4);
+			this.initialize();
 		}
 
 		const player: BlackjackPlayer = { cards: [], state: PlayerState.WAITING, id };
@@ -32,7 +30,7 @@ class BlackjackGame {
 	}
 
 	getCards() {
-		return this.cards;
+		return Deck.getCards();
 	}
 
 	hit(id: string): string {
@@ -295,7 +293,7 @@ class BlackjackGame {
 	}
 
 	private dealToPlayer(player: BlackjackPlayer) {
-		const card: Card = this.cards.shift();
+		const card: Card = Deck.getCard();
 		if (player.id !== 'dealer') {
 			this.pubMessage(`+ <@${player.id}> ${card.name}`);
 		} else {
@@ -311,23 +309,14 @@ class BlackjackGame {
 		this.updatePlayerState(player);
 	}
 
-	private initialize(numberOfDecks: number) {
-		for (let i = 0; i < numberOfDecks; i++) {
-			this.cards.push(...createDeck());
+	private initialize() {
+		let shuffled: boolean = Deck.newRound();
+		if (shuffled) {
+			this.pubMessage('Shuffled');
 		}
-		this.shuffleDeck();
 
 		const dealer: BlackjackPlayer = { cards: [], state: PlayerState.WAITING, id: 'dealer' };
 		this.players.push(dealer);
-	}
-
-	private shuffleDeck() {
-		for (let i = 0; i < this.cards.length - 2; i++) {
-			const randomIndex: number = Math.floor(Math.random() * (this.cards.length - 2 - i));
-			const temp: Card = this.cards[randomIndex];
-			this.cards[randomIndex] = this.cards[i];
-			this.cards[i] = temp;
-		}
 	}
 }
 
