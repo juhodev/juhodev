@@ -1,4 +1,5 @@
-import BlackjackGame from '../blackjack';
+import BlackjackGame from '../blackjackGame';
+import { NUMBER_OF_DECKS } from '../deck';
 import { BlackjackPlayer, Card, GameState, PlayerState } from '../types';
 import { createDeck } from '../utils';
 
@@ -15,7 +16,7 @@ test('game should initialize on first join', () => {
 	const game: BlackjackGame = new BlackjackGame();
 	game.join('123');
 
-	expect(game.getCards().length).toBe(52 * 4);
+	expect(game.getCards().length).toBe(52 * NUMBER_OF_DECKS);
 });
 
 test('start deals cards', () => {

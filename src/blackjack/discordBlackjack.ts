@@ -12,7 +12,7 @@ import {
 import { bank } from '..';
 import { BankChangeType } from '../bank/types';
 import { isNil, isNumeric } from '../utils';
-import BlackjackGame from './blackjack';
+import BlackjackGame from './blackjackGame';
 import { BlackjackPlayer, Card, GameState } from './types';
 
 class DiscordBlackjack {
