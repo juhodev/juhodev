@@ -268,7 +268,10 @@ class BlackjackGame {
 			} else {
 				this.pubMessage(`💵 Dealer **Blackjack**`);
 			}
-			this.moveToNextPlayer();
+
+			if (this.players[this.currentPlayerIndex].id === player.id) {
+				this.moveToNextPlayer();
+			}
 			return;
 		}
 
@@ -296,7 +299,7 @@ class BlackjackGame {
 		}
 	}
 
-	private dealToPlayer(player: BlackjackPlayer) {
+	dealToPlayer(player: BlackjackPlayer) {
 		const card: Card = Deck.getCard();
 		if (player.id !== 'dealer') {
 			this.pubMessage(`+ <@${player.id}> ${card.name}`);

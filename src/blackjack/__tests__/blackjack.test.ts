@@ -271,3 +271,27 @@ test('dealer should be delt cards until stop when game ends', () => {
 	expect(game.getGameState()).toBe(GameState.ENDED);
 	expect(dealer.state).not.toBe(PlayerState.WAITING);
 });
+
+test('first player should be able to play after second player blackjack', () => {
+	const game: BlackjackGame = new BlackjackGame();
+
+	game.join('123');
+	game.join('666');
+
+	game.setGameState(GameState.RUNNING);
+
+	const playerOne: BlackjackPlayer = game.getPlayers().get('123');
+	const playerTwo: BlackjackPlayer = game.getPlayers().get('666');
+
+	const deck: Card[] = createDeck();
+
+	playerOne.cards.push(...[deck.find((x) => x.name === '5 ♥'), deck.find((x) => x.name === '6 ♥')]);
+	playerTwo.cards.push(...[deck.find((x) => x.name === 'Ace ♥'), deck.find((x) => x.name === 'King ♥')]);
+
+	game.forceUpdatePlayerStates();
+
+	const response: string = game.hit('123');
+	expect(response).toBeUndefined();
+	expect(playerOne.cards.length).toBe(3);
+	expect(game.getGameState()).toBe(GameState.RUNNING);
+});
