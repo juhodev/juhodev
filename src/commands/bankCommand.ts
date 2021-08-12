@@ -29,6 +29,7 @@ const BankCommand: Command = {
 		const amountFloat: number = parseFloat(amount);
 
 		switch (action.toLowerCase()) {
+			case 'give':
 			case 'add':
 				addPoints(channel, userAndTag, amountFloat);
 				break;
@@ -42,7 +43,7 @@ const BankCommand: Command = {
 				break;
 
 			default:
-				channel.send('!eco <get|set|add> <user#id> <amount>');
+				channel.send('!eco <remove|set|add> <user#id> <amount>');
 				break;
 		}
 	},
