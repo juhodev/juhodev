@@ -17,7 +17,7 @@ const BankCommand: Command = {
 		const amount: string = args.shift();
 
 		if (isNil(action) || isNil(userAndTag) || isNil(amount)) {
-			channel.send('!eco <get|set|add> <user#id> <amount>');
+			channel.send('!eco <remove|set|add> <user#id> <amount>');
 			return;
 		}
 
