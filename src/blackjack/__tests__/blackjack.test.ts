@@ -104,6 +104,7 @@ test('dealer soft 17', () => {
 	const deck: Card[] = createDeck();
 	const game: BlackjackGame = new BlackjackGame();
 
+	game.setGameState(GameState.ENDED);
 	const player: BlackjackPlayer = {
 		id: 'dealer',
 		state: PlayerState.WAITING,
@@ -142,6 +143,7 @@ test('player should be able to stand', () => {
 	const deck: Card[] = createDeck();
 	const game: BlackjackGame = new BlackjackGame();
 	game.join('123');
+	game.setGameState(GameState.RUNNING);
 	const player: BlackjackPlayer = game.getPlayers().get('123');
 	player.cards.push(
 		deck.find((x) => x.name === 'King ♥'),
@@ -155,6 +157,7 @@ test('player should be able to stand', () => {
 test('soft hand should collapse on stand', () => {
 	const deck: Card[] = createDeck();
 	const game: BlackjackGame = new BlackjackGame();
+	game.setGameState(GameState.RUNNING);
 	game.join('123');
 	const player: BlackjackPlayer = game.getPlayers().get('123');
 	player.cards.push(

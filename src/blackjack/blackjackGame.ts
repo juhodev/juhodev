@@ -83,6 +83,10 @@ class BlackjackGame {
 		}
 	}
 
+	setGameState(gameState: GameState) {
+		this.gameState = gameState;
+	}
+
 	getCardsTotalString(player: BlackjackPlayer): string {
 		let hasAce: boolean = false;
 		let count: number = 0;
