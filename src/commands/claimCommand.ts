@@ -25,6 +25,7 @@ async function claim(channel: TextChannel | NewsChannel | DMChannel, author: Use
 	const now: Date = new Date();
 	const lastClaimDate: Date = new Date(lastClaim.shift().last_claim);
 	const firstMinuteOfCurrentDate: Date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), -2, 0, 0);
+	lastClaimDate.setHours(lastClaimDate.getHours() - 2);
 
 	if (lastClaimDate <= firstMinuteOfCurrentDate) {
 		await knex<DBClaim>('claims').update({ last_claim: new Date().getTime() }).where({ snowflake: author.id });
