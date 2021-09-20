@@ -1,6 +1,7 @@
 import { youtubePlayer } from '..';
 import { isNil } from '../utils';
 import { Command } from './types';
+import { embed } from '../youtubePlayer/youtubeEmbed';
 
 const PlayCommand: Command = {
 	execute: (channel, author, args, db) => {
@@ -40,6 +41,10 @@ const PlayCommand: Command = {
 
 				youtubePlayer.playRandom(channel, author, 1);
 				return;
+
+			case 'test':
+				embed.write(channel);
+				break;
 		}
 
 		let query: string = arg;

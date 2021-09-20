@@ -427,6 +427,15 @@ class YoutubePlayer {
 		channel.send(message);
 	}
 
+	async getPlaylists(): Promise<string[]> {
+		const dbPlaylists: DBYtPlaylist[] = await knex<DBYtPlaylist>('yt_playlist');
+		return dbPlaylists.map(x => x.name);
+	}
+
+	getQueue(): QueueItem[] {
+		return this.queue;
+	}
+
 	// https://stackoverflow.com/a/2450976
 	private randomizePlaylist(playlist: QueueItem[]): QueueItem[] {
 		let currentIndex: number = playlist.length;
