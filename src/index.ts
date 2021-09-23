@@ -53,6 +53,7 @@ import YoutubePlayer from './youtubePlayer/youtubePlayer';
 import Bank from './bank/bank';
 import DiscordBlackjack from './blackjack/discordBlackjack';
 import Duelflip from './duelflip/duelflip';
+import TodoData from './todo/todoData';
 
 const db = new DB();
 const siteMetrics: SiteMetrics = new SiteMetrics();
@@ -62,10 +63,13 @@ export const youtubePlayer: YoutubePlayer = new YoutubePlayer();
 export const bank: Bank = new Bank();
 export const blackjack: DiscordBlackjack = new DiscordBlackjack();
 export const duelflip: Duelflip = new Duelflip();
+export const todoData: TodoData = new TodoData();
 
 (async () => {
 	config.load();
 	await initDatabase();
+
+	todoData.load();
 
 	const client = new Discord.Client();
 	db.load();

@@ -13,6 +13,7 @@ import {
 } from '../../../todo/todo';
 import { Todo, TodoResponse } from './types';
 import { UserData } from '../../types';
+import { todoData } from '../index';
 
 const router = expressPromiseRouter();
 
@@ -70,6 +71,47 @@ router.post('/add', [verifyIdentity], async (req, res) => {
 	const { task } = req.body;
 	await insertTodo(identity.snowflake, task);
 
+	res.sendStatus(200);
+});
+
+router.get('/progressbar/', [verifyIdentity], (req, res) => {
+	const userData: DBDiscordData = await getIdentify(req);
+
+	res.json(todoData.getProgressBars(user.snowflake));
+});
+
+router.post('/progressbar/edit', [verifyIdentity], (req, res) => {
+	const { original, edited } = req.body;
+	const userData: DBDiscordData = await getIdentify(req);
+
+	if (original.name !== edited.name) {
+		todoData.updateProgressBarName(userData.snowflake, edited.name);
+	}
+
+	if (original.value !== edited.value) {
+		todoData.updateProgressBarValue(userData.snowflake, edited.value);
+	}
+
+	if (original.max !== edited.max) {
+		todoData.updateProgressBarMax(userData.snowflake, edited.max);
+	}
+
+	if (isNil(original.displayPercentage) || original.displayPercentage !== edited.displayPercentage) {
+		todoData.updateProgressBarDisplayPercentage(userData.snowflake, edited.displayPercentage);
+	}
+
+	if (isNil(original.displayNumber) || original.displayNumber !== edited.displayNumber) {
+		todoData.updateProgressBarDisplayNumber(userData.snowflake, edited.displayNumber)
+	}
+
+	res.sendStatus(200);
+});
+
+router.post('/progressbar/create', [verifyIdentity], (req, res) => {
+	const { name, value, max, displayNumber, displayPercentage } = req.body;
+	const discordData: DBDiscordData = await getIdentify(req);
+
+	todoData.createProgressBar(discordData.snowflake, name, parseInt(value), parseInt(max), displayNumber, displayPercentage);
 	res.sendStatus(200);
 });
 
