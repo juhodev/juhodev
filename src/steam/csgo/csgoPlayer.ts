@@ -131,7 +131,25 @@ class CsgoPlayer {
 		return sortedDates;
 	}
 
-	getStatistics(type: StatisticsType): number[] {
+	getStatistics(average: boolean, type: StatisticsType): number[] {
+		if (average) {
+			const array: number[] = [];
+			const slidingWindow: number[] = [];
+
+			for (const match of this.matches) {
+				const playerStat: number = match.players.find((stats) => stats.player.id === this.id)[type];
+
+				slidingWindow.push(playerStat);
+				if (slidingWindow.length === 10) {
+					const windowAverage: number = slidingWindow.reduce((a, b) => a + b) / slidingWindow.length;
+					array.push(windowAverage);
+					slidingWindow.shift();
+				}
+			}
+
+			return array;
+		}
+
 		return this.matches.map((match) => match.players.find((stats) => stats.player.id === this.id)[type]);
 	}
 

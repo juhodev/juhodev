@@ -116,10 +116,11 @@ router.get('/profiles', [], async (req, res) => {
 
 router.get('/statistics', [], async (req, res) => {
 	// TODO: Maybe one day fix returning only soloQueue matches
-	const { playerId, type, soloQueue } = req.query;
+	// lol no
+	const { playerId, type, average } = req.query;
 
 	siteMetrics.time('get_player_statistics');
-	const statistics: number[] = csgo.getPlayer(playerId).getStatistics(type);
+	const statistics: number[] = csgo.getPlayer(playerId).getStatistics(average === "true", type);
 	siteMetrics.timeEnd('get_player_statistics');
 
 	const response: SteamStatisticsResponse = {
