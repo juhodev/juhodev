@@ -20,7 +20,6 @@ async function sendMessage(channel: DMChannel | NewsChannel | TextChannel, args:
 	await fetchGames(user);
 
 	const profile: ChessPlayer = chess.getProfile(user);
-	console.log(profile);
 	if (isNil(profile)) {
 		// TODO: Error
 		return;

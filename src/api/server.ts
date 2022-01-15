@@ -98,12 +98,10 @@ export function startApi() {
 		res.sendFile(path.resolve('dist', 'index.html'));
 	});
 
-	if (ENVIRONMENT === 'dev') {
-		const httpPort: number = parseInt(process.env.HTTP_PORT);
-		app.listen(httpPort, () => {
-			console.log(`Listening on port ${httpPort}`);
-		});
-	}
+	const httpPort: number = parseInt(process.env.HTTP_PORT);
+	app.listen(httpPort, () => {
+		console.log(`Listening on port ${httpPort}`);
+	});
 
 	if (ENVIRONMENT === 'prod') {
 		const privKeyPath: string = '/etc/letsencrypt/live/juho.dev/privkey.pem';
