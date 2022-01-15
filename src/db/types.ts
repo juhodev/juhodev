@@ -309,3 +309,30 @@ export type DBClaim = {
 	snowflake: string;
 	last_claim: number;
 };
+
+export type DBChessGame = {
+	id: string;
+	rated: boolean;
+	variant: string;
+	created_at: number;
+	opening: string;
+	moves: string;
+	status: string;
+	last_move_at: number;
+	player_white: string;
+	player_black: string;
+	player_white_rating: number;
+	player_black_rating: number;
+	player_white_id: string;
+	player_black_id: string;
+	analysis: string;
+	speed: string;
+	initial_clock: number;
+	clock_increment: number;
+	winner: string;
+};
+
+export type DBChessUser = {
+	user_id: string;
+	last_loaded_game: number;
+};

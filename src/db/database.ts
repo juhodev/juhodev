@@ -722,6 +722,101 @@ export async function initDatabase() {
 				},
 			],
 		},
+		{
+			name: 'chess_game',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.STRING,
+					primary: true,
+				},
+				{
+					name: 'rated',
+					type: ColumnType.BOOLEAN,
+				},
+				{
+					name: 'variant',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'created_at',
+					type: ColumnType.BIG_INTEGER,
+				},
+				{
+					name: 'opening',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'moves',
+					type: ColumnType.TEXT,
+				},
+				{
+					name: 'status',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'last_move_at',
+					type: ColumnType.BIG_INTEGER,
+				},
+				{
+					name: 'player_white',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'player_black',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'player_white_rating',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'player_black_rating',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'player_white_id',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'player_black_id',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'analysis',
+					type: ColumnType.TEXT,
+				},
+				{
+					name: 'speed',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'initial_clock',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'clock_increment',
+					type: ColumnType.INTEGER,
+				},
+				{
+					name: 'winner',
+					type: ColumnType.STRING,
+				},
+			],
+		},
+		{
+			name: 'chess_user',
+			columns: [
+				{
+					name: 'user_id',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'last_loaded_game',
+					type: ColumnType.BIG_INTEGER,
+				},
+			],
+		},
 	];
 
 	for (const table of tables) {
