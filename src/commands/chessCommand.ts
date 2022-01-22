@@ -2,8 +2,9 @@ import { DMChannel, MessageEmbed, NewsChannel, TextChannel, Message } from 'disc
 import { Command } from './types';
 import { fetchGames } from '../lichess/lichess';
 import { chess } from '../index';
-import { ChessPlayer } from '../chess/types';
+import { ChessPlayer, GamesBetweenPlayers } from '../chess/types';
 import { isNil } from '../utils';
+import fetch from 'node-fetch';
 
 const ChessCommand: Command = {
 	execute: (channel, author, args, db) => {
@@ -13,10 +14,66 @@ const ChessCommand: Command = {
 };
 
 async function sendMessage(channel: DMChannel | NewsChannel | TextChannel, args: string[]) {
+	const msg: Message = await channel.send(new MessageEmbed({ title: 'Chess', description: 'Loading...' }));
+	
+	if (args.length === 1) {
+		sendProfile(msg, args);
+		return;
+	} else if (args.length === 2) {
+		sendGamesBetweenUsers(msg, args);
+	}
+}
+
+async function sendGamesBetweenUsers(msg: Message, args: string[]) {
+	const userA: string = args.shift().toLowerCase();
+	const userB: string = args.shift().toLowerCase();
+
+	await fetchGames(userA);
+	await fetchGames(userB);
+
+	const gamesResponse = await fetch(`http://localhost:5000/api/chess/gamesBetween?userA=${userA}&userB=${userB}`);
+	const gamesBetween: GamesBetweenPlayers = await gamesResponse.json();
+
+	const userAResults: string = `Wins ${gamesBetween.playerA.totalWins}\nDraws ${gamesBetween.playerA.totalDraws}\nLosses ${gamesBetween.playerA.totalLosses}`;
+	const userBResults: string = `Wins ${gamesBetween.playerB.totalWins}\nDraws ${gamesBetween.playerB.totalDraws}\nLosses ${gamesBetween.playerB.totalLosses}`;
+
+	const embed: MessageEmbed = new MessageEmbed({ title: `${userA} vs ${userB}` });
+	embed.addFields(
+		{ name: userA, value: userAResults, inline: true },
+		{ name: userB, value: userBResults, inline: true },
+	);
+
+	const userAOpenings: string = getOpeningsString(gamesBetween.playerA);
+	const userBOpenings: string = getOpeningsString(gamesBetween.playerB);
+
+	embed.addField(`${userA} openings`, userAOpenings);
+	embed.addField(`${userB} openings`, userBOpenings);
+
+	const blunderStrA: string = getCounterString(gamesBetween.playerA.blunders);
+	const mistakesStrA: string = getCounterString(gamesBetween.playerA.mistakes);
+	const inaccuraciesStrA: string = getCounterString(gamesBetween.playerA.inaccuracies);
+
+	const blunderStrB: string = getCounterString(gamesBetween.playerB.blunders);
+	const mistakesStrB: string = getCounterString(gamesBetween.playerB.mistakes);
+	const inaccuraciesStrB: string = getCounterString(gamesBetween.playerB.inaccuracies);
+
+	embed.addFields(
+		{ name: `${userA} blunders`, value: blunderStrA, inline: true },
+		{ name: 'Mistakes', value: mistakesStrA, inline: true },
+		{ name: 'Inaccuracies', value: inaccuraciesStrA, inline: true },
+	);
+
+	embed.addFields(
+		{ name: `${userB} blunders`, value: blunderStrB, inline: true },
+		{ name: 'Mistakes', value: mistakesStrB, inline: true },
+		{ name: 'Inaccuracies', value: inaccuraciesStrB, inline: true },
+	);
+
+	msg.edit(embed);
+}
+
+async function sendProfile(msg: Message, args: string[]) {
 	const user: string = args.shift().toLowerCase();
-
-	const msg: Message = await channel.send(new MessageEmbed({ title: 'Chess', description: 'Loading...' }))
-
 	await fetchGames(user);
 
 	const profile: ChessPlayer = await chess.getProfile(user);
@@ -134,6 +191,37 @@ async function sendMessage(channel: DMChannel | NewsChannel | TextChannel, args:
 		);
 
 	msg.edit(embed);
+}
+
+function getCounterString(counters: {[name: string]: { count: number, data: number }}): string {
+	let str: string = '';
+	for (const speed of Object.keys(counters)) {
+		const data: { count: number, data: number } = counters[speed];
+
+		str += `${speed}: ${data.data} (${Math.round(data.data / data.count)} per game)\n`;
+	}
+
+	return str;
+}
+
+function getOpeningsString(profile: ChessPlayer): string {
+	const openings: { name: string, count: number }[] = [];
+	for (const opening of Object.keys(profile.openingsSelf)) {
+		openings.push({ name: opening, count: profile.openingsSelf[opening] });
+	}
+
+	openings.sort((a, b) => b.count - a.count);
+	let openingStr: string = '';
+	for (let i = 0; i < 3; i++) {
+		const opening: { name: string, count: number } = openings[i];
+		openingStr += `${opening.name} **${opening.count}**\n`;
+	}
+
+	if (openingStr.length === 0) {
+		openingStr = '\u200B';
+	}
+
+	return openingStr;
 }
 
 export default ChessCommand;

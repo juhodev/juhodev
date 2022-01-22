@@ -26,4 +26,15 @@ export type ChessPlayer = {
 	mistakes: {
 		[name: string]: { count: number, data: number },
 	},
+	inaccuracies: {
+		[name: string]: { count: number, data: number },
+	},
+	totalWins: number,
+	totalLosses: number,
+	totalDraws: number,
 }
+
+export type GamesBetweenPlayers = {
+	playerA: ChessPlayer;
+	playerB: ChessPlayer;
+};
