@@ -2,10 +2,13 @@ export type ChessPlayer = {
 	id: string;
 	name: string;
 	currentRating: number;
-	rating: {
+	ratings: {
 		[name: string]: number[],
 	},
-	openings: {
+	openingsSelf: {
+		[name: string]: number;
+	},
+	openingsAgainst: {
 		[name: string]: number;
 	},
 	wins: {
@@ -17,13 +20,10 @@ export type ChessPlayer = {
 	draws: {
 		[name: string]: number;
 	},
-	lastMatch: number,
 	blunders: {
-		total: number;
-		gamesJudged: number;
+		[name: string]: { count: number, data: number },
 	},
 	mistakes: {
-		total: number;
-		gamesJudged: number;
-	}
+		[name: string]: { count: number, data: number },
+	},
 }

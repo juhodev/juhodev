@@ -19,7 +19,7 @@ async function sendMessage(channel: DMChannel | NewsChannel | TextChannel, args:
 
 	await fetchGames(user);
 
-	const profile: ChessPlayer = chess.getProfile(user);
+	const profile: ChessPlayer = await chess.getProfile(user);
 	if (isNil(profile)) {
 		// TODO: Error
 		return;
@@ -28,15 +28,15 @@ async function sendMessage(channel: DMChannel | NewsChannel | TextChannel, args:
 	let speedStr: string = '';
 	let ratingStr: string = '';
 	let playedStr: string = '';
-	for (const speed of Object.keys(profile.rating)) {
-		const ratings: number[] = profile.rating[speed];
+	for (const speed of Object.keys(profile.ratings)) {
+		const ratings: number[] = profile.ratings[speed];
 		if (ratings.length === 0) {
 			continue;
 		}
 
 		speedStr += `${speed}\n`;
 		ratingStr += `${ratings[ratings.length - 1]}\n`;
-		playedStr += `${ratings.length} (${profile.wins[speed]} / ${profile.draws[speed]} / ${profile.losses[speed]})\n`;
+		playedStr += `${ratings.length} (${profile.wins[speed] ?? 0} / ${profile.draws[speed] ?? 0} / ${profile.losses[speed] ?? 0})\n`;
 	}
 
 	if (speedStr.length === 0) {
@@ -51,26 +51,62 @@ async function sendMessage(channel: DMChannel | NewsChannel | TextChannel, args:
 		playedStr = '\u200B';
 	}
 
-	const openings: { name: string, count: number }[] = [];
-	for (const opening of Object.keys(profile.openings)) {
-		openings.push({ name: opening, count: profile.openings[opening] });
+	const openingsSelf: { name: string, count: number }[] = [];
+	for (const opening of Object.keys(profile.openingsSelf)) {
+		openingsSelf.push({ name: opening, count: profile.openingsSelf[opening] });
 	}
 
-	openings.sort((a, b) => b.count - a.count);
-	let openingStr: string = '';
-	let openingCountStr: string = '';
+	openingsSelf.sort((a, b) => b.count - a.count);
+	let openingSelfStr: string = '';
+	let openingCountSelfStr: string = '';
 	for (let i = 0; i < 3; i++) {
-		const opening: { name: string, count: number } = openings[i];
-		openingStr += `${opening.name}\n`;
-		openingCountStr += `${opening.count}\n`;
+		const opening: { name: string, count: number } = openingsSelf[i];
+		openingSelfStr += `${opening.name}\n`;
+		openingCountSelfStr += `${opening.count}\n`;
 	}
 
-	if (openingStr.length === 0) {
-		openingStr = '\u200B';
+	if (openingSelfStr.length === 0) {
+		openingSelfStr = '\u200B';
 	}
 
-	if (openingCountStr.length === 0) {
-		openingCountStr = '\u200B';
+	if (openingCountSelfStr.length === 0) {
+		openingCountSelfStr = '\u200B';
+	}
+
+	const openingsAgainst: { name: string, count: number }[] = [];
+	for (const opening of Object.keys(profile.openingsAgainst)) {
+		openingsAgainst.push({ name: opening, count: profile.openingsAgainst[opening] });
+	}
+
+	openingsAgainst.sort((a, b) => b.count - a.count);
+	let openingAgainstStr: string = '';
+	let openingCountAgainstStr: string = '';
+	for (let i = 0; i < 3; i++) {
+		const opening: { name: string, count: number } = openingsAgainst[i];
+		openingAgainstStr += `${opening.name}\n`;
+		openingCountAgainstStr += `${opening.count}\n`;
+	}
+
+	if (openingAgainstStr.length === 0) {
+		openingAgainstStr = '\u200B';
+	}
+
+	if (openingCountAgainstStr.length === 0) {
+		openingCountAgainstStr = '\u200B';
+	}
+
+	let mistakesStr: string = '';
+	for (const speed of Object.keys(profile.mistakes)) {
+		const data: { count: number, data: number } = profile.mistakes[speed];
+
+		mistakesStr += `${speed}: ${data.data} (${Math.round(data.data / data.count)})\n`;
+	}
+
+	let blundersStr: string = '';
+	for (const speed of Object.keys(profile.blunders)) {
+		const data: { count: number, data: number } = profile.blunders[speed];
+
+		blundersStr += `${speed}: ${data.data} (${Math.round(data.data / data.count)})\n`;
 	}
 
 	const embed: MessageEmbed = new MessageEmbed({ title: 'Chess' })
@@ -82,13 +118,18 @@ async function sendMessage(channel: DMChannel | NewsChannel | TextChannel, args:
 		)
 		.addField('\u200B', '\u200B', false)
 		.addFields(
-			{ name: 'Opening', value: openingStr, inline: true },
-			{ name: 'Times played', value: openingCountStr, inline: true },
+			{ name: 'Opening played', value: openingSelfStr, inline: true },
+			{ name: 'Times played', value: openingCountSelfStr, inline: true },
 			{ name: '\u200B', value: '\u200B', inline: false },
 		)
 		.addFields(
-			{ name: 'Blunders', value: `${profile.blunders.total} (${Math.round(profile.blunders.total / profile.blunders.gamesJudged)} per game)`, inline: true },
-			{ name: 'Mistakes', value: `${profile.mistakes.total} (${Math.round(profile.mistakes.total / profile.mistakes.gamesJudged)} per game)`, inline: true },
+			{ name: 'Opening played against', value: openingAgainstStr, inline: true },
+			{ name: 'Times played', value: openingCountAgainstStr, inline: true },
+			{ name: '\u200B', value: '\u200B', inline: false },
+		)
+		.addFields(
+			{ name: 'Blunders', value: blundersStr, inline: true },
+			{ name: 'Mistakes', value: mistakesStr, inline: true },
 			{ name: '\u200B', value: '\u200B', inline: true },
 		);
 
