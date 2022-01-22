@@ -118,12 +118,12 @@ async function sendMessage(channel: DMChannel | NewsChannel | TextChannel, args:
 		)
 		.addField('\u200B', '\u200B', false)
 		.addFields(
-			{ name: 'Opening played', value: openingSelfStr, inline: true },
+			{ name: 'Openings played', value: openingSelfStr, inline: true },
 			{ name: 'Times played', value: openingCountSelfStr, inline: true },
 			{ name: '\u200B', value: '\u200B', inline: false },
 		)
 		.addFields(
-			{ name: 'Opening played against', value: openingAgainstStr, inline: true },
+			{ name: 'Openings played against', value: openingAgainstStr, inline: true },
 			{ name: 'Times played', value: openingCountAgainstStr, inline: true },
 			{ name: '\u200B', value: '\u200B', inline: false },
 		)
