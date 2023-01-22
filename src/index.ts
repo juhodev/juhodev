@@ -172,6 +172,7 @@ export const reddit: Reddit = new Reddit();
 	reddit.loadChannel();
 	await reddit.loadCelebs();
 	await reddit.loadSubreddits();
+	await reddit.loadKeywords();
 	reddit.addClient(client);
 	reddit.startFetchingPosts();
 })();

@@ -352,3 +352,8 @@ export type DBSubreddit = {
 	id: number;
 	link: string;
 };
+
+export type DBDeathpoolKeyword = {
+	id: number;
+	keyword: string;
+};

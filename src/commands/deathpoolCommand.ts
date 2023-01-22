@@ -46,6 +46,19 @@ const RegisterSpamCommand: Command = {
 			return;
 		}
 
+		if (first === 'keyword') {
+			const word = args.shift();
+
+			if (isNil(word)) {
+				await channel.send('!deathpool keyword <word>');
+				return;
+			}
+
+			await reddit.addKeyword(word);
+			await channel.send(`${word} added`);
+			return;
+		}
+
 		await channel.send(`${first} is not a valid argument`);
 	},
 	alias: ['!deathpool', '!deadpool'],

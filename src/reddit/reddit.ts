@@ -4,12 +4,14 @@ import * as fs from 'fs';
 import * as Discord from 'discord.js';
 import { isNil } from '../utils';
 import { knex } from '../db/utils';
-import { DBCeleb, DBCelebNews, DBSubreddit } from '../db/types';
+import { DBCeleb, DBCelebNews, DBDeathpoolKeyword, DBSubreddit } from '../db/types';
 
 export class Reddit {
 	private subredditUrls: string[] = [];
 
 	private interestingPersons: string[] = [];
+
+	private keywords: string[] = [];
 
 	private ratelimitRemaining: number;
 	private ratelimitReset: number;
@@ -41,6 +43,20 @@ export class Reddit {
 		}
 
 		this.channelToSpam = fs.readFileSync('deathpool-spam-channel.txt', 'utf-8');
+	}
+
+	async loadKeywords() {
+		const keywords = await knex<DBDeathpoolKeyword>('deathpool_keyword').where({});
+
+		for (const key of keywords) {
+			this.keywords.push(key.keyword);
+		}
+	}
+
+	async addKeyword(keyword: string) {
+		this.keywords.push(keyword);
+
+		await knex<DBDeathpoolKeyword>('deathpool_keyword').insert({ keyword });
 	}
 
 	async loadSubreddits() {
@@ -104,6 +120,11 @@ export class Reddit {
 
 				const interesting = this.doesPostHaveAnyInterestingPerson(post);
 				if (!isNil(interesting)) {
+					const foundKeyword = this.doesHaveKeyword(post);
+					if (!foundKeyword) {
+						continue;
+					}
+
 					console.log('found interesting post', post.data.permalink);
 					await this.sendPostToChannel(post);
 					await this.logArticle(interesting, post);
@@ -149,6 +170,16 @@ export class Reddit {
 		}
 
 		return null;
+	}
+
+	private doesHaveKeyword(post: RedditPost): boolean {
+		for (const keyword of this.keywords) {
+			if (post.data.title.toLocaleLowerCase().includes(keyword)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private async fetchSubreddit(url: string): Promise<RedditFeed | null> {

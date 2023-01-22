@@ -863,6 +863,20 @@ export async function initDatabase() {
 				},
 			],
 		},
+		{
+			name: 'deathpool_keyword',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.BIG_INTEGER,
+					autoIncrement: true,
+				},
+				{
+					name: 'keyword',
+					type: ColumnType.STRING,
+				},
+			],
+		},
 	];
 
 	for (const table of tables) {
