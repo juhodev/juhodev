@@ -81,7 +81,6 @@ export class Reddit {
 
 	startFetchingPosts() {
 		const fetchInterval = 1000 * 60;
-		this.fetchPosts();
 		setInterval(() => {
 			this.fetchPosts();
 		}, fetchInterval);
