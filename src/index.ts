@@ -43,6 +43,7 @@ import GiftCommand from './commands/giftCommand';
 import BaltopCommand from './commands/baltopCommand';
 import DuelflipCommand from './commands/duelflipCommand';
 import ChessCommand from './commands/chessCommand';
+import DeathpoolCommand from './commands/deathpoolCommand';
 
 import { logUsers } from './userLogger';
 import { startApi } from './api/server';
@@ -55,6 +56,7 @@ import Bank from './bank/bank';
 import DiscordBlackjack from './blackjack/discordBlackjack';
 import Duelflip from './duelflip/duelflip';
 import Chess from './chess/chess';
+import { Reddit } from './reddit/reddit';
 
 const db = new DB();
 const siteMetrics: SiteMetrics = new SiteMetrics();
@@ -65,6 +67,7 @@ export const bank: Bank = new Bank();
 export const blackjack: DiscordBlackjack = new DiscordBlackjack();
 export const duelflip: Duelflip = new Duelflip();
 export const chess: Chess = new Chess();
+export const reddit: Reddit = new Reddit();
 
 (async () => {
 	config.load();
@@ -133,6 +136,7 @@ export const chess: Chess = new Chess();
 	commandHandler.registerCommand(BaltopCommand);
 	commandHandler.registerCommand(DuelflipCommand);
 	commandHandler.registerCommand(ChessCommand);
+	commandHandler.registerCommand(DeathpoolCommand);
 
 	db.changeUsernameEvent = (username: string, video?: string) => {
 		db.getGuild().me.setNickname(username);
@@ -164,6 +168,12 @@ export const chess: Chess = new Chess();
 	client.login(process.env.DISCORD_TOKEN);
 
 	startApi();
+
+	reddit.loadChannel();
+	await reddit.loadCelebs();
+	await reddit.loadSubreddits();
+	reddit.addClient(client);
+	reddit.startFetchingPosts();
 })();
 
 const updateGuild = async (db: DB, client: Discord.Client, userMetrics: UserMetrics) => {

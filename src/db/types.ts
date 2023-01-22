@@ -336,3 +336,19 @@ export type DBChessUser = {
 	user_id: string;
 	last_loaded_game: number;
 };
+
+export type DBCelebNews = {
+	id: number;
+	celeb_name: string;
+	url: string;
+};
+
+export type DBCeleb = {
+	id: number;
+	name: string;
+};
+
+export type DBSubreddit = {
+	id: number;
+	link: string;
+};

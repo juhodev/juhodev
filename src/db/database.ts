@@ -817,6 +817,52 @@ export async function initDatabase() {
 				},
 			],
 		},
+		{
+			name: 'celeb_news',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.BIG_INTEGER,
+					autoIncrement: true,
+				},
+				{
+					name: 'celeb_name',
+					type: ColumnType.STRING,
+				},
+				{
+					name: 'url',
+					type: ColumnType.STRING,
+				},
+			],
+		},
+		{
+			name: 'celeb',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.BIG_INTEGER,
+					autoIncrement: true,
+				},
+				{
+					name: 'name',
+					type: ColumnType.STRING,
+				},
+			],
+		},
+		{
+			name: 'subreddit',
+			columns: [
+				{
+					name: 'id',
+					type: ColumnType.BIG_INTEGER,
+					autoIncrement: true,
+				},
+				{
+					name: 'link',
+					type: ColumnType.STRING,
+				},
+			],
+		},
 	];
 
 	for (const table of tables) {
