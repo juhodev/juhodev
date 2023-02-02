@@ -111,6 +111,10 @@ export class Reddit {
 
 		for (const sub of this.subredditUrls) {
 			const data = await this.fetchSubreddit(sub);
+			if (isNil(data?.data)) {
+				continue;
+			}
+
 			console.log(`Fetched ${data.data.children.length} posts`);
 
 			for (const post of data.data.children) {
@@ -153,7 +157,7 @@ export class Reddit {
 
 		const channel: Discord.Channel = await this.client.channels.fetch(this.channelToSpam);
 		if (channel instanceof Discord.TextChannel) {
-			const embed = new Discord.MessageEmbed({ title: post.data.title });
+			const embed = new Discord.MessageEmbed({ title: post.data.title.substring(0, 255) });
 
 			embed.addField('Link to article', post.data.url);
 			embed.addField('Link to post', `https://reddit.com${post.data.permalink}`);
